@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* my css */
+
+.dropdown-item-custom {
+  border-radius: 0 !important; /* keep square */
+  transition: background-color 0.2s;
+}
+
+.dropdown-item-custom:hover {
+  background-color: #6c757d; /* dark grey Bootstrap color */
+  color: white; /* ensure text is visible */
+}

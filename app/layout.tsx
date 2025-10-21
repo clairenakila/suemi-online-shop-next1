@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import Navbar from "./components/Navbar";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -16,6 +17,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="d-flex flex-column min-vh-100">
+        <Header />
+
         <main className="flex-fill">{children}</main>
         <Footer />
       </body>
