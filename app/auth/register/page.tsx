@@ -81,6 +81,8 @@ export default function RegisterPage() {
           {
             auth_id: data.user?.id,
             name: form.name,
+            email: form.email,
+            password: form.password,
             role_id: form.role_id,
           },
         ]);

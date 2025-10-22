@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 export default function LayoutClient({
@@ -15,8 +14,8 @@ export default function LayoutClient({
 
   return (
     <>
-      {!hideHeader && <Header />} {/* hide header only on login */}
-      <main className="flex-fill">{children}</main>
+      {/* {!hideHeader && <Header />}  */}
+      <main className="grow container py-4">{children}</main>
       <Footer />
     </>
   );

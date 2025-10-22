@@ -1,44 +1,28 @@
-// import { NextResponse } from "next/server";
-// import { supabase } from "@/lib/supabase";
-// import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
-// export async function POST(req: Request) {
-//   try {
-//     const { email, password } = await req.json();
+export async function POST(req: NextRequest) {
+  const { email, password } = await req.json();
 
-//     // get user by email
-//     const { data: user, error } = await supabase
-//       .from("users")
-//       .select("*")
-//       .eq("email", email)
-//       .single();
+  if (!email || !password) {
+    return NextResponse.json(
+      { error: "Email and password required" },
+      { status: 400 }
+    );
+  }
 
-//     if (error || !user) {
-//       return NextResponse.json({ error: "User not found" }, { status: 400 });
-//     }
+  const { data: user, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .eq("password", password) // WARNING: plain text for simplicity
+    .single();
 
-//     // compare hashed passwords
-//     const valid = await bcrypt.compare(password, user.password);
-//     if (!valid) {
-//       return NextResponse.json(
-//         { error: "Invalid credentials" },
-//         { status: 401 }
-//       );
-//     }
+  if (error || !user) {
+    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  }
 
-//     // ✅ success - never return the password
-//     return NextResponse.json({
-//       message: "Login successful",
-//       user: {
-//         id: user.id,
-//         name: user.name,
-//         email: user.email,
-//         phone_number: user.phone_number,
-//         role_id: user.role_id,
-//       },
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     return NextResponse.json({ error: "Server error" }, { status: 500 });
-//   }
-// }
+  // ✅ Logged in
+  // You can also return user info here
+  return NextResponse.json({ message: "Login successful", user });
+}

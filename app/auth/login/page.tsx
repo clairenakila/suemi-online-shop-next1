@@ -2,72 +2,72 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
 import { ROUTES } from "../../routes";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate login delay
-    setTimeout(() => {
+    try {
+      // Call API route to validate credentials
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Invalid credentials");
+      } else {
+        toast.success("Logged in successfully!");
+        router.push(ROUTES.HOME);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error");
+    } finally {
       setLoading(false);
-      router.push(ROUTES.HOME);
-    }, 1000);
+    }
   };
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-white">
+      <Toaster position="top-center" />
       <div
         className="card shadow-lg p-4"
-        style={{ maxWidth: "400px", width: "100%", borderRadius: "12px" }}
+        style={{ maxWidth: "400px", borderRadius: "12px", width: "100%" }}
       >
-        <div className="text-center mb-4">
-          <h2 className="fw-bold">Login</h2>
-        </div>
-
+        <h2 className="fw-bold text-center mb-3">Login</h2>
         <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label fw-semibold">
-              Email address
-            </label>
-            <input
-              type="email"
-              id="email"
-              className="form-control shadow-sm"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="yourname@gmail.com"
-              required
-            />
-          </div>
+          <label className="form-label fw-semibold">Email address</label>
+          <input
+            type="email"
+            className="form-control mb-3"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-          <div className="mb-4">
-            <label htmlFor="password" className="form-label fw-semibold">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              className="form-control shadow-sm"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+          <label className="form-label fw-semibold">Password</label>
+          <input
+            type="password"
+            className="form-control mb-4"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-          <button
-            type="submit"
-            className="btn btn-rose w-100 fw-bold"
-            disabled={loading}
-          >
+          <button className="btn btn-rose w-100 fw-bold" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
@@ -75,10 +75,7 @@ export default function LoginPage() {
         <div className="text-center mt-3">
           <p className="mb-0">
             Don’t have an account?{" "}
-            <Link
-              href={ROUTES.REGISTER}
-              className="text-danger text-decoration-none fw-semibold"
-            >
+            <Link href={ROUTES.REGISTER} className="text-danger fw-semibold">
               Register
             </Link>
           </p>

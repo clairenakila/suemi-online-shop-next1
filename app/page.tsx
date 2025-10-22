@@ -9,13 +9,4 @@ import { ROUTES } from "@/app/routes";
 
 export default function Home() {
   const router = useRouter();
-
-  //redirect user if not logged_in
-  useEffect(() => {
-    // Example: redirect if no session
-    const user = localStorage.getItem("user"); // or supabase.auth.getSession()
-    if (!user) {
-      router.push(ROUTES.LOGIN);
-    }
-  }, [router]);
 }
