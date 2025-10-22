@@ -13,14 +13,13 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    phone_number: "",
     role_id: 0, // default empty, will be selected
   });
   const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Fetch roles from Supabase on mount
+  // Fetch roles from Supabase
   useEffect(() => {
     const fetchRoles = async () => {
       const { data, error } = await supabase.from("roles").select("*");
@@ -33,18 +32,15 @@ export default function RegisterPage() {
     fetchRoles();
   }, []);
 
-  // Handle input changes with validation
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
     if (name === "name") {
-      const filtered = value.replace(/[^a-zA-Z.-]/g, "");
-      setForm({ ...form, [name]: filtered });
+      setForm({ ...form, [name]: value.replace(/[^a-zA-Z.-]/g, "") });
     } else if (name === "email") {
-      const filtered = value.replace(/[^a-zA-Z0-9.@]/g, "");
-      setForm({ ...form, [name]: filtered });
+      setForm({ ...form, [name]: value.replace(/[^a-zA-Z0-9.@]/g, "") });
     } else if (name === "role_id") {
       setForm({ ...form, [name]: Number(value) });
     } else {
@@ -52,7 +48,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -68,20 +63,35 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // Send registration data to your API
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      // Create Supabase auth user
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Registration failed");
-      } else {
-        toast.success("Registered successfully!");
-        router.push(ROUTES.LOGIN);
+      if (error) {
+        toast.error(error.message);
+        return;
       }
+
+      // Insert additional info into your "users" table
+      const { data: userData, error: insertError } = await supabase
+        .from("users")
+        .insert([
+          {
+            auth_id: data.user?.id,
+            name: form.name,
+            role_id: form.role_id,
+          },
+        ]);
+
+      if (insertError) {
+        toast.error(insertError.message);
+        return;
+      }
+
+      toast.success("Registered successfully!");
+      router.push(ROUTES.LOGIN);
     } catch (err) {
       console.error(err);
       toast.error("Server error");
@@ -91,7 +101,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-white">
+    <div className="container d-flex justify-content-center align-items-start min-vh-100 bg-white py-5">
       <Toaster position="top-center" />
       <div
         className="card shadow-lg p-4"
