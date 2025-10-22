@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ROUTES } from "../routes";
 
 export default function Navbar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
