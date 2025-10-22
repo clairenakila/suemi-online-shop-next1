@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
+import { supabase } from "@/lib/supabase";
 import { ROUTES } from "../../routes";
 import Link from "next/link";
 
@@ -13,27 +14,39 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     phone_number: "",
-    role_id: 1,
+    role_id: 0, // default empty, will be selected
   });
+  const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Fetch roles from Supabase on mount
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const { data, error } = await supabase.from("roles").select("*");
+      if (error) {
+        console.error("Failed to fetch roles:", error.message);
+      } else {
+        setRoles(data);
+      }
+    };
+    fetchRoles();
+  }, []);
+
   // Handle input changes with validation
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
 
     if (name === "name") {
-      // Only letters, dot, dash
       const filtered = value.replace(/[^a-zA-Z.-]/g, "");
       setForm({ ...form, [name]: filtered });
     } else if (name === "email") {
-      // Only letters, numbers, dot, @
       const filtered = value.replace(/[^a-zA-Z0-9.@]/g, "");
       setForm({ ...form, [name]: filtered });
-    } else if (name === "phone_number") {
-      // Only numbers
-      const filtered = value.replace(/[^0-9]/g, "");
-      setForm({ ...form, [name]: filtered });
+    } else if (name === "role_id") {
+      setForm({ ...form, [name]: Number(value) });
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -43,14 +56,19 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check password match
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
 
+    if (!form.role_id) {
+      toast.error("Please select a role");
+      return;
+    }
+
     setLoading(true);
     try {
+      // Send registration data to your API
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -64,7 +82,8 @@ export default function RegisterPage() {
         toast.success("Registered successfully!");
         router.push(ROUTES.LOGIN);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Server error");
     } finally {
       setLoading(false);
@@ -136,18 +155,23 @@ export default function RegisterPage() {
             maxLength={50}
           />
 
-          <label htmlFor="phone_number" className="form-label fw-semibold">
-            Phone Number
+          <label htmlFor="role_id" className="form-label fw-semibold">
+            Role
           </label>
-          <input
-            type="text"
-            name="phone_number"
+          <select
+            name="role_id"
             className="form-control mb-4"
-            placeholder="11 Digits only. e.g., 09918885966"
-            value={form.phone_number}
+            value={form.role_id}
             onChange={handleChange}
-            maxLength={11}
-          />
+            required
+          >
+            <option value="">Select role</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
+          </select>
 
           <button className="btn btn-rose w-100 fw-bold" disabled={loading}>
             {loading ? "Registering..." : "Register"}
