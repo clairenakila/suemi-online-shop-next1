@@ -30,7 +30,7 @@ export default function LoginPage() {
         toast.error(data.error || "Invalid credentials");
       } else {
         toast.success("Logged in successfully!");
-        router.push(ROUTES.HOME);
+        router.push(ROUTES.DASHBOARD);
       }
     } catch (err) {
       console.error(err);
@@ -49,7 +49,7 @@ export default function LoginPage() {
       >
         <Link href={ROUTES.HOME}>
           <img
-            src="/images/logo2.png" // make sure logo.png is in public/images
+            src="/images/logo2.png" //logo.png is in public/images
             alt="Logo"
             className="mx-auto"
             style={{ width: "120px", cursor: "pointer" }}

@@ -23,6 +23,5 @@ export async function POST(req: NextRequest) {
   }
 
   // ✅ Logged in
-  // You can also return user info here
   return NextResponse.json({ message: "Login successful", user });
 }
