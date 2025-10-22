@@ -145,3 +145,27 @@ body {
     opacity: 1;
   }
 }
+
+/* sidebar and submenu  */
+/* Sidebar links hover - make text white */
+nav .nav-link {
+  transition: color 0.2s, background-color 0.2s;
+}
+
+nav .nav-link:hover,
+nav .nav-link:focus {
+  color: white !important; /* ensures text becomes white */
+  background-color: #495057; /* optional: darken the background slightly */
+}
+
+/* Submenu links */
+nav ul.nav ul.nav-link,
+nav ul.nav li .nav-link {
+  transition: color 0.2s, background-color 0.2s;
+}
+
+nav ul.nav ul.nav-link:hover,
+nav ul.nav li .nav-link:hover {
+  color: white !important;
+  background-color: #495057; /* slightly dark grey on hover */
+}

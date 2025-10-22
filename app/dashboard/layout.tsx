@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ROUTES } from "../routes";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
+import { ROUTES } from "../routes";
 
 export default function DashboardLayout({
   children,
@@ -12,14 +12,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const toggleSidebar = () => setCollapsed(!collapsed);
+  const [usersMenuOpen, setUsersMenuOpen] = useState(false); // submenu state
 
-  //redirect logout to home
-  const router = useRouter(); // ✅ initialize router
+  const toggleSidebar = () => setCollapsed(!collapsed);
+  const toggleUsersMenu = () => setUsersMenuOpen(!usersMenuOpen);
+
+  const router = useRouter();
 
   const handleLogout = () => {
     toast.success("Logged out successfully");
-    router.push(ROUTES.HOME); // ✅ use router to navigate
+    router.push(ROUTES.HOME);
   };
 
   return (
@@ -52,15 +54,47 @@ export default function DashboardLayout({
               {!collapsed && "Dashboard"}
             </Link>
           </li>
+
+          {/* Users with Submenu */}
           <li className="nav-item mb-2">
-            <Link
-              href="/dashboard/users"
-              className="nav-link text-white d-flex align-items-center"
+            <button
+              className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
+              onClick={toggleUsersMenu}
             >
-              <i className="bi bi-people me-2"></i>
-              {!collapsed && "Users"}
-            </Link>
+              <span className="d-flex align-items-center">
+                <i className="bi bi-people me-2"></i>
+                {!collapsed && "Users"}
+              </span>
+              {!collapsed && (
+                <i
+                  className={`bi ${
+                    usersMenuOpen ? "bi-chevron-up" : "bi-chevron-down"
+                  }`}
+                ></i>
+              )}
+            </button>
+            {usersMenuOpen && !collapsed && (
+              <ul className="nav flex-column ms-3 mt-2">
+                <li className="nav-item mb-1">
+                  <Link
+                    href="/dashboard/users/list"
+                    className="nav-link text-white"
+                  >
+                    Accounts
+                  </Link>
+                </li>
+                <li className="nav-item mb-1">
+                  <Link
+                    href="/dashboard/users/create"
+                    className="nav-link text-white"
+                  >
+                    Roles
+                  </Link>
+                </li>
+              </ul>
+            )}
           </li>
+
           <li className="nav-item mb-2">
             <Link
               href="/dashboard/settings"
@@ -75,7 +109,6 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <div className="d-flex flex-column grow vh-100 overflow-hidden">
-        {/* Header */}
         <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center shrink-0">
           <h5 className="mb-0">Dashboard Header</h5>
           <button
@@ -86,9 +119,10 @@ export default function DashboardLayout({
           </button>
         </header>
 
-        {/* Page Content */}
         <main className="grow p-4 overflow-auto">{children}</main>
       </div>
+
+      <Toaster />
     </div>
   );
 }
