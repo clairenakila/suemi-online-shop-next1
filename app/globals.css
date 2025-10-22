@@ -18,6 +18,10 @@
     --foreground: #ededed;
   }
 }
+/* remove blue line in links */
+a {
+  text-decoration: none;
+}
 
 body {
   background: var(--background);
