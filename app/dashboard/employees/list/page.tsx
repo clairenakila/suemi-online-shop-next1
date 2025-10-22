@@ -147,6 +147,9 @@ export default function EmployeesListPage() {
       center: true,
     },
   ];
+  //pass this to datatable
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(2);
 
   return (
     <div className="container my-5">
@@ -199,6 +202,7 @@ export default function EmployeesListPage() {
         onToggleSelect={toggleSelectUser}
         onToggleSelectAll={toggleSelectAll}
         rowKey="id"
+        defaultRecordsPerPage={2} // <--- set default limit here
       />
 
       <CreateEmployeeModal
