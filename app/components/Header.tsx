@@ -15,7 +15,7 @@ export default function Header({ title }: { title?: string }) {
   };
 
   return (
-    <header className="bg-light py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+    <header className="bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
       {/* Left: Logo + Name */}
       <div className="d-flex align-items-center">
         <Image

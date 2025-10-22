@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import Navbar from "./components/Navbar";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import LayoutClient from "./LayoutClient"; // 👈 must be in same folder
 
 export const metadata: Metadata = {
   title: "Suemi Online Shop Official",
@@ -17,10 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="d-flex flex-column min-vh-100">
-        <Header />
-
-        <main className="flex-fill">{children}</main>
-        <Footer />
+        <LayoutClient>{children}</LayoutClient>
       </body>
     </html>
   );
