@@ -106,8 +106,8 @@ export default function EmployeesListPage() {
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3>Employees Management</h3>
-        <button className="btn btn-primary" onClick={openAddModal}>
-          Add Employee
+        <button className="btn btn-rose" onClick={openAddModal}>
+          Add
         </button>
       </div>
 
