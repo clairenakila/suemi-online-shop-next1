@@ -23,9 +23,12 @@ a {
   text-decoration: none;
 }
 /* dashboard panel fit to screen */
+/* Make html/body take full screen */
 html,
 body {
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {

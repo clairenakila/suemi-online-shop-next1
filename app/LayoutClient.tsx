@@ -14,9 +14,11 @@ export default function LayoutClient({
 
   return (
     <>
-      {/* {!hideHeader && <Header />}  */}
-      <main className="grow container py-4">{children}</main>
-      <Footer />
+      <div className="d-flex flex-column min-vh-100">
+        {/* {!hideHeader && <Header />} */}
+        <main className="grow">{children}</main>
+        <Footer />
+      </div>
     </>
   );
 }

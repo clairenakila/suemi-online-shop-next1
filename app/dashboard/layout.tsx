@@ -9,14 +9,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-
   const toggleSidebar = () => setCollapsed(!collapsed);
 
   return (
-    <div className="d-flex min-vh-100">
+    <div className="d-flex vh-100 w-100" style={{ overflow: "hidden" }}>
       {/* Sidebar */}
       <nav
-        className={`bg-dark text-white flex-column p-3`}
+        className="bg-dark text-white d-flex flex-column p-3"
         style={{
           width: collapsed ? "60px" : "220px",
           transition: "width 0.3s",
@@ -32,7 +31,7 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        <ul className="nav nav-pills flex-column">
+        <ul className="nav nav-pills flex-column grow">
           <li className="nav-item mb-2">
             <Link
               href="/dashboard"
@@ -64,18 +63,15 @@ export default function DashboardLayout({
       </nav>
 
       {/* Main Content */}
-      <div className="grow">
+      <div className="d-flex flex-column grow vh-100 overflow-hidden">
         {/* Header */}
-        <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center">
+        <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center shrink-0">
           <h5 className="mb-0">Dashboard Header</h5>
           <button className="btn btn-outline-secondary btn-sm">Logout</button>
         </header>
 
         {/* Page Content */}
-        <div className="grow d-flex flex-column">
-          <header>...</header>
-          <main className="grow p-4 overflow-auto">{children}</main>
-        </div>
+        <main className="grow p-4 overflow-auto">{children}</main>
       </div>
     </div>
   );
