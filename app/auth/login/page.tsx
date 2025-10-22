@@ -67,7 +67,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="btn btn-rose w-100 fw-bold"
+            className="btn btn-rose w-100 mt-3 fw-bold"
             disabled={loading}
           >
             {loading ? "Logging in..." : "Login"}
