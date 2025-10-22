@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import toast, { Toaster } from "react-hot-toast";
+import { supabase } from "@/lib/supabase";
+
 import CreateEmployeeModal from "./CreateEmployeeModal";
 import SearchBar from "../../../components/SearchBar";
 import ConfirmDelete from "../../../components/ConfirmDelete";
+import { DataTable, Column } from "../../../components/DataTable";
 
 interface User {
   id?: string;
@@ -39,37 +41,37 @@ export default function EmployeesListPage() {
     fetchRoles();
   }, []);
 
-  async function fetchUsers() {
+  const fetchUsers = async () => {
     const { data, error } = await supabase.from("users").select("*");
-    if (error) toast.error(`Failed to load users: ${error.message}`);
-    else setUsers(data || []);
-  }
+    if (error) return toast.error(error.message);
+    setUsers(data || []);
+  };
 
-  async function fetchRoles() {
+  const fetchRoles = async () => {
     const { data, error } = await supabase.from("roles").select("*");
-    if (error) toast.error(`Failed to load roles: ${error.message}`);
-    else setRoles(data || []);
-  }
+    if (error) return toast.error(error.message);
+    setRoles(data || []);
+  };
 
-  function openAddModal() {
+  const openAddModal = () => {
     setForm({ name: "", email: "", password: "", role_id: "" });
     setEditId(null);
     setShowModal(true);
-  }
+  };
 
-  function handleUserEdit(user: User) {
+  const handleUserEdit = (user: User) => {
     setForm(user);
-    if (user.id) setEditId(user.id);
+    setEditId(user.id || null);
     setShowModal(true);
-  }
+  };
 
-  function closeModal() {
+  const closeModal = () => {
     setShowModal(false);
     setForm({ name: "", email: "", password: "", role_id: "" });
     setEditId(null);
-  }
+  };
 
-  async function handleSubmit(userData: User) {
+  const handleSubmit = async (userData: User) => {
     if (!userData.role_id) return toast.error("Please select a role");
 
     if (editId) {
@@ -77,41 +79,74 @@ export default function EmployeesListPage() {
         .from("users")
         .update(userData)
         .eq("id", editId);
-      if (error) toast.error(`Failed to update: ${error.message}`);
-      else {
-        toast.success("User updated successfully");
-        fetchUsers();
-        closeModal();
-      }
+      if (error) return toast.error(error.message);
+      toast.success("User updated successfully");
     } else {
       const { error } = await supabase.from("users").insert([userData]);
-      if (error) toast.error(`Failed to create: ${error.message}`);
-      else {
-        toast.success("User added successfully");
-        fetchUsers();
-        closeModal();
-      }
+      if (error) return toast.error(error.message);
+      toast.success("User added successfully");
     }
-  }
 
-  function toggleSelectUser(id: string) {
+    fetchUsers();
+    closeModal();
+  };
+
+  const toggleSelectUser = (id: string) =>
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
     );
-  }
+
+  const toggleSelectAll = (checked: boolean) =>
+    setSelectedUsers(checked ? users.map((u) => u.id!) : []);
 
   const filteredUsers = users.filter((u) => {
     const term = searchTerm.toLowerCase();
     const roleName =
       roles.find((r) => r.id === u.role_id)?.name.toLowerCase() || "";
-
     return (
-      (u.name || "").toLowerCase().includes(term) ||
-      (u.email || "").toLowerCase().includes(term) ||
-      (u.password || "").toLowerCase().includes(term) ||
-      roleName.includes(term)
+      [u.name, u.email, u.password].some((val) =>
+        val.toLowerCase().includes(term)
+      ) || roleName.includes(term)
     );
   });
+
+  const columns: Column<User>[] = [
+    { header: "Name", accessor: "name" as keyof User },
+    { header: "Email", accessor: "email" as keyof User },
+    { header: "Password", accessor: "password" as keyof User },
+    {
+      header: "Role",
+      accessor: (row: User) =>
+        roles.find((r) => r.id === row.role_id)?.name || "",
+    },
+    {
+      header: "Action",
+      accessor: (row: User) => (
+        <>
+          <button
+            className="btn btn-warning btn-sm me-2"
+            onClick={() => handleUserEdit(row)}
+          >
+            Edit
+          </button>
+          <ConfirmDelete
+            confirmMessage={`Are you sure you want to delete ${row.name}?`}
+            onConfirm={async () => {
+              const { error } = await supabase
+                .from("users")
+                .delete()
+                .eq("id", row.id!);
+              if (error) throw error;
+              fetchUsers();
+            }}
+          >
+            Delete
+          </ConfirmDelete>
+        </>
+      ),
+      center: true,
+    },
+  ];
 
   return (
     <div className="container my-5">
@@ -133,13 +168,11 @@ export default function EmployeesListPage() {
             confirmMessage="Are you sure you want to delete selected users?"
             onConfirm={async () => {
               if (!selectedUsers.length) throw new Error("No users selected");
-
               const { error } = await supabase
                 .from("users")
                 .delete()
                 .in("id", selectedUsers);
               if (error) throw error;
-
               setSelectedUsers([]);
               fetchUsers();
             }}
@@ -148,10 +181,7 @@ export default function EmployeesListPage() {
           </ConfirmDelete>
         </div>
 
-        <div
-          className="search-bar-container position-relative w-100"
-          style={{ width: "100%" }}
-        >
+        <div className="search-bar-container position-relative w-100">
           <SearchBar
             placeholder="Search employees..."
             value={searchTerm}
@@ -161,81 +191,15 @@ export default function EmployeesListPage() {
         </div>
       </div>
 
-      <div
-        className="table-responsive"
-        style={{ maxHeight: "70vh", overflowY: "auto" }}
-      >
-        <table className="table table-bordered table-striped">
-          <thead className="table-light sticky-top">
-            <tr>
-              <th className="text-center">
-                <input
-                  type="checkbox"
-                  checked={
-                    selectedUsers.length === users.length && users.length > 0
-                  }
-                  onChange={(e) =>
-                    setSelectedUsers(
-                      e.target.checked ? users.map((u) => u.id!) : []
-                    )
-                  }
-                />
-              </th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Password</th>
-              <th>Role</th>
-              <th className="text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="align-middle">
-                <td className="text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(user.id!)}
-                    onChange={() => toggleSelectUser(user.id!)}
-                  />
-                </td>
-                <td>{user.name}</td>
-                <td>{user.email}</td>
-                <td>{user.password}</td>
-                <td>{roles.find((r) => r.id === user.role_id)?.name || ""}</td>
-                <td className="text-center">
-                  <button
-                    className="btn btn-warning btn-sm me-2"
-                    onClick={() => handleUserEdit(user)}
-                  >
-                    Edit
-                  </button>
-
-                  <ConfirmDelete
-                    confirmMessage={`Are you sure you want to delete ${user.name}?`}
-                    onConfirm={async () => {
-                      const { error } = await supabase
-                        .from("users")
-                        .delete()
-                        .eq("id", user.id!);
-                      if (error) throw error;
-                      fetchUsers();
-                    }}
-                  >
-                    Delete
-                  </ConfirmDelete>
-                </td>
-              </tr>
-            ))}
-            {filteredUsers.length === 0 && (
-              <tr>
-                <td colSpan={6} className="text-center">
-                  No employees found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        data={filteredUsers}
+        columns={columns}
+        selectable
+        selectedIds={selectedUsers}
+        onToggleSelect={toggleSelectUser}
+        onToggleSelectAll={toggleSelectAll}
+        rowKey="id"
+      />
 
       <CreateEmployeeModal
         show={showModal}
