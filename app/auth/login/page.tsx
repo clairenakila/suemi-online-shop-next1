@@ -47,6 +47,14 @@ export default function LoginPage() {
         className="card shadow-lg p-4"
         style={{ maxWidth: "400px", borderRadius: "12px", width: "100%" }}
       >
+        <Link href={ROUTES.HOME}>
+          <img
+            src="/images/logo2.png" // make sure logo.png is in public/images
+            alt="Logo"
+            className="mx-auto"
+            style={{ width: "120px", cursor: "pointer" }}
+          />
+        </Link>
         <h2 className="fw-bold text-center mb-3">Login</h2>
         <form onSubmit={handleSubmit}>
           <label className="form-label fw-semibold">Email address</label>
