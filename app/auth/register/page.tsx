@@ -75,20 +75,18 @@ export default function RegisterPage() {
       }
 
       // Insert additional info into your "users" table
-      const { data: userData, error: insertError } = await supabase
-        .from("users")
-        .insert([
-          {
-            auth_id: data.user?.id,
-            name: form.name,
-            email: form.email,
-            password: form.password,
-            role_id: form.role_id,
-          },
-        ]);
+      const insertResponse = await supabase.from("users").insert([
+        {
+          auth_id: data.user?.id,
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          role_id: form.role_id,
+        },
+      ]);
 
-      if (insertError) {
-        toast.error(insertError.message);
+      if (insertResponse.error) {
+        toast.error(insertResponse.error.message);
         return;
       }
 
