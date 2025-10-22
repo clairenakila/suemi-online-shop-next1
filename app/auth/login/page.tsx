@@ -75,8 +75,8 @@ export default function LoginPage() {
         <div className="text-center mt-3">
           <p className="mb-0">
             Don’t have an account?{" "}
-            <Link href={ROUTES.REGISTER} className="text-danger fw-semibold">
-              Register
+            <Link href={ROUTES.REGISTER}>
+              <span className="text-danger fw-semibold">Register</span>
             </Link>
           </p>
         </div>
