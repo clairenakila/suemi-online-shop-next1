@@ -8,8 +8,8 @@ import { ROUTES } from "../../routes";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,11 +23,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-white">
-      <div
-        className="card shadow-lg p-4"
-        style={{ maxWidth: "400px", width: "100%", borderRadius: "12px" }}
-      >
+    <div className="login-page d-flex justify-content-center align-items-center min-vh-100 bg-white">
+      <div className="login-card card shadow-lg p-4">
         <div className="text-center mb-4">
           <h2 className="fw-bold">Login</h2>
           <p className="text-muted">
@@ -48,6 +45,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
+              maxLength={50}
             />
           </div>
 
@@ -63,19 +61,21 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
+              maxLength={50}
             />
           </div>
 
           <button
             type="submit"
-            className="btn btn-danger w-100 fw-bold"
+            className="btn btn-rose w-100 fw-bold"
             disabled={loading}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        <div className="text-center mt-3">
+        {/* Optional Register Link */}
+        {/* <div className="text-center mt-3">
           <p className="mb-0">
             Don’t have an account?{" "}
             <Link
@@ -85,7 +85,7 @@ export default function LoginPage() {
               Register
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
