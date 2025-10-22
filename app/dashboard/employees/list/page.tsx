@@ -100,11 +100,18 @@ export default function EmployeesListPage() {
     );
   }
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter((u) => {
+    const term = searchTerm.toLowerCase();
+    const roleName =
+      roles.find((r) => r.id === u.role_id)?.name.toLowerCase() || "";
+
+    return (
+      (u.name || "").toLowerCase().includes(term) ||
+      (u.email || "").toLowerCase().includes(term) ||
+      (u.password || "").toLowerCase().includes(term) ||
+      roleName.includes(term)
+    );
+  });
 
   return (
     <div className="container my-5">
@@ -141,7 +148,10 @@ export default function EmployeesListPage() {
           </ConfirmDelete>
         </div>
 
-        <div className="ms-md-auto mt-2 mt-md-0" style={{ minWidth: "200px" }}>
+        <div
+          className="search-bar-container position-relative w-100"
+          style={{ width: "100%" }}
+        >
           <SearchBar
             placeholder="Search employees..."
             value={searchTerm}

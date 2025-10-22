@@ -169,3 +169,37 @@ nav ul.nav li .nav-link:hover {
   color: white !important;
   background-color: #495057; /* slightly dark grey on hover */
 }
+
+/* search bar */
+/* Search bar container */
+.search-bar-container {
+  width: 100%;
+  max-width: 300px; /* default for desktop */
+}
+
+/* Make it full width on small screens */
+@media (max-width: 768px) {
+  .search-bar-container {
+    max-width: 100%;
+  }
+}
+
+/* Style the dropdown to match input width */
+.search-bar-container .list-group {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999; /* ensure it's above table/modal */
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 4px 4px;
+}
+
+/* table is at the back */
+.table-responsive {
+  position: relative;
+  z-index: 1; /* table is behind dropdown */
+}
