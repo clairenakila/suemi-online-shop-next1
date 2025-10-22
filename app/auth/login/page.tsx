@@ -30,9 +30,6 @@ export default function LoginPage() {
       >
         <div className="text-center mb-4">
           <h2 className="fw-bold">Login</h2>
-          <p className="text-muted">
-            Welcome back! Please login to your account.
-          </p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -74,7 +71,7 @@ export default function LoginPage() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        {/* 
+
         <div className="text-center mt-3">
           <p className="mb-0">
             Don’t have an account?{" "}
@@ -85,7 +82,7 @@ export default function LoginPage() {
               Register
             </Link>
           </p>
-        </div> */}
+        </div>
       </div>
     </div>
   );

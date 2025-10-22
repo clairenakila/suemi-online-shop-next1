@@ -10,7 +10,8 @@ export default function LayoutClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const hideHeader = pathname === "/auth/login";
+  const hideHeader =
+    pathname === "/auth/login" || pathname === "/auth/register";
 
   return (
     <>
