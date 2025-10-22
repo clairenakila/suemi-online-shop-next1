@@ -38,7 +38,10 @@ export default function SearchBar({
   }
 
   return (
-    <div className="position-relative w-100" style={{ maxWidth: "300px" }}>
+    <div
+      className="search-bar-container position-relative w-100"
+      style={{ maxWidth: "300px" }}
+    >
       <input
         type="text"
         className="form-control"
@@ -49,7 +52,10 @@ export default function SearchBar({
         onBlur={() => setTimeout(() => setShowDropdown(false), 100)}
       />
       {showDropdown && (
-        <ul className="list-group position-absolute w-100 z-10">
+        <ul
+          className="list-group position-absolute w-100"
+          style={{ top: "100%", zIndex: 50 }}
+        >
           {filteredOptions.map((opt, index) => (
             <li
               key={index}

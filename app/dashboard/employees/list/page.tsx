@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import toast, { Toaster } from "react-hot-toast";
 import CreateEmployeeModal from "./CreateEmployeeModal";
 import SearchBar from "../../../components/SearchBar";
+import ConfirmDelete from "../../../components/ConfirmDelete";
 
 interface User {
   id?: string;
@@ -93,36 +94,10 @@ export default function EmployeesListPage() {
     }
   }
 
-  async function handleUserDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this user?")) return;
-    const { error } = await supabase.from("users").delete().eq("id", id);
-    if (error) toast.error(`Failed to delete: ${error.message}`);
-    else {
-      toast.success("User deleted successfully");
-      fetchUsers();
-    }
-  }
-
   function toggleSelectUser(id: string) {
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
     );
-  }
-
-  async function handleDeleteSelected() {
-    if (!selectedUsers.length) return toast.error("No users selected");
-    if (!confirm("Are you sure you want to delete selected users?")) return;
-
-    const { error } = await supabase
-      .from("users")
-      .delete()
-      .in("id", selectedUsers);
-    if (error) toast.error(`Failed to delete: ${error.message}`);
-    else {
-      toast.success("Selected users deleted successfully");
-      setSelectedUsers([]);
-      fetchUsers();
-    }
   }
 
   const filteredUsers = users.filter(
@@ -137,23 +112,43 @@ export default function EmployeesListPage() {
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3>Employees Management</h3>
-        <SearchBar
-          placeholder="Search employees..."
-          value={searchTerm}
-          onChange={setSearchTerm}
-          options={users.map((u) => u.name)}
-        />
       </div>
 
-      <div className="mb-3 d-flex gap-2">
-        <button className="btn btn-rose" onClick={openAddModal}>
-          Add
-        </button>
-        <button className="btn btn-rose">Import</button>
-        <button className="btn btn-rose">Export</button>
-        <button className="btn btn-danger" onClick={handleDeleteSelected}>
-          Delete Selected
-        </button>
+      <div className="mb-3 d-flex flex-column flex-md-row align-items-start align-items-md-center gap-2">
+        <div className="d-flex flex-wrap gap-2">
+          <button className="btn btn-rose" onClick={openAddModal}>
+            Add
+          </button>
+          <button className="btn btn-rose">Import</button>
+          <button className="btn btn-rose">Export</button>
+
+          <ConfirmDelete
+            confirmMessage="Are you sure you want to delete selected users?"
+            onConfirm={async () => {
+              if (!selectedUsers.length) throw new Error("No users selected");
+
+              const { error } = await supabase
+                .from("users")
+                .delete()
+                .in("id", selectedUsers);
+              if (error) throw error;
+
+              setSelectedUsers([]);
+              fetchUsers();
+            }}
+          >
+            Delete Selected
+          </ConfirmDelete>
+        </div>
+
+        <div className="ms-md-auto mt-2 mt-md-0" style={{ minWidth: "200px" }}>
+          <SearchBar
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={setSearchTerm}
+            options={users.map((u) => u.name)}
+          />
+        </div>
       </div>
 
       <div
@@ -204,12 +199,20 @@ export default function EmployeesListPage() {
                   >
                     Edit
                   </button>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => user.id && handleUserDelete(user.id)}
+
+                  <ConfirmDelete
+                    confirmMessage={`Are you sure you want to delete ${user.name}?`}
+                    onConfirm={async () => {
+                      const { error } = await supabase
+                        .from("users")
+                        .delete()
+                        .eq("id", user.id!);
+                      if (error) throw error;
+                      fetchUsers();
+                    }}
                   >
                     Delete
-                  </button>
+                  </ConfirmDelete>
                 </td>
               </tr>
             ))}
