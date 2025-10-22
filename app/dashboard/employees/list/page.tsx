@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import toast, { Toaster } from "react-hot-toast";
 import CreateEmployeeModal from "./CreateEmployeeModal";
+import SearchBar from "../../../components/SearchBar";
 
 interface User {
   id?: string;
@@ -21,6 +22,7 @@ interface Role {
 export default function EmployeesListPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [form, setForm] = useState<User>({
     name: "",
     email: "",
@@ -29,6 +31,7 @@ export default function EmployeesListPage() {
   });
   const [editId, setEditId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -100,14 +103,56 @@ export default function EmployeesListPage() {
     }
   }
 
+  function toggleSelectUser(id: string) {
+    setSelectedUsers((prev) =>
+      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
+    );
+  }
+
+  async function handleDeleteSelected() {
+    if (!selectedUsers.length) return toast.error("No users selected");
+    if (!confirm("Are you sure you want to delete selected users?")) return;
+
+    const { error } = await supabase
+      .from("users")
+      .delete()
+      .in("id", selectedUsers);
+    if (error) toast.error(`Failed to delete: ${error.message}`);
+    else {
+      toast.success("Selected users deleted successfully");
+      setSelectedUsers([]);
+      fetchUsers();
+    }
+  }
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="container my-5">
       <Toaster />
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h3>Employees Management</h3>
+        <SearchBar
+          placeholder="Search employees..."
+          value={searchTerm}
+          onChange={setSearchTerm}
+          options={users.map((u) => u.name)}
+        />
+      </div>
+
+      <div className="mb-3 d-flex gap-2">
         <button className="btn btn-rose" onClick={openAddModal}>
           Add
+        </button>
+        <button className="btn btn-rose">Import</button>
+        <button className="btn btn-rose">Export</button>
+        <button className="btn btn-danger" onClick={handleDeleteSelected}>
+          Delete Selected
         </button>
       </div>
 
@@ -118,6 +163,19 @@ export default function EmployeesListPage() {
         <table className="table table-bordered table-striped">
           <thead className="table-light sticky-top">
             <tr>
+              <th className="text-center">
+                <input
+                  type="checkbox"
+                  checked={
+                    selectedUsers.length === users.length && users.length > 0
+                  }
+                  onChange={(e) =>
+                    setSelectedUsers(
+                      e.target.checked ? users.map((u) => u.id!) : []
+                    )
+                  }
+                />
+              </th>
               <th>Name</th>
               <th>Email</th>
               <th>Password</th>
@@ -126,8 +184,15 @@ export default function EmployeesListPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
+            {filteredUsers.map((user) => (
+              <tr key={user.id} className="align-middle">
+                <td className="text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.includes(user.id!)}
+                    onChange={() => toggleSelectUser(user.id!)}
+                  />
+                </td>
                 <td>{user.name}</td>
                 <td>{user.email}</td>
                 <td>{user.password}</td>
@@ -148,9 +213,9 @@ export default function EmployeesListPage() {
                 </td>
               </tr>
             ))}
-            {users.length === 0 && (
+            {filteredUsers.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center">
+                <td colSpan={6} className="text-center">
                   No employees found.
                 </td>
               </tr>
