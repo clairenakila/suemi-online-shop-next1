@@ -46,7 +46,7 @@ export default function LoginPage() {
               className="form-control shadow-sm"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="yourname@gmail.com"
               required
             />
           </div>
