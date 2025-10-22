@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import toast, { Toaster } from "react-hot-toast";
+import CreateEmployeeModal from "./CreateEmployeeModal";
 
 interface User {
   id?: string;
@@ -27,6 +28,7 @@ export default function EmployeesListPage() {
     role_id: "",
   });
   const [editId, setEditId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -45,29 +47,45 @@ export default function EmployeesListPage() {
     else setRoles(data || []);
   }
 
-  async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!form.role_id) return toast.error("Please select a role");
+  function openAddModal() {
+    setForm({ name: "", email: "", password: "", role_id: "" });
+    setEditId(null);
+    setShowModal(true);
+  }
+
+  function handleUserEdit(user: User) {
+    setForm(user);
+    if (user.id) setEditId(user.id);
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setForm({ name: "", email: "", password: "", role_id: "" });
+    setEditId(null);
+  }
+
+  async function handleSubmit(userData: User) {
+    if (!userData.role_id) return toast.error("Please select a role");
 
     if (editId) {
       const { error } = await supabase
         .from("users")
-        .update(form)
+        .update(userData)
         .eq("id", editId);
       if (error) toast.error(`Failed to update: ${error.message}`);
       else {
         toast.success("User updated successfully");
         fetchUsers();
-        setEditId(null);
-        setForm({ name: "", email: "", password: "", role_id: "" });
+        closeModal();
       }
     } else {
-      const { error } = await supabase.from("users").insert([form]);
+      const { error } = await supabase.from("users").insert([userData]);
       if (error) toast.error(`Failed to create: ${error.message}`);
       else {
         toast.success("User added successfully");
         fetchUsers();
-        setForm({ name: "", email: "", password: "", role_id: "" });
+        closeModal();
       }
     }
   }
@@ -82,124 +100,74 @@ export default function EmployeesListPage() {
     }
   }
 
-  function handleUserEdit(user: User) {
-    setForm(user);
-    if (user.id) setEditId(user.id);
-  }
-
   return (
     <div className="container my-5">
       <Toaster />
-      <h3 className="mb-4">Employees Management</h3>
 
-      <div className="row">
-        {/* Form */}
-        <div className="col-md-4 mb-4">
-          <div className="card h-100">
-            <div className="card-body">
-              <form onSubmit={handleFormSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">Name</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    placeholder="Enter email"
-                    value={form.email}
-                    onChange={(e) =>
-                      setForm({ ...form, email: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Password</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    placeholder="Enter password"
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Role</label>
-                  <select
-                    className="form-control"
-                    value={form.role_id}
-                    onChange={(e) =>
-                      setForm({ ...form, role_id: e.target.value })
-                    }
-                  >
-                    <option value="">Select Role</option>
-                    {roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button type="submit" className="btn btn-rose w-100">
-                  {editId ? "Update" : "Add"}
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        {/* Users Table */}
-        <div className="col-md-8">
-          <div className="table-responsive">
-            <table className="table table-bordered">
-              <thead className="table-light">
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Password</th>
-                  <th>Role</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.password}</td>
-                    <td>
-                      {roles.find((r) => r.id === user.role_id)?.name || ""}
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-warning btn-sm me-2"
-                        onClick={() => handleUserEdit(user)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => user.id && handleUserDelete(user.id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h3>Employees Management</h3>
+        <button className="btn btn-primary" onClick={openAddModal}>
+          Add Employee
+        </button>
       </div>
+
+      <div
+        className="table-responsive"
+        style={{ maxHeight: "70vh", overflowY: "auto" }}
+      >
+        <table className="table table-bordered table-striped">
+          <thead className="table-light sticky-top">
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Password</th>
+              <th>Role</th>
+              <th className="text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>{user.password}</td>
+                <td>{roles.find((r) => r.id === user.role_id)?.name || ""}</td>
+                <td className="text-center">
+                  <button
+                    className="btn btn-warning btn-sm me-2"
+                    onClick={() => handleUserEdit(user)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => user.id && handleUserDelete(user.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={5} className="text-center">
+                  No employees found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <CreateEmployeeModal
+        show={showModal}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+        userData={form}
+        setUserData={setForm}
+        roles={roles}
+        isEdit={!!editId}
+      />
     </div>
   );
 }
