@@ -84,7 +84,9 @@ export default function LoginPage() {
           <p className="mb-0">
             Don’t have an account?{" "}
             <Link href={ROUTES.REGISTER}>
-              <span className="text-danger fw-semibold">Register</span>
+              <span className="text-danger fw-semibold  text-decoration-none">
+                Register
+              </span>
             </Link>
           </p>
         </div>
