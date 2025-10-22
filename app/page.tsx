@@ -8,8 +8,8 @@ export default function HomePage() {
   const bags = [
     { id: 1, src: "/images/bag1.jpg", name: "Leather Tote" },
     { id: 2, src: "/images/bag2.jpg", name: "Backpack" },
-    { id: 3, src: "/images/bag1.jpg", name: "Clutch" },
-    { id: 4, src: "/images/bag2.jpg", name: "Messenger Bag" },
+    { id: 3, src: "/images/bag3.png", name: "Clutch" },
+    { id: 4, src: "/images/bag4.png", name: "Messenger Bag" },
   ];
 
   return (
