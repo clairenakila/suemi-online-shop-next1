@@ -12,10 +12,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [usersMenuOpen, setUsersMenuOpen] = useState(false); // submenu state
+  const [usersMenuOpen, setUsersMenuOpen] = useState(false); // Users submenu
+  const [itemsMenuOpen, setItemsMenuOpen] = useState(false); // Items submenu
 
   const toggleSidebar = () => setCollapsed(!collapsed);
   const toggleUsersMenu = () => setUsersMenuOpen(!usersMenuOpen);
+  const toggleItemsMenu = () => setItemsMenuOpen(!itemsMenuOpen); // Items toggle
 
   const router = useRouter();
 
@@ -55,6 +57,46 @@ export default function DashboardLayout({
             </Link>
           </li>
 
+          {/* Items with Submenu */}
+          <li className="nav-item mb-2">
+            <button
+              className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
+              onClick={toggleItemsMenu}
+            >
+              <span className="d-flex align-items-center">
+                <i className="bi bi-handbag me-2"></i>
+                {!collapsed && "Items"}
+              </span>
+              {!collapsed && (
+                <i
+                  className={`bi ${
+                    itemsMenuOpen ? "bi-chevron-up" : "bi-chevron-down"
+                  }`}
+                ></i>
+              )}
+            </button>
+            {itemsMenuOpen && !collapsed && (
+              <ul className="nav flex-column ms-3 mt-2">
+                <li className="nav-item mb-1">
+                  <Link
+                    href="/dashboard/items/items"
+                    className="nav-link text-white"
+                  >
+                    Sold Items
+                  </Link>
+                </li>
+                <li className="nav-item mb-1">
+                  <Link
+                    href="/dashboard/items/inventories"
+                    className="nav-link text-white"
+                  >
+                    Inventories
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
+
           {/* Users with Submenu */}
           <li className="nav-item mb-2">
             <button
@@ -77,10 +119,18 @@ export default function DashboardLayout({
               <ul className="nav flex-column ms-3 mt-2">
                 <li className="nav-item mb-1">
                   <Link
-                    href="/dashboard/users/list"
+                    href="/dashboard/employees/list"
                     className="nav-link text-white"
                   >
-                    Accounts
+                    Employees
+                  </Link>
+                </li>
+                <li className="nav-item mb-1">
+                  <Link
+                    href="/dashboard/suppliers/list"
+                    className="nav-link text-white"
+                  >
+                    Suppliers
                   </Link>
                 </li>
                 <li className="nav-item mb-1">
