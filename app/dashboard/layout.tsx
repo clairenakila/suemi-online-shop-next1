@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ROUTES } from "../routes";
+import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function DashboardLayout({
   children,
@@ -10,6 +13,14 @@ export default function DashboardLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const toggleSidebar = () => setCollapsed(!collapsed);
+
+  //redirect logout to home
+  const router = useRouter(); // ✅ initialize router
+
+  const handleLogout = () => {
+    toast.success("Logged out successfully");
+    router.push(ROUTES.HOME); // ✅ use router to navigate
+  };
 
   return (
     <div className="d-flex vh-100 w-100" style={{ overflow: "hidden" }}>
@@ -67,7 +78,12 @@ export default function DashboardLayout({
         {/* Header */}
         <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center shrink-0">
           <h5 className="mb-0">Dashboard Header</h5>
-          <button className="btn btn-outline-secondary btn-sm">Logout</button>
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
         </header>
 
         {/* Page Content */}
