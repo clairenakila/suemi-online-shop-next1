@@ -38,7 +38,7 @@ export default function RegisterPage() {
     const { name, value } = e.target;
 
     if (name === "name") {
-      setForm({ ...form, [name]: value.replace(/[^a-zA-Z.-]/g, "") });
+      setForm({ ...form, [name]: value.replace(/[^a-zA-Z .-]/g, "") });
     } else if (name === "email") {
       setForm({ ...form, [name]: value.replace(/[^a-zA-Z0-9.@]/g, "") });
     } else if (name === "role_id") {
