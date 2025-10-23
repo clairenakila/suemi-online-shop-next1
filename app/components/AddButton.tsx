@@ -45,16 +45,19 @@ export default function AddButton({
     try {
       setLoading(true);
 
-      const row: Record<string, string | number> = {};
+      // Build the row object for insertion
+      const row: Record<string, any> = {};
 
       fields.forEach((f) => {
-        const rawValue = form[f.key] ?? f.defaultValue ?? "";
+        const value = form[f.key] ?? f.defaultValue ?? "";
 
-        // Convert to number only for numeric fields
         if (f.type === "number" || f.type === "float") {
-          row[f.key] = Number(rawValue) || 0;
+          // Store numeric fields as strings to preserve formatting like "100.10"
+          row[f.key] = value.toString();
+        } else if (f.type === "select") {
+          row[f.key] = value;
         } else {
-          row[f.key] = rawValue;
+          row[f.key] = value;
         }
       });
 

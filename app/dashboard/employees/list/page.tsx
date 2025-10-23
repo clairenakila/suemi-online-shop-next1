@@ -94,8 +94,8 @@ export default function EmployeesListPage() {
 
   const sanitizeUserData = (data: User) => ({
     ...data,
-    hourly_rate: data.hourly_rate ? Number(data.hourly_rate) : 0,
-    daily_rate: data.daily_rate ? Number(data.daily_rate) : 0,
+    hourly_rate: data.hourly_rate?.toString() || "0",
+    daily_rate: data.daily_rate?.toString() || "0",
   });
 
   const handleSubmit = async (userData: User) => {
