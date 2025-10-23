@@ -15,6 +15,7 @@ import ExportButton from "../../../components/ExportButton";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import AddItemModal from "../../../components/AddItemModal";
+import { formatDate } from "../../../utils/validator";
 
 interface Item {
   id?: string;
@@ -46,6 +47,8 @@ export default function SoldItemsPage() {
     startDate: string | null;
     endDate: string | null;
   }>({ startDate: null, endDate: null });
+
+  const formatted = formatDate("2025-10-25T12:34:56Z"); // "10-25-2025"
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState<Item>({
@@ -121,7 +124,10 @@ export default function SoldItemsPage() {
 
   // Table columns
   const columns: Column<Item>[] = [
-    { header: "Timestamp", accessor: (row) => row.timestamp || "" },
+    {
+      header: "Timestamp",
+      accessor: (row) => formatDate(row.timestamp), // <-- format here
+    },
     { header: "Prepared By", accessor: "prepared_by" },
     { header: "Brand", accessor: "brand" },
     { header: "Order ID", accessor: "order_id" },

@@ -19,3 +19,16 @@ export const formatNumberForText = (val: any, decimals = 2): string | null => {
   if (!isNaN(Number(val))) return Number(val).toFixed(decimals);
   return String(val);
 };
+
+/**
+ * Formats a date string (ISO) to MM-DD-YYYY
+ */
+export const formatDate = (dateStr?: string): string => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return ""; // handle invalid dates
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${mm}-${dd}-${yyyy}`;
+};
