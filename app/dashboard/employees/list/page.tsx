@@ -90,18 +90,29 @@ export default function EmployeesListPage() {
     setEditId(null);
   };
 
+  // ✅ Converts numeric fields safely before insert/update
+  const sanitizeUserData = (data: User) => {
+    return {
+      ...data,
+      hourly_rate: data.hourly_rate ? Number(data.hourly_rate) : 0,
+      daily_rate: data.daily_rate ? Number(data.daily_rate) : 0,
+    };
+  };
+
   const handleSubmit = async (userData: User) => {
     if (!userData.role_id) return toast.error("Please select a role");
+
+    const cleanData = sanitizeUserData(userData);
 
     if (editId) {
       const { error } = await supabase
         .from("users")
-        .update(userData)
+        .update(cleanData)
         .eq("id", editId);
       if (error) return toast.error(error.message);
       toast.success("User updated successfully");
     } else {
-      const { error } = await supabase.from("users").insert([userData]);
+      const { error } = await supabase.from("users").insert([cleanData]);
       if (error) return toast.error(error.message);
       toast.success("User added successfully");
     }
