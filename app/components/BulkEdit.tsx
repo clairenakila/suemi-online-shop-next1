@@ -12,7 +12,7 @@ interface FieldOption {
 interface FieldConfig {
   key: string;
   label: string;
-  type?: "text" | "number" | "select";
+  type?: "text" | "number" | "float" | "select";
   options?: string[] | FieldOption[];
   placeholder?: string;
 }
@@ -31,7 +31,7 @@ export default function BulkEdit({
   onSuccess,
 }: BulkEditProps) {
   const [show, setShow] = useState(false);
-  const [form, setForm] = useState<Record<string, any>>({});
+  const [form, setForm] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,6 +42,7 @@ export default function BulkEdit({
       return;
     }
 
+    // Only include filled fields
     const updateData = Object.fromEntries(
       Object.entries(form).filter(([_, v]) => v !== "" && v !== undefined)
     );
@@ -51,10 +52,23 @@ export default function BulkEdit({
       return;
     }
 
+    // Sanitize numeric/float fields as strings to preserve formatting
+    const sanitizedData: Record<string, any> = {};
+    Object.keys(updateData).forEach((key) => {
+      const fieldConfig = fields.find((f) => f.key === key);
+      if (!fieldConfig) return;
+
+      if (fieldConfig.type === "number" || fieldConfig.type === "float") {
+        sanitizedData[key] = updateData[key].toString(); // preserve "100.10"
+      } else {
+        sanitizedData[key] = updateData[key];
+      }
+    });
+
     setLoading(true);
     const { error } = await supabase
       .from(table)
-      .update(updateData)
+      .update(sanitizedData)
       .in("id", selectedIds);
 
     setLoading(false);
@@ -105,9 +119,7 @@ export default function BulkEdit({
           <div className="modal-dialog modal-dialog-centered">
             <div
               className="modal-content overflow-hidden"
-              style={{
-                borderRadius: "8px", // ✅ enforced rounded border
-              }}
+              style={{ borderRadius: "8px" }}
             >
               <div className="modal-header bg-light">
                 <h5 className="modal-title">Bulk Edit</h5>
@@ -150,7 +162,7 @@ export default function BulkEdit({
                         </select>
                       ) : (
                         <input
-                          type={f.type || "text"}
+                          type="text"
                           className="form-control"
                           placeholder={f.placeholder || ""}
                           value={form[f.key] || ""}
