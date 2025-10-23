@@ -15,7 +15,7 @@ export default function ConfirmDelete({
   onConfirm,
   children,
   confirmMessage = "Are you sure you want to delete this item?",
-  className = "btn btn-danger btn-sm",
+  className = "",
 }: ConfirmDeleteProps) {
   const handleClick = async () => {
     const result = await Swal.fire({
@@ -23,7 +23,7 @@ export default function ConfirmDelete({
       text: confirmMessage,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#dc3545",
+      confirmButtonColor: "#e11d48",
       cancelButtonColor: "#6c757d",
       confirmButtonText: "Yes, delete it!",
     });
@@ -39,7 +39,13 @@ export default function ConfirmDelete({
   };
 
   return (
-    <button className={className} onClick={handleClick}>
+    <button
+      onClick={handleClick}
+      className={`px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white shadow-md transition font-medium ${className}`}
+      style={{
+        borderRadius: "4px", // ✅ enforce radius
+      }}
+    >
       {children}
     </button>
   );
