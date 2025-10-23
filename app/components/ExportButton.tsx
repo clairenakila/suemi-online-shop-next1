@@ -20,7 +20,6 @@ export default function ExportButton<T extends Record<string, any>>({
   rowKey = "id" as keyof T,
 }: ExportButtonProps<T>) {
   const handleExport = () => {
-    // Use all rows if nothing selected
     const selectedData =
       selectedIds.length > 0
         ? data.filter((row) => selectedIds.includes(String(row[rowKey] ?? "")))
@@ -34,8 +33,7 @@ export default function ExportButton<T extends Record<string, any>>({
     const csv = convertToCSV(selectedData);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.href = url;
+    link.href = URL.createObjectURL(blob);
     link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
@@ -54,11 +52,19 @@ export default function ExportButton<T extends Record<string, any>>({
       ...rows.map((row) =>
         columns
           .map((col) => {
-            let val: any;
-            if (typeof col.accessor === "function") val = col.accessor(row);
-            else val = row[col.accessor as keyof T];
+            let val: any =
+              typeof col.accessor === "function"
+                ? col.accessor(row)
+                : row[col.accessor as keyof T];
+
             if (val === null || val === undefined) return "";
-            return `"${String(val).replace(/"/g, '""')}"`;
+
+            // If it’s a rate column (number), force 2 decimals
+            if (col.header === "Hourly Rate" || col.header === "Daily Rate") {
+              if (typeof val === "number") val = val.toFixed(2);
+            }
+
+            return `"${val.toString().replace(/"/g, '""')}"`;
           })
           .join(",")
       ),

@@ -9,7 +9,6 @@ import SearchBar from "../../../components/SearchBar";
 import ConfirmDelete from "../../../components/ConfirmDelete";
 import { DataTable, Column } from "../../../components/DataTable";
 import BulkEdit from "../../../components/BulkEdit";
-import ExportButton from "../../../components/ExportButton";
 import DateRangePicker from "../../../components/DateRangePicker";
 import AddButton from "../../../components/AddButton";
 import ToggleColumns from "../../../components/ToggleColumns";
@@ -24,8 +23,8 @@ interface User {
   sss_number?: string;
   philhealth_number?: string;
   pagibig_number?: string;
-  hourly_rate?: number;
-  daily_rate?: number;
+  hourly_rate?: string;
+  daily_rate?: string;
   is_employee?: "Yes" | "No";
   is_live_seller?: "Yes" | "No";
   created_at?: string;
@@ -48,8 +47,8 @@ export default function EmployeesListPage() {
     sss_number: "",
     philhealth_number: "",
     pagibig_number: "",
-    hourly_rate: 0,
-    daily_rate: 0,
+    hourly_rate: "",
+    daily_rate: "",
     is_employee: "Yes",
     is_live_seller: "No",
   });
@@ -104,8 +103,8 @@ export default function EmployeesListPage() {
 
   const sanitizeUserData = (data: User) => ({
     ...data,
-    hourly_rate: data.hourly_rate?.toString() || "0",
-    daily_rate: data.daily_rate?.toString() || "0",
+    hourly_rate: data.hourly_rate?.toString() || "0.00",
+    daily_rate: data.daily_rate?.toString() || "0.00",
   });
 
   const handleSubmit = async (userData: User) => {
@@ -298,13 +297,6 @@ export default function EmployeesListPage() {
 
           <button className="btn btn-success">Import</button>
 
-          <ExportButton
-            data={filteredUsers}
-            selectedIds={selectedUsers}
-            columns={tableColumns}
-            filename="employees.csv"
-          />
-
           <ConfirmDelete
             confirmMessage="Are you sure you want to delete selected users?"
             onConfirm={async () => {
@@ -358,16 +350,6 @@ export default function EmployeesListPage() {
         onToggleSelectAll={toggleSelectAll}
         rowKey="id"
         defaultRecordsPerPage={50}
-      />
-
-      <CreateEmployeeModal
-        show={showModal}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        userData={form}
-        setUserData={setForm}
-        roles={roles}
-        isEdit={!!editId}
       />
     </div>
   );
