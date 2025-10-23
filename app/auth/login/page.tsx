@@ -80,7 +80,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="text-center mt-3">
+        {/* <div className="text-center mt-3">
           <p className="mb-0">
             Don’t have an account?{" "}
             <Link href={ROUTES.REGISTER}>
@@ -89,7 +89,7 @@ export default function LoginPage() {
               </span>
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
