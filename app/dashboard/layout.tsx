@@ -79,7 +79,7 @@ export default function DashboardLayout({
               <ul className="nav flex-column ms-3 mt-2">
                 <li className="nav-item mb-1">
                   <Link
-                    href="/dashboard/items/items"
+                    href="/dashboard/items/list"
                     className="nav-link text-white"
                   >
                     Sold Items

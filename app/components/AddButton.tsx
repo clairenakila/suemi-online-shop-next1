@@ -12,7 +12,7 @@ interface FieldOption {
 interface FieldConfig {
   key: string;
   label: string;
-  type?: "text" | "number" | "float" | "select";
+  type?: "text" | "number" | "float" | "select" | "datetime";
   placeholder?: string;
   defaultValue?: any;
   options?: FieldOption[] | string[];

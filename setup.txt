@@ -1,1 +1,7 @@
 //bycrypt for pass:npm install -D @types/bcryptjs
+
+
+// must be first to put in the page to render
+export default function SoldItemsPage() {
+  return <div>Sold Items</div>;
+}
