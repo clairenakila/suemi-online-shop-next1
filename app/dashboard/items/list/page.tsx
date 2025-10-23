@@ -12,10 +12,15 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import AddItemModal from "../../../components/AddItemModal";
-import { formatDate } from "../../../utils/validator";
+
+import {
+  formatDate,
+  applyDiscount,
+  calculateOrderIncome,
+  calculateCommissionRate,
+  parseExcelDate,
+} from "../../../utils/validator";
 
 interface Item {
   id?: string;
@@ -33,7 +38,6 @@ interface Item {
   category?: string;
   mined_from?: string;
   discount?: string;
-  discounted_selling_price?: string;
   date_shipped?: string;
   date_returned?: string;
 }
@@ -47,10 +51,8 @@ export default function SoldItemsPage() {
     startDate: string | null;
     endDate: string | null;
   }>({ startDate: null, endDate: null });
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const formatted = formatDate("2025-10-25T12:34:56Z"); // "10-25-2025"
-
-  const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState<Item>({
     timestamp: new Date().toISOString(),
     prepared_by: "",
@@ -62,7 +64,6 @@ export default function SoldItemsPage() {
     capital: "0",
     order_income: "0",
     discount: "0",
-    discounted_selling_price: "0",
     live_seller: "",
     category: "",
     mined_from: "",
@@ -71,7 +72,7 @@ export default function SoldItemsPage() {
     is_returned: "No",
   });
 
-  // Fetch items from Supabase
+  // Fetch items
   useEffect(() => {
     fetchItems();
   }, []);
@@ -83,21 +84,24 @@ export default function SoldItemsPage() {
     const mapped = (data || []).map((i) => ({
       ...i,
       category: i.category?.toString() || "",
+      timestamp: parseExcelDate(i.timestamp),
+      date_shipped: parseExcelDate(i.date_shipped),
+      date_returned: parseExcelDate(i.date_returned),
     }));
 
     setItems(mapped);
   };
 
-  // Selection handlers
+  // Selection
   const toggleSelectItem = (id: string) =>
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
 
   const toggleSelectAll = (checked: boolean) =>
     setSelectedItems(checked ? items.map((i) => i.id!) : []);
 
-  // Filter items by search + date
+  // Filter by search & date
   const filteredItems = items.filter((i) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = [
@@ -124,26 +128,38 @@ export default function SoldItemsPage() {
 
   // Table columns
   const columns: Column<Item>[] = [
-    {
-      header: "Timestamp",
-      accessor: (row) => formatDate(row.timestamp), // <-- format here
-    },
-    { header: "Prepared By", accessor: "prepared_by" },
-    { header: "Brand", accessor: "brand" },
-    { header: "Order ID", accessor: "order_id" },
-    { header: "Shoppee Commission", accessor: "shoppee_commission" },
-    { header: "Selling Price", accessor: "selling_price" },
-    { header: "Quantity", accessor: "quantity" },
-    { header: "Capital", accessor: "capital" },
-    { header: "Order Income", accessor: "order_income" },
-    { header: "Discount", accessor: "discount" },
-    {
-      header: "Discounted Selling Price",
-      accessor: "discounted_selling_price",
-    },
-    { header: "Live Seller", accessor: "live_seller" },
-    { header: "Category", accessor: "category" },
+    { header: "Timestamp", accessor: (row) => formatDate(row.timestamp) },
     { header: "Mined From", accessor: "mined_from" },
+    { header: "Prepared By", accessor: "prepared_by" },
+    { header: "Category", accessor: "category" },
+    { header: "Brand", accessor: "brand" },
+    { header: "Quantity", accessor: "quantity" },
+    { header: "Live Seller", accessor: "live_seller" },
+    { header: "Order ID", accessor: "order_id" },
+    { header: "Capital", accessor: "capital" },
+    {
+      header: "Selling Price",
+      accessor: (row) =>
+        applyDiscount(row.selling_price || "0", row.discount || "0"),
+    },
+    { header: "Discount", accessor: "discount" },
+    { header: "Shoppee Commission", accessor: "shoppee_commission" },
+    {
+      header: "Order Income",
+      accessor: (row) =>
+        calculateOrderIncome(
+          applyDiscount(row.selling_price || "0", row.discount || "0"),
+          row.shoppee_commission || "0"
+        ),
+    },
+    {
+      header: "Commission Rate (%)",
+      accessor: (row) =>
+        calculateCommissionRate(
+          applyDiscount(row.selling_price || "0", row.discount || "0"),
+          row.shoppee_commission || "0"
+        ),
+    },
     {
       header: "Action",
       accessor: (row) => (
@@ -167,37 +183,6 @@ export default function SoldItemsPage() {
 
   const [tableColumns, setTableColumns] = useState<Column<Item>[]>(columns);
 
-  // Add item handler
-  const handleAddItem = async () => {
-    const { error } = await supabase.from("items").insert([newItem]);
-    if (error) return toast.error(error.message);
-
-    toast.success("Item added successfully!");
-    setShowAddForm(false);
-    setNewItem({
-      timestamp: new Date().toISOString(),
-      prepared_by: "",
-      brand: "",
-      order_id: "",
-      shoppee_commission: "0",
-      selling_price: "0",
-      quantity: "1",
-      capital: "0",
-      order_income: "0",
-      discount: "0",
-      discounted_selling_price: "0",
-      live_seller: "",
-      category: "",
-      mined_from: "",
-      date_shipped: "",
-      date_returned: "",
-      is_returned: "No",
-    });
-    fetchItems();
-  };
-  //const for additemmodal
-  const [showAddModal, setShowAddModal] = useState(false);
-
   return (
     <div className="container my-5">
       <Toaster />
@@ -206,20 +191,18 @@ export default function SoldItemsPage() {
       {/* Toolbar */}
       <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex flex-wrap align-items-center gap-2">
-          {/* Add Item Button */}
           <button
             className="btn btn-primary"
             onClick={() => setShowAddModal(true)}
           >
             Add Item
           </button>
-
           <AddItemModal
             isOpen={showAddModal}
             onClose={() => setShowAddModal(false)}
             onSuccess={fetchItems}
           />
-          {/* Bulk Edit, Import, Export, Delete Selected */}
+
           <BulkEdit
             table="items"
             selectedIds={selectedItems}
@@ -247,7 +230,6 @@ export default function SoldItemsPage() {
               Capital: "capital",
               "Order Income": "order_income",
               Discount: "discount",
-              "Discounted Selling Price": "discounted_selling_price",
               "Live Seller": "live_seller",
               Category: "category",
               "Mined From": "mined_from",
@@ -268,7 +250,6 @@ export default function SoldItemsPage() {
               Capital: "capital",
               "Order Income": "order_income",
               Discount: "discount",
-              "Discounted Selling Price": "discounted_selling_price",
               "Live Seller": "live_seller",
               Category: "category",
               "Mined From": "mined_from",
@@ -293,7 +274,6 @@ export default function SoldItemsPage() {
           </ConfirmDelete>
         </div>
 
-        {/* Search + Calendar */}
         <div className="d-flex align-items-center gap-2">
           <SearchBar
             placeholder="Search items..."

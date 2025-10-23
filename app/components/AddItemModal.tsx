@@ -22,7 +22,6 @@ export interface Item {
   category?: string;
   mined_from?: string;
   discount?: string;
-  discounted_selling_price?: string;
   commission_rate?: string; // new hidden field
   date_shipped?: string | null;
   date_returned?: string | null;
@@ -59,7 +58,6 @@ export default function AddItemModal({
     shoppee_commission: "0",
     discount: "0",
     order_income: "0",
-    discounted_selling_price: "0",
     commission_rate: "0", // default 0
     live_seller: "",
     category: "",
@@ -144,19 +142,11 @@ export default function AddItemModal({
     { key: "date_shipped", label: "Date Shipped", type: "date" },
     { key: "date_returned", label: "Date Returned", type: "date" },
     { key: "order_income", label: "Order Income", type: "text" },
-    {
-      key: "discounted_selling_price",
-      label: "Discounted Selling Price",
-      type: "text",
-    },
+
     { key: "commission_rate", label: "Commission Rate", type: "text" }, // hidden
   ];
 
-  const hiddenKeys: (keyof Item)[] = [
-    "order_income",
-    "discounted_selling_price",
-    "commission_rate",
-  ];
+  const hiddenKeys: (keyof Item)[] = ["order_income", "commission_rate"];
   const visibleFields = allFields.filter((f) => !hiddenKeys.includes(f.key));
   const hiddenFields = allFields.filter((f) => hiddenKeys.includes(f.key));
 
@@ -184,7 +174,6 @@ export default function AddItemModal({
       shoppee_commission: "0",
       discount: "0",
       order_income: "0",
-      discounted_selling_price: "0",
       commission_rate: "0",
       live_seller: "",
       category: "",
