@@ -4,11 +4,16 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 
+interface FieldOption {
+  label: string;
+  value: string;
+}
+
 interface FieldConfig {
   key: string;
   label: string;
   type?: "text" | "number" | "select";
-  options?: string[];
+  options?: string[] | FieldOption[];
   placeholder?: string;
 }
 
@@ -37,7 +42,6 @@ export default function BulkEdit({
       return;
     }
 
-    // Only include fields with values
     const updateData = Object.fromEntries(
       Object.entries(form).filter(([_, v]) => v !== "" && v !== undefined)
     );
@@ -68,8 +72,20 @@ export default function BulkEdit({
 
   return (
     <>
+      {/* Trigger Button */}
       <button
-        className="btn btn-warning"
+        className="px-4 py-2 text-white shadow-md transition"
+        style={{
+          backgroundColor: "#f59e0b", // amber-500
+          borderRadius: "4px",
+          fontWeight: 500,
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = "#d97706")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor = "#f59e0b")
+        }
         onClick={() => {
           if (!selectedIds.length)
             return toast.error("Select records to edit first.");
@@ -79,6 +95,7 @@ export default function BulkEdit({
         Edit
       </button>
 
+      {/* Modal */}
       {show && (
         <div
           className="modal fade show d-block"
@@ -86,7 +103,12 @@ export default function BulkEdit({
           style={{ background: "rgba(0,0,0,0.5)" }}
         >
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
+            <div
+              className="modal-content overflow-hidden"
+              style={{
+                borderRadius: "8px", // ✅ enforced rounded border
+              }}
+            >
               <div className="modal-header bg-light">
                 <h5 className="modal-title">Bulk Edit</h5>
                 <button
@@ -98,7 +120,7 @@ export default function BulkEdit({
 
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
-                  <p className="text-muted small">
+                  <p className="text-muted small mb-3">
                     Only filled fields will be updated for all selected records.
                   </p>
 
@@ -114,11 +136,17 @@ export default function BulkEdit({
                           }
                         >
                           <option value="">— No Change —</option>
-                          {f.options?.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
+                          {f.options?.map((opt) =>
+                            typeof opt === "string" ? (
+                              <option key={opt} value={opt}>
+                                {opt}
+                              </option>
+                            ) : (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            )
+                          )}
                         </select>
                       ) : (
                         <input
@@ -146,7 +174,19 @@ export default function BulkEdit({
                   </button>
                   <button
                     type="submit"
-                    className="btn btn-warning"
+                    className="text-white shadow-md transition"
+                    style={{
+                      backgroundColor: "#f59e0b", // amber-500
+                      borderRadius: "4px",
+                      padding: "8px 16px",
+                      fontWeight: 500,
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#d97706")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#f59e0b")
+                    }
                     disabled={loading}
                   >
                     {loading ? "Saving..." : "Save Changes"}

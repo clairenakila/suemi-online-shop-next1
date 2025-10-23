@@ -11,6 +11,8 @@ import { DataTable, Column } from "../../../components/DataTable";
 import BulkEdit from "../../../components/BulkEdit";
 import ExportButton from "../../../components/ExportButton";
 import DateRangePicker from "../../../components/DateRangePicker";
+import EditButtonDataTable from "../../../components/EditButtonDataTable";
+import AddButton from "../../../components/AddButton";
 
 interface User {
   id?: string;
@@ -90,14 +92,11 @@ export default function EmployeesListPage() {
     setEditId(null);
   };
 
-  // ✅ Converts numeric fields safely before insert/update
-  const sanitizeUserData = (data: User) => {
-    return {
-      ...data,
-      hourly_rate: data.hourly_rate ? Number(data.hourly_rate) : 0,
-      daily_rate: data.daily_rate ? Number(data.daily_rate) : 0,
-    };
-  };
+  const sanitizeUserData = (data: User) => ({
+    ...data,
+    hourly_rate: data.hourly_rate ? Number(data.hourly_rate) : 0,
+    daily_rate: data.daily_rate ? Number(data.daily_rate) : 0,
+  });
 
   const handleSubmit = async (userData: User) => {
     if (!userData.role_id) return toast.error("Please select a role");
@@ -129,7 +128,6 @@ export default function EmployeesListPage() {
   const toggleSelectAll = (checked: boolean) =>
     setSelectedUsers(checked ? users.map((u) => u.id!) : []);
 
-  // ✅ Filter logic
   const filteredUsers = users.filter((u) => {
     const term = searchTerm.toLowerCase();
     const roleName =
@@ -160,14 +158,8 @@ export default function EmployeesListPage() {
   const columns: Column<User>[] = [
     {
       header: "Created At",
-      accessor: (row: User) => {
-        if (!row.created_at) return "";
-        const date = new Date(row.created_at);
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        const year = date.getFullYear();
-        return `${month}-${day}-${year}`;
-      },
+      accessor: (row) =>
+        row.created_at ? new Date(row.created_at).toLocaleDateString() : "",
     },
     { header: "Name", accessor: "name" },
     { header: "Email", accessor: "email" },
@@ -180,19 +172,18 @@ export default function EmployeesListPage() {
     { header: "Live Seller?", accessor: "is_live_seller" },
     {
       header: "Role",
-      accessor: (row: User) =>
-        roles.find((r) => r.id === row.role_id)?.name || "",
+      accessor: (row) => roles.find((r) => r.id === row.role_id)?.name || "",
     },
     {
       header: "Action",
-      accessor: (row: User) => (
+      accessor: (row) => (
         <>
-          <button
-            className="btn btn-warning btn-sm me-2"
-            onClick={() => handleUserEdit(row)}
-          >
-            Edit
-          </button>
+          {/* <EditButtonDataTable<User>
+            table="users"
+            id={row.id!}
+            onFetched={(data) => setForm(data)}
+            onOpenModal={() => handleUserEdit(row)}
+          /> */}
           <ConfirmDelete
             confirmMessage={`Are you sure you want to delete ${row.name}?`}
             onConfirm={async () => {
@@ -217,19 +208,71 @@ export default function EmployeesListPage() {
       <Toaster />
       <h3 className="mb-4">Employees Management</h3>
 
-      {/* ✅ Unified Toolbar */}
+      {/* Toolbar */}
       <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <button className="btn btn-rose" onClick={() => setShowModal(true)}>
-            Add
-          </button>
+          <AddButton
+            table="users"
+            onSuccess={fetchUsers}
+            fields={[
+              { key: "name", label: "Name", type: "text" },
+              { key: "email", label: "Email", type: "text" },
+              { key: "password", label: "Password", type: "text" },
+              { key: "sss_number", label: "SSS Number", type: "text" },
+              {
+                key: "philhealth_number",
+                label: "PhilHealth Number",
+                type: "text",
+              },
+              { key: "pagibig_number", label: "Pagibig Number", type: "text" },
+              {
+                key: "hourly_rate",
+                label: "Hourly Rate",
+                type: "float",
+                defaultValue: 0,
+              },
+              {
+                key: "daily_rate",
+                label: "Daily Rate",
+                type: "float",
+                defaultValue: 0,
+              },
+              {
+                key: "is_employee",
+                label: "Is Employee?",
+                type: "select",
+                options: ["Yes", "No"],
+              },
+              {
+                key: "is_live_seller",
+                label: "Is Live Seller?",
+                type: "select",
+                options: ["Yes", "No"],
+              },
+              {
+                key: "role_id",
+                label: "Role",
+                type: "select",
+                options: roles.map((r) => ({ label: r.name, value: r.id })),
+              },
+            ]}
+          />
 
           <BulkEdit
             table="users"
             selectedIds={selectedUsers}
             onSuccess={fetchUsers}
             fields={[
-              { key: "role_id", label: "Role ID" },
+              { key: "name", label: "Name", type: "text" },
+              { key: "email", label: "Email", type: "text" },
+              { key: "password", label: "Password", type: "text" },
+              { key: "sss_number", label: "SSS Number", type: "text" },
+              {
+                key: "philhealth_number",
+                label: "PhilHealth Number",
+                type: "text",
+              },
+              { key: "pagibig_number", label: "Pagibig Number", type: "text" },
               { key: "hourly_rate", label: "Hourly Rate", type: "number" },
               { key: "daily_rate", label: "Daily Rate", type: "number" },
               {
@@ -243,6 +286,12 @@ export default function EmployeesListPage() {
                 label: "Is Live Seller?",
                 type: "select",
                 options: ["Yes", "No"],
+              },
+              {
+                key: "role_id",
+                label: "Role",
+                type: "select",
+                options: roles.map((r) => ({ label: r.name, value: r.id })),
               },
             ]}
           />
@@ -272,7 +321,7 @@ export default function EmployeesListPage() {
           </ConfirmDelete>
         </div>
 
-        {/* 🔍 Search + Calendar aligned */}
+        {/* Search + Calendar */}
         <div className="d-flex align-items-center gap-2">
           <SearchBar
             placeholder="Search employees..."
@@ -291,7 +340,6 @@ export default function EmployeesListPage() {
         </div>
       </div>
 
-      {/* 📅 Date Picker */}
       {showDatePicker && (
         <div className="bg-white p-3 shadow-md rounded-4 mb-3 w-fit">
           <DateRangePicker onChange={setDateRange} />
