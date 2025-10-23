@@ -36,11 +36,17 @@ export function DataTable<T extends Record<string, any>>({
   // 🔽 Sort data by created_at DESC if it exists
   const sortedData = useMemo(() => {
     if (data.length === 0) return [];
-    if (!("created_at" in data[0])) return [...data];
-    return [...data].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+
+    return [...data].sort((a, b) => {
+      const getTime = (row: any) => {
+        if ("created_at" in row && row.created_at)
+          return new Date(row.created_at).getTime();
+        if ("timestamp" in row && row.timestamp)
+          return new Date(row.timestamp).getTime();
+        return 0;
+      };
+      return getTime(b) - getTime(a); // descending
+    });
   }, [data]);
 
   // 🔢 Pagination calculations

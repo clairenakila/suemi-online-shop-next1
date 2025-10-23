@@ -23,6 +23,7 @@ export interface Item {
   mined_from?: string;
   discount?: string;
   discounted_selling_price?: string;
+  commission_rate?: string; // new hidden field
   date_shipped?: string | null;
   date_returned?: string | null;
 }
@@ -59,6 +60,7 @@ export default function AddItemModal({
     discount: "0",
     order_income: "0",
     discounted_selling_price: "0",
+    commission_rate: "0", // default 0
     live_seller: "",
     category: "",
     is_returned: "No",
@@ -74,7 +76,6 @@ export default function AddItemModal({
     { id: string; name: string }[]
   >([]);
 
-  // Fetch employees and live sellers
   useEffect(() => {
     const fetchData = async () => {
       const { data: empData, error: empError } = await supabase
@@ -126,8 +127,8 @@ export default function AddItemModal({
       key: "order_id",
       label: "Order ID",
       type: "text",
-      validate: (value: string) =>
-        value.length === 4 ? "" : "Order ID must be exactly 4 characters",
+      validate: (v) =>
+        v.length === 4 ? "" : "Order ID must be exactly 4 characters",
     },
     { key: "quantity", label: "Quantity", type: "number" },
     { key: "selling_price", label: "Selling Price", type: "float" },
@@ -148,12 +149,13 @@ export default function AddItemModal({
       label: "Discounted Selling Price",
       type: "text",
     },
+    { key: "commission_rate", label: "Commission Rate", type: "text" }, // hidden
   ];
 
-  // Hidden fields (read-only)
   const hiddenKeys: (keyof Item)[] = [
     "order_income",
     "discounted_selling_price",
+    "commission_rate",
   ];
   const visibleFields = allFields.filter((f) => !hiddenKeys.includes(f.key));
   const hiddenFields = allFields.filter((f) => hiddenKeys.includes(f.key));
@@ -164,7 +166,6 @@ export default function AddItemModal({
     e.preventDefault();
     setLoading(true);
 
-    // Insert into Supabase
     const { error } = await supabase.from("items").insert([item]);
     setLoading(false);
 
@@ -173,29 +174,30 @@ export default function AddItemModal({
     toast.success("Item added successfully!");
     setItem({
       timestamp: new Date().toISOString(),
+      mined_from: "",
       prepared_by: "",
       brand: "",
-      order_id: "",
-      shoppee_commission: "0",
-      selling_price: "0",
       quantity: "1",
+      order_id: "",
+      selling_price: "0",
       capital: "0",
-      order_income: "0",
+      shoppee_commission: "0",
       discount: "0",
+      order_income: "0",
       discounted_selling_price: "0",
+      commission_rate: "0",
       live_seller: "",
       category: "",
-      mined_from: "",
+      is_returned: "No",
       date_shipped: null,
       date_returned: null,
-      is_returned: "No",
     });
     onClose();
     onSuccess();
   };
 
   const renderField = (f: FieldConfig, readOnly = false) => {
-    if (f.type === "select") {
+    if (f.type === "select")
       return (
         <select
           className="form-select"
@@ -213,9 +215,7 @@ export default function AddItemModal({
           ))}
         </select>
       );
-    }
-
-    if (f.type === "date") {
+    if (f.type === "date")
       return (
         <DatePicker
           selected={item[f.key] ? new Date(item[f.key]!) : null}
@@ -232,8 +232,6 @@ export default function AddItemModal({
           disabled={readOnly}
         />
       );
-    }
-
     return (
       <input
         type="text"
@@ -267,14 +265,12 @@ export default function AddItemModal({
               onClick={onClose}
             ></button>
           </div>
-
           <form onSubmit={handleSave}>
             <div
               className="modal-body"
               style={{ maxHeight: "70vh", overflowY: "auto" }}
             >
               <div className="row">
-                {/* Visible fields */}
                 {visibleFields.map((f) => (
                   <div className="col-md-6 mb-3" key={f.key}>
                     <label className="form-label">{f.label}</label>
@@ -282,7 +278,6 @@ export default function AddItemModal({
                   </div>
                 ))}
 
-                {/* Hidden read-only fields */}
                 {hiddenFields.length > 0 && (
                   <div className="col-12 mt-4">
                     <h6 className="text-muted mb-2">
@@ -300,7 +295,6 @@ export default function AddItemModal({
                 )}
               </div>
             </div>
-
             <div className="modal-footer">
               <button
                 type="button"
