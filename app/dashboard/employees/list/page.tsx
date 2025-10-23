@@ -13,6 +13,7 @@ import ExportButton from "../../../components/ExportButton";
 import DateRangePicker from "../../../components/DateRangePicker";
 import EditButtonDataTable from "../../../components/EditButtonDataTable";
 import AddButton from "../../../components/AddButton";
+import ToggleColumns from "../../../components/ToggleColumns";
 
 interface User {
   id?: string;
@@ -203,6 +204,8 @@ export default function EmployeesListPage() {
     },
   ];
 
+  const [tableColumns, setTableColumns] = useState<Column<User>[]>(columns);
+
   return (
     <div className="container my-5">
       <Toaster />
@@ -337,6 +340,8 @@ export default function EmployeesListPage() {
           >
             <i className="bi bi-calendar3 fs-5 text-secondary"></i>
           </button>
+
+          <ToggleColumns columns={columns} onChange={setTableColumns} />
         </div>
       </div>
 
@@ -348,7 +353,8 @@ export default function EmployeesListPage() {
 
       <DataTable
         data={filteredUsers}
-        columns={columns}
+        // columns={columns}
+        columns={tableColumns}
         selectable
         selectedIds={selectedUsers}
         onToggleSelect={toggleSelectUser}

@@ -35,7 +35,7 @@ export default function DateRangePicker({
           type="date"
           value={startDate || ""}
           onChange={(e) => handleStartChange(e.target.value)}
-          className="border border-gray-300 rounded-[12px] px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none transition"
+          className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none transition"
         />
       </div>
 
@@ -45,7 +45,7 @@ export default function DateRangePicker({
           type="date"
           value={endDate || ""}
           onChange={(e) => handleEndChange(e.target.value)}
-          className="border border-gray-300 rounded-[12px] px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none transition"
+          className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none transition"
         />
       </div>
     </div>
