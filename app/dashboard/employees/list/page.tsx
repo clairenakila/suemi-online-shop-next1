@@ -21,7 +21,8 @@ interface User {
   email: string;
   password: string;
   role_id: string;
-  role_name?: string; // added for convenience
+  role_name?: string;
+  contact_number?: string; // ✅ added
   sss_number?: string;
   philhealth_number?: string;
   pagibig_number?: string;
@@ -45,6 +46,7 @@ export default function EmployeesListPage() {
     name: "",
     email: "",
     password: "",
+    contact_number: "",
     role_id: "",
     sss_number: "",
     philhealth_number: "",
@@ -61,18 +63,14 @@ export default function EmployeesListPage() {
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
-  }>({
-    startDate: null,
-    endDate: null,
-  });
+  }>({ startDate: null, endDate: null });
 
-  // Fetch users and roles
+  // Fetch roles & users
   useEffect(() => {
     fetchRoles();
   }, []);
-
   useEffect(() => {
-    if (roles.length > 0) fetchUsers(); // only fetch users after roles are loaded
+    if (roles.length) fetchUsers();
   }, [roles]);
 
   const fetchRoles = async () => {
@@ -84,7 +82,6 @@ export default function EmployeesListPage() {
   const fetchUsers = async () => {
     const { data, error } = await supabase.from("users").select("*");
     if (error) return toast.error(error.message);
-    // map role_name for convenience
     const mapped = (data || []).map((u) => ({
       ...u,
       role_name: roles.find((r) => r.id === u.role_id)?.name || "",
@@ -97,7 +94,6 @@ export default function EmployeesListPage() {
     setEditId(user.id || null);
     setShowModal(true);
   };
-
   const closeModal = () => {
     setShowModal(false);
     setEditId(null);
@@ -135,7 +131,6 @@ export default function EmployeesListPage() {
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
     );
-
   const toggleSelectAll = (checked: boolean) =>
     setSelectedUsers(checked ? users.map((u) => u.id!) : []);
 
@@ -145,6 +140,7 @@ export default function EmployeesListPage() {
     const matchesSearch = [
       u.name,
       u.email,
+      u.contact_number, // ✅ included
       u.sss_number,
       u.philhealth_number,
       u.pagibig_number,
@@ -173,6 +169,7 @@ export default function EmployeesListPage() {
     },
     { header: "Name", accessor: "name" },
     { header: "Email", accessor: "email" },
+    { header: "Contact Number", accessor: "contact_number" }, // ✅ added
     { header: "SSS Number", accessor: "sss_number" },
     { header: "PhilHealth Number", accessor: "philhealth_number" },
     { header: "Pagibig Number", accessor: "pagibig_number" },
@@ -180,7 +177,7 @@ export default function EmployeesListPage() {
     { header: "Daily Rate", accessor: "daily_rate" },
     { header: "Is Employee", accessor: "is_employee" },
     { header: "Is Live Seller", accessor: "is_live_seller" },
-    { header: "Role", accessor: "role_name" }, // now uses mapped property
+    { header: "Role", accessor: "role_name" },
     {
       header: "Action",
       accessor: (row) => (
@@ -218,6 +215,7 @@ export default function EmployeesListPage() {
             fields={[
               { key: "name", label: "Name", type: "text" },
               { key: "email", label: "Email", type: "text" },
+              { key: "contact_number", label: "Contact Number", type: "text" }, // ✅ added
               { key: "password", label: "Password", type: "text" },
               { key: "sss_number", label: "SSS Number", type: "text" },
               {
@@ -266,6 +264,7 @@ export default function EmployeesListPage() {
             fields={[
               { key: "name", label: "Name", type: "text" },
               { key: "email", label: "Email", type: "text" },
+              { key: "contact_number", label: "Contact Number", type: "text" }, // ✅ added
               { key: "password", label: "Password", type: "text" },
               { key: "sss_number", label: "SSS Number", type: "text" },
               {
@@ -302,6 +301,7 @@ export default function EmployeesListPage() {
             headersMap={{
               Name: "name",
               Email: "email",
+              "Contact Number": "contact_number", // ✅ added
               Password: "password",
               "SSS Number": "sss_number",
               "PhilHealth Number": "philhealth_number",
@@ -310,18 +310,17 @@ export default function EmployeesListPage() {
               "Daily Rate": "daily_rate",
               "Is Employee": "is_employee",
               "Is Live Seller": "is_live_seller",
-              Role: "role_id", // mapped to role_id after validation
+              Role: "role_id",
             }}
             transformRow={(row) => {
-              // Validate role_name
-              const roleId = mapRoleNameToId(roles, row.role_id); // row.role_id temporarily holds the role name
+              const roleId = mapRoleNameToId(roles, row.role_id);
               if (!roleId) throw new Error(`Invalid role: ${row.role_id}`);
-
-              // Force hourly_rate & daily_rate to be text with proper decimals
-              const hourly_rate = formatNumberForText(row.hourly_rate, 3); // 3 decimals if you want 100.100
-              const daily_rate = formatNumberForText(row.daily_rate, 3);
-
-              return { ...row, role_id: roleId, hourly_rate, daily_rate };
+              return {
+                ...row,
+                role_id: roleId,
+                hourly_rate: formatNumberForText(row.hourly_rate, 3),
+                daily_rate: formatNumberForText(row.daily_rate, 3),
+              };
             }}
             onSuccess={fetchUsers}
           />
@@ -332,11 +331,12 @@ export default function EmployeesListPage() {
               "Created At": (row) => row.created_at || "",
               Name: "name",
               Email: "email",
+              "Contact Number": "contact_number", // ✅ added
               "SSS Number": "sss_number",
               "PhilHealth Number": "philhealth_number",
               "Pagibig Number": "pagibig_number",
-              "Hourly Rate": "hourly_rate", // string, preserves decimals
-              "Daily Rate": "daily_rate", // string, preserves decimals
+              "Hourly Rate": "hourly_rate",
+              "Daily Rate": "daily_rate",
               "Is Employee": "is_employee",
               "Is Live Seller": "is_live_seller",
               Role: "role_name",
