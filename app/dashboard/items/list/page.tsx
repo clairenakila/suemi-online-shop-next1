@@ -13,7 +13,6 @@ import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
 import AddButton from "../../../components/AddButton";
-
 import { formatNumberForText } from "../../../utils/validator";
 
 interface Item {
