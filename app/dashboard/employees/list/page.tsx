@@ -11,7 +11,6 @@ import { DataTable, Column } from "../../../components/DataTable";
 import BulkEdit from "../../../components/BulkEdit";
 import ExportButton from "../../../components/ExportButton";
 import DateRangePicker from "../../../components/DateRangePicker";
-import EditButtonDataTable from "../../../components/EditButtonDataTable";
 import AddButton from "../../../components/AddButton";
 import ToggleColumns from "../../../components/ToggleColumns";
 
@@ -21,6 +20,7 @@ interface User {
   email: string;
   password: string;
   role_id: string;
+  role_name?: string; // added for convenience
   sss_number?: string;
   philhealth_number?: string;
   pagibig_number?: string;
@@ -65,21 +65,30 @@ export default function EmployeesListPage() {
     endDate: null,
   });
 
+  // Fetch users and roles
   useEffect(() => {
-    fetchUsers();
     fetchRoles();
   }, []);
 
-  const fetchUsers = async () => {
-    const { data, error } = await supabase.from("users").select("*");
-    if (error) return toast.error(error.message);
-    setUsers(data || []);
-  };
+  useEffect(() => {
+    if (roles.length > 0) fetchUsers(); // only fetch users after roles are loaded
+  }, [roles]);
 
   const fetchRoles = async () => {
     const { data, error } = await supabase.from("roles").select("*");
     if (error) return toast.error(error.message);
     setRoles(data || []);
+  };
+
+  const fetchUsers = async () => {
+    const { data, error } = await supabase.from("users").select("*");
+    if (error) return toast.error(error.message);
+    // map role_name for convenience
+    const mapped = (data || []).map((u) => ({
+      ...u,
+      role_name: roles.find((r) => r.id === u.role_id)?.name || "",
+    }));
+    setUsers(mapped);
   };
 
   const handleUserEdit = (user: User) => {
@@ -101,7 +110,6 @@ export default function EmployeesListPage() {
 
   const handleSubmit = async (userData: User) => {
     if (!userData.role_id) return toast.error("Please select a role");
-
     const cleanData = sanitizeUserData(userData);
 
     if (editId) {
@@ -121,6 +129,7 @@ export default function EmployeesListPage() {
     closeModal();
   };
 
+  // Selection
   const toggleSelectUser = (id: string) =>
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
@@ -129,19 +138,17 @@ export default function EmployeesListPage() {
   const toggleSelectAll = (checked: boolean) =>
     setSelectedUsers(checked ? users.map((u) => u.id!) : []);
 
+  // Filtering
   const filteredUsers = users.filter((u) => {
     const term = searchTerm.toLowerCase();
-    const roleName =
-      roles.find((r) => r.id === u.role_id)?.name.toLowerCase() || "";
-    const matchesSearch =
-      [
-        u.name,
-        u.email,
-        u.sss_number,
-        u.philhealth_number,
-        u.pagibig_number,
-      ].some((val) => val?.toLowerCase().includes(term)) ||
-      roleName.includes(term);
+    const matchesSearch = [
+      u.name,
+      u.email,
+      u.sss_number,
+      u.philhealth_number,
+      u.pagibig_number,
+      u.role_name,
+    ].some((val) => val?.toLowerCase().includes(term));
 
     let matchesDateRange = true;
     if (dateRange.startDate && dateRange.endDate && u.created_at) {
@@ -156,6 +163,7 @@ export default function EmployeesListPage() {
     return matchesSearch && matchesDateRange;
   });
 
+  // Columns
   const columns: Column<User>[] = [
     {
       header: "Created At",
@@ -169,36 +177,25 @@ export default function EmployeesListPage() {
     { header: "Pagibig Number", accessor: "pagibig_number" },
     { header: "Hourly Rate", accessor: "hourly_rate" },
     { header: "Daily Rate", accessor: "daily_rate" },
-    { header: "Employee?", accessor: "is_employee" },
-    { header: "Live Seller?", accessor: "is_live_seller" },
-    {
-      header: "Role",
-      accessor: (row) => roles.find((r) => r.id === row.role_id)?.name || "",
-    },
+    { header: "Is Employee", accessor: "is_employee" },
+    { header: "Is Live Seller", accessor: "is_live_seller" },
+    { header: "Role", accessor: "role_name" }, // now uses mapped property
     {
       header: "Action",
       accessor: (row) => (
-        <>
-          {/* <EditButtonDataTable<User>
-            table="users"
-            id={row.id!}
-            onFetched={(data) => setForm(data)}
-            onOpenModal={() => handleUserEdit(row)}
-          /> */}
-          <ConfirmDelete
-            confirmMessage={`Are you sure you want to delete ${row.name}?`}
-            onConfirm={async () => {
-              const { error } = await supabase
-                .from("users")
-                .delete()
-                .eq("id", row.id!);
-              if (error) throw error;
-              fetchUsers();
-            }}
-          >
-            Delete
-          </ConfirmDelete>
-        </>
+        <ConfirmDelete
+          confirmMessage={`Are you sure you want to delete ${row.name}?`}
+          onConfirm={async () => {
+            const { error } = await supabase
+              .from("users")
+              .delete()
+              .eq("id", row.id!);
+            if (error) throw error;
+            fetchUsers();
+          }}
+        >
+          Delete
+        </ConfirmDelete>
       ),
       center: true,
     },
@@ -304,6 +301,7 @@ export default function EmployeesListPage() {
           <ExportButton
             data={filteredUsers}
             selectedIds={selectedUsers}
+            columns={tableColumns}
             filename="employees.csv"
           />
 
@@ -353,7 +351,6 @@ export default function EmployeesListPage() {
 
       <DataTable
         data={filteredUsers}
-        // columns={columns}
         columns={tableColumns}
         selectable
         selectedIds={selectedUsers}

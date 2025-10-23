@@ -2,29 +2,29 @@
 
 import React from "react";
 import toast from "react-hot-toast";
+import { Column } from "./DataTable";
 
 interface ExportButtonProps<T extends Record<string, any>> {
   data: T[];
   selectedIds: string[];
+  columns: Column<T>[];
   filename?: string;
-  rowKey?: keyof T; // defaults to "id"
+  rowKey?: keyof T;
 }
 
 export default function ExportButton<T extends Record<string, any>>({
   data,
   selectedIds,
+  columns,
   filename = "export.csv",
   rowKey = "id" as keyof T,
 }: ExportButtonProps<T>) {
   const handleExport = () => {
-    if (!selectedIds.length) {
-      toast.error("Please select records to export.");
-      return;
-    }
-
-    const selectedData = data.filter((row) =>
-      selectedIds.includes(String(row[rowKey]))
-    );
+    // Use all rows if nothing selected
+    const selectedData =
+      selectedIds.length > 0
+        ? data.filter((row) => selectedIds.includes(String(row[rowKey] ?? "")))
+        : data;
 
     if (!selectedData.length) {
       toast.error("No matching records found.");
@@ -32,7 +32,6 @@ export default function ExportButton<T extends Record<string, any>>({
     }
 
     const csv = convertToCSV(selectedData);
-
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -46,15 +45,18 @@ export default function ExportButton<T extends Record<string, any>>({
   };
 
   const convertToCSV = (rows: T[]): string => {
-    if (rows.length === 0) return "";
+    if (!columns.length || !rows.length) return "";
 
-    const headers = Object.keys(rows[0]);
+    const headers = columns.map((col) => col.header);
+
     const csvRows = [
       headers.join(","),
       ...rows.map((row) =>
-        headers
-          .map((h) => {
-            const val = row[h];
+        columns
+          .map((col) => {
+            let val: any;
+            if (typeof col.accessor === "function") val = col.accessor(row);
+            else val = row[col.accessor as keyof T];
             if (val === null || val === undefined) return "";
             return `"${String(val).replace(/"/g, '""')}"`;
           })
@@ -70,7 +72,7 @@ export default function ExportButton<T extends Record<string, any>>({
       onClick={handleExport}
       className="px-4 py-2 text-white shadow-md transition"
       style={{
-        backgroundColor: "#e11d48", // rose color
+        backgroundColor: "#e11d48",
         borderRadius: "4px",
         fontWeight: 500,
       }}
