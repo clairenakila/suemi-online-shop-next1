@@ -28,24 +28,33 @@ export function DataTable<T extends Record<string, any>>({
   onToggleSelect,
   onToggleSelectAll,
   rowKey,
-  defaultRecordsPerPage = 2,
+  defaultRecordsPerPage = 50,
 }: DataTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(defaultRecordsPerPage);
 
-  // Compute total pages
+  // 🔽 Sort data by created_at DESC if it exists
+  const sortedData = useMemo(() => {
+    if (data.length === 0) return [];
+    if (!("created_at" in data[0])) return [...data];
+    return [...data].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [data]);
+
+  // 🔢 Pagination calculations
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(data.length / recordsPerPage)),
-    [data.length, recordsPerPage]
+    () => Math.max(1, Math.ceil(sortedData.length / recordsPerPage)),
+    [sortedData.length, recordsPerPage]
   );
 
-  // Ensure current page is always valid
   if (currentPage > totalPages) setCurrentPage(totalPages);
 
   const startIdx = (currentPage - 1) * recordsPerPage;
   const paginatedData = useMemo(
-    () => data.slice(startIdx, startIdx + recordsPerPage),
-    [data, startIdx, recordsPerPage]
+    () => sortedData.slice(startIdx, startIdx + recordsPerPage),
+    [sortedData, startIdx, recordsPerPage]
   );
 
   const handlePageChange = (page: number) => {
@@ -54,13 +63,14 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   const handleRecordsPerPageChange = (value: number) => {
-    const newTotalPages = Math.max(1, Math.ceil(data.length / value));
+    const newTotalPages = Math.max(1, Math.ceil(sortedData.length / value));
     setRecordsPerPage(value);
     setCurrentPage((prev) => Math.min(prev, newTotalPages));
   };
 
   return (
     <div>
+      {/* Table container */}
       <div
         className="table-responsive"
         style={{ maxHeight: "70vh", overflowY: "auto" }}
@@ -73,7 +83,8 @@ export function DataTable<T extends Record<string, any>>({
                   <input
                     type="checkbox"
                     checked={
-                      selectedIds.length === data.length && data.length > 0
+                      selectedIds.length === sortedData.length &&
+                      sortedData.length > 0
                     }
                     onChange={(e) => onToggleSelectAll?.(e.target.checked)}
                   />
@@ -86,6 +97,7 @@ export function DataTable<T extends Record<string, any>>({
               ))}
             </tr>
           </thead>
+
           <tbody>
             {paginatedData.length === 0 ? (
               <tr>
@@ -126,7 +138,7 @@ export function DataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination + Footer */}
       <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
         {/* Show entries */}
         <div>
@@ -149,7 +161,7 @@ export function DataTable<T extends Record<string, any>>({
           </label>
         </div>
 
-        {/* Page buttons (if more than 1 page) */}
+        {/* Page buttons */}
         {totalPages > 1 && (
           <div>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -166,11 +178,11 @@ export function DataTable<T extends Record<string, any>>({
           </div>
         )}
 
-        {/* Always show X to Y of Z entries */}
+        {/* Entry info */}
         <div>
-          Showing {data.length === 0 ? 0 : startIdx + 1} to{" "}
-          {Math.min(startIdx + recordsPerPage, data.length)} of {data.length}{" "}
-          entries
+          Showing {sortedData.length === 0 ? 0 : startIdx + 1} to{" "}
+          {Math.min(startIdx + recordsPerPage, sortedData.length)} of{" "}
+          {sortedData.length} entries
         </div>
       </div>
     </div>
