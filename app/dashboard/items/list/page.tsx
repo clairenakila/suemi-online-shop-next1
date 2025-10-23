@@ -12,8 +12,9 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
-import AddButton from "../../../components/AddButton";
-import { formatNumberForText } from "../../../utils/validator";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import AddItemModal from "../../../components/AddItemModal";
 
 interface Item {
   id?: string;
@@ -28,7 +29,7 @@ interface Item {
   live_seller?: string;
   capital?: string;
   order_income?: string;
-  category?: string; // treat as text
+  category?: string;
   mined_from?: string;
   discount?: string;
   discounted_selling_price?: string;
@@ -46,7 +47,28 @@ export default function SoldItemsPage() {
     endDate: string | null;
   }>({ startDate: null, endDate: null });
 
-  // Fetch items
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newItem, setNewItem] = useState<Item>({
+    timestamp: new Date().toISOString(),
+    prepared_by: "",
+    brand: "",
+    order_id: "",
+    shoppee_commission: "0",
+    selling_price: "0",
+    quantity: "1",
+    capital: "0",
+    order_income: "0",
+    discount: "0",
+    discounted_selling_price: "0",
+    live_seller: "",
+    category: "",
+    mined_from: "",
+    date_shipped: "",
+    date_returned: "",
+    is_returned: "No",
+  });
+
+  // Fetch items from Supabase
   useEffect(() => {
     fetchItems();
   }, []);
@@ -63,7 +85,7 @@ export default function SoldItemsPage() {
     setItems(mapped);
   };
 
-  // Selection
+  // Selection handlers
   const toggleSelectItem = (id: string) =>
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
@@ -72,7 +94,7 @@ export default function SoldItemsPage() {
   const toggleSelectAll = (checked: boolean) =>
     setSelectedItems(checked ? items.map((i) => i.id!) : []);
 
-  // Filtering
+  // Filter items by search + date
   const filteredItems = items.filter((i) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = [
@@ -97,13 +119,9 @@ export default function SoldItemsPage() {
     return matchesSearch && matchesDateRange;
   });
 
-  // Columns
+  // Table columns
   const columns: Column<Item>[] = [
-    {
-      header: "Timestamp",
-      accessor: (row) =>
-        row.timestamp ? new Date(row.timestamp).toLocaleString() : "",
-    },
+    { header: "Timestamp", accessor: (row) => row.timestamp || "" },
     { header: "Prepared By", accessor: "prepared_by" },
     { header: "Brand", accessor: "brand" },
     { header: "Order ID", accessor: "order_id" },
@@ -143,6 +161,37 @@ export default function SoldItemsPage() {
 
   const [tableColumns, setTableColumns] = useState<Column<Item>[]>(columns);
 
+  // Add item handler
+  const handleAddItem = async () => {
+    const { error } = await supabase.from("items").insert([newItem]);
+    if (error) return toast.error(error.message);
+
+    toast.success("Item added successfully!");
+    setShowAddForm(false);
+    setNewItem({
+      timestamp: new Date().toISOString(),
+      prepared_by: "",
+      brand: "",
+      order_id: "",
+      shoppee_commission: "0",
+      selling_price: "0",
+      quantity: "1",
+      capital: "0",
+      order_income: "0",
+      discount: "0",
+      discounted_selling_price: "0",
+      live_seller: "",
+      category: "",
+      mined_from: "",
+      date_shipped: "",
+      date_returned: "",
+      is_returned: "No",
+    });
+    fetchItems();
+  };
+  //const for additemmodal
+  const [showAddModal, setShowAddModal] = useState(false);
+
   return (
     <div className="container my-5">
       <Toaster />
@@ -151,74 +200,20 @@ export default function SoldItemsPage() {
       {/* Toolbar */}
       <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <AddButton
-            table="items"
-            onSuccess={fetchItems}
-            fields={[
-              { key: "timestamp", label: "Timestamp", type: "datetime" },
-              { key: "prepared_by", label: "Prepared By", type: "text" },
-              { key: "brand", label: "Brand", type: "text" },
-              { key: "order_id", label: "Order ID", type: "text" },
-              {
-                key: "shoppee_commission",
-                label: "Shoppee Commission",
-                type: "float",
-                defaultValue: 0,
-              },
-              {
-                key: "selling_price",
-                label: "Selling Price",
-                type: "float",
-                defaultValue: 0,
-              },
-              {
-                key: "quantity",
-                label: "Quantity",
-                type: "number",
-                defaultValue: 1,
-              },
-              {
-                key: "capital",
-                label: "Capital",
-                type: "float",
-                defaultValue: 0,
-              },
-              {
-                key: "order_income",
-                label: "Order Income",
-                type: "float",
-                defaultValue: 0,
-              },
-              {
-                key: "discount",
-                label: "Discount",
-                type: "float",
-                defaultValue: 0,
-              },
-              {
-                key: "discounted_selling_price",
-                label: "Discounted Selling Price",
-                type: "float",
-                defaultValue: 0,
-              },
-              { key: "live_seller", label: "Live Seller", type: "text" },
-              { key: "category", label: "Category", type: "text" },
-              { key: "mined_from", label: "Mined From", type: "text" },
-              { key: "date_shipped", label: "Date Shipped", type: "datetime" },
-              {
-                key: "date_returned",
-                label: "Date Returned",
-                type: "datetime",
-              },
-              {
-                key: "is_returned",
-                label: "Is Returned?",
-                type: "select",
-                options: ["Yes", "No"],
-              },
-            ]}
-          />
+          {/* Add Item Button */}
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowAddModal(true)}
+          >
+            Add Item
+          </button>
 
+          <AddItemModal
+            isOpen={showAddModal}
+            onClose={() => setShowAddModal(false)}
+            onSuccess={fetchItems}
+          />
+          {/* Bulk Edit, Import, Export, Delete Selected */}
           <BulkEdit
             table="items"
             selectedIds={selectedItems}
@@ -251,18 +246,6 @@ export default function SoldItemsPage() {
               Category: "category",
               "Mined From": "mined_from",
             }}
-            transformRow={(row) => ({
-              ...row,
-              selling_price: formatNumberForText(row.selling_price),
-              shoppee_commission: formatNumberForText(row.shoppee_commission),
-              capital: formatNumberForText(row.capital),
-              order_income: formatNumberForText(row.order_income),
-              discount: formatNumberForText(row.discount),
-              discounted_selling_price: formatNumberForText(
-                row.discounted_selling_price
-              ),
-              category: row.category,
-            })}
             onSuccess={fetchItems}
           />
 
