@@ -13,6 +13,7 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import AddButton from "../../../components/AddButton";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
+import ExportButton from "../../../components/ExportButton";
 import { mapRoleNameToId, formatNumberForText } from "../../../utils/validator";
 
 interface User {
@@ -324,6 +325,24 @@ export default function EmployeesListPage() {
               return { ...row, role_id: roleId, hourly_rate, daily_rate };
             }}
             onSuccess={fetchUsers}
+          />
+
+          <ExportButton
+            data={filteredUsers}
+            headersMap={{
+              "Created At": (row) => row.created_at || "",
+              Name: "name",
+              Email: "email",
+              "SSS Number": "sss_number",
+              "PhilHealth Number": "philhealth_number",
+              "Pagibig Number": "pagibig_number",
+              "Hourly Rate": "hourly_rate", // string, preserves decimals
+              "Daily Rate": "daily_rate", // string, preserves decimals
+              "Is Employee": "is_employee",
+              "Is Live Seller": "is_live_seller",
+              Role: "role_name",
+            }}
+            filename="employees.xlsx"
           />
 
           <ConfirmDelete

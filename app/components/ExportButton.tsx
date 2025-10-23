@@ -1,90 +1,54 @@
 "use client";
 
-import React from "react";
+import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
-import { Column } from "./DataTable";
 
-interface ExportButtonProps<T extends Record<string, any>> {
+export interface ExportButtonProps<T> {
   data: T[];
-  selectedIds: string[];
-  columns: Column<T>[];
+  headersMap: Record<string, keyof T | ((row: T) => any)>;
   filename?: string;
-  rowKey?: keyof T;
 }
 
-export default function ExportButton<T extends Record<string, any>>({
+export default function ExportButton<T>({
   data,
-  selectedIds,
-  columns,
-  filename = "export.csv",
-  rowKey = "id" as keyof T,
+  headersMap,
+  filename = "export.xlsx",
 }: ExportButtonProps<T>) {
   const handleExport = () => {
-    const selectedData =
-      selectedIds.length > 0
-        ? data.filter((row) => selectedIds.includes(String(row[rowKey] ?? "")))
-        : data;
+    try {
+      if (!data || !data.length) {
+        toast.error("No data to export");
+        return;
+      }
 
-    if (!selectedData.length) {
-      toast.error("No matching records found.");
-      return;
+      // Map data for export
+      const exportData = data.map((row) => {
+        const mappedRow: Record<string, any> = {};
+        for (const [header, accessor] of Object.entries(headersMap)) {
+          let value;
+          if (typeof accessor === "function") value = accessor(row);
+          else value = row[accessor];
+
+          // Keep everything as string
+          mappedRow[header] = value ?? "";
+        }
+        return mappedRow;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+      XLSX.writeFile(workbook, filename);
+
+      toast.success("Data exported successfully");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to export data");
     }
-
-    const csv = convertToCSV(selectedData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast.success("Exported successfully!");
-  };
-
-  const convertToCSV = (rows: T[]): string => {
-    if (!columns.length || !rows.length) return "";
-
-    const headers = columns.map((col) => col.header);
-
-    const csvRows = [
-      headers.join(","),
-      ...rows.map((row) =>
-        columns
-          .map((col) => {
-            let val: any =
-              typeof col.accessor === "function"
-                ? col.accessor(row)
-                : row[col.accessor as keyof T];
-
-            if (val === null || val === undefined) return "";
-
-            // If it’s a rate column (number), force 2 decimals
-            if (col.header === "Hourly Rate" || col.header === "Daily Rate") {
-              if (typeof val === "number") val = val.toFixed(2);
-            }
-
-            return `"${val.toString().replace(/"/g, '""')}"`;
-          })
-          .join(",")
-      ),
-    ];
-
-    return csvRows.join("\n");
   };
 
   return (
-    <button
-      onClick={handleExport}
-      className="px-4 py-2 text-white shadow-md transition"
-      style={{
-        backgroundColor: "#e11d48",
-        borderRadius: "4px",
-        fontWeight: 500,
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#be123c")}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#e11d48")}
-    >
+    <button className="btn btn-success" onClick={handleExport}>
       Export
     </button>
   );
