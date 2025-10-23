@@ -12,6 +12,8 @@ import BulkEdit from "../../../components/BulkEdit";
 import DateRangePicker from "../../../components/DateRangePicker";
 import AddButton from "../../../components/AddButton";
 import ToggleColumns from "../../../components/ToggleColumns";
+import ImportButton from "../../../components/ImportButton";
+import { mapRoleNameToId, formatNumberForText } from "../../../utils/validator";
 
 interface User {
   id?: string;
@@ -295,7 +297,34 @@ export default function EmployeesListPage() {
             ]}
           />
 
-          <button className="btn btn-success">Import</button>
+          <ImportButton
+            table="users"
+            headersMap={{
+              Name: "name",
+              Email: "email",
+              Password: "password",
+              "SSS Number": "sss_number",
+              "PhilHealth Number": "philhealth_number",
+              "Pagibig Number": "pagibig_number",
+              "Hourly Rate": "hourly_rate",
+              "Daily Rate": "daily_rate",
+              "Is Employee": "is_employee",
+              "Is Live Seller": "is_live_seller",
+              Role: "role_id", // mapped to role_id after validation
+            }}
+            transformRow={(row) => {
+              // Validate role_name
+              const roleId = mapRoleNameToId(roles, row.role_id); // row.role_id temporarily holds the role name
+              if (!roleId) throw new Error(`Invalid role: ${row.role_id}`);
+
+              // Force hourly_rate & daily_rate to be text with proper decimals
+              const hourly_rate = formatNumberForText(row.hourly_rate, 3); // 3 decimals if you want 100.100
+              const daily_rate = formatNumberForText(row.daily_rate, 3);
+
+              return { ...row, role_id: roleId, hourly_rate, daily_rate };
+            }}
+            onSuccess={fetchUsers}
+          />
 
           <ConfirmDelete
             confirmMessage="Are you sure you want to delete selected users?"
