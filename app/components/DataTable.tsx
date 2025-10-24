@@ -37,7 +37,7 @@ export function DataTable<T extends Record<string, any>>({
   onPageChange,
   onPageSizeChange,
 }: DataTableProps<T>) {
-  // Optional: sort data locally for display (does NOT affect pagination)
+  // Optional: sort data locally for display
   const sortedData = useMemo(() => {
     if (!data?.length) return [];
     if ("created_at" in data[0]) {
@@ -55,16 +55,20 @@ export function DataTable<T extends Record<string, any>>({
     return data;
   }, [data]);
 
-  // ----------------------------
-  // Render table rows (no slicing!)
-  // ----------------------------
+  // Render all rows (no slicing!)
   const rowsToRender = sortedData;
 
-  // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
+      {/* Selected rows count */}
+      {selectable && selectedIds.length > 0 && (
+        <div className="mb-2 text-sm text-muted">
+          {selectedIds.length} row{selectedIds.length > 1 ? "s" : ""} selected
+        </div>
+      )}
+
       <div className="table-responsive" style={{ maxHeight: "70vh" }}>
         <table className="table table-bordered table-striped">
           <thead className="table-light sticky-top">
@@ -140,7 +144,6 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Pagination footer */}
       <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-        {/* Page size selector */}
         <div>
           Show{" "}
           <select
@@ -157,7 +160,6 @@ export function DataTable<T extends Record<string, any>>({
           entries
         </div>
 
-        {/* Page buttons */}
         <div className="d-flex flex-wrap align-items-center justify-content-center">
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .slice(Math.max(0, page - 3), Math.min(totalPages, page + 2))
@@ -174,7 +176,6 @@ export function DataTable<T extends Record<string, any>>({
             ))}
         </div>
 
-        {/* Record count summary */}
         <div className="text-muted small">
           Showing {(page - 1) * pageSize + 1}–
           {Math.min(page * pageSize, totalCount)} of {totalCount} entries

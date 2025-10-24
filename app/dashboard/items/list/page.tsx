@@ -12,7 +12,7 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
-import { formatDateShort } from "../../../utils/validator";
+import { formatDateShort, dateNoTimezone } from "../../../utils/validator";
 import AddItemModal from "../../../components/AddItemModal";
 
 import {
@@ -138,7 +138,10 @@ export default function SoldItemsPage() {
 
   // Columns
   const columns: Column<Item>[] = [
-    { header: "Timestamp", accessor: (row) => formatDate(row.timestamp) },
+    {
+      header: "Timestamp",
+      accessor: (row) => dateNoTimezone(row.timestamp),
+    },
     { header: "Mined From", accessor: "mined_from" },
     { header: "Prepared By", accessor: "prepared_by" },
     { header: "Category", accessor: "category" },
@@ -173,11 +176,11 @@ export default function SoldItemsPage() {
     { header: "Is Returned", accessor: "is_returned" },
     {
       header: "Date Returned",
-      accessor: (row) => formatDateShort(row.date_returned),
+      accessor: (row) => dateNoTimezone(row.date_returned),
     },
     {
       header: "Date Shipped",
-      accessor: (row) => formatDateShort(row.date_shipped),
+      accessor: (row) => dateNoTimezone(row.date_shipped),
     },
 
     {

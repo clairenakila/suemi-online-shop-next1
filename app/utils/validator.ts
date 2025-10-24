@@ -158,3 +158,15 @@ export const formatDateShort = (dateStr?: string): string => {
   const yy = String(d.getFullYear()).slice(-2); // last 2 digits
   return `${mm}-${dd}-${yy}`;
 };
+
+/**
+ * Format timestamp string to MM-DD-YY text (no timezone). to be used in date filter cause supa is timestampz
+ */
+export const dateNoTimezone = (timestamp?: string) => {
+  if (!timestamp) return "";
+  const d = new Date(timestamp);
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2); // last 2 digits
+  return `${mm}-${dd}-${yy}`;
+};
