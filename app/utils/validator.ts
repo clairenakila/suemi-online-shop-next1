@@ -188,21 +188,16 @@ export const textToNumber = (
 };
 
 /**
- * Converts multiple text columns of items to numbers safely.
- *
- * @param items Array of rows/objects
- * @param columns Array of column names to convert
- * @returns A new array of items where the specified columns are converted to numbers
+ * Convert a text value with commas into a number safely.
  */
-export const convertTextColumnsToNumbers = <T extends Record<string, any>>(
-  items: T[],
-  columns: string[]
-): T[] => {
-  return items.map((item) => {
-    const newItem = { ...item };
-    columns.forEach((col) => {
-      newItem[col] = Number(item[col]) || 0;
-    });
-    return newItem;
-  });
+export const myNumber = (value: string | number | undefined | null): number => {
+  if (!value) return 0;
+  return Number(String(value).replace(/,/g, "")) || 0;
+};
+
+/**
+ * Sum the 'quantity' column in a list of items.
+ */
+export const sumQuantity = (items: { quantity?: string }[]): number => {
+  return items.reduce((sum, item) => sum + myNumber(item.quantity), 0);
 };

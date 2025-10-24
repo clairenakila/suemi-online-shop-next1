@@ -2,76 +2,47 @@
 
 import { FC, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { convertTextColumnsToNumbers } from "../../utils/validator";
+import { sumQuantity } from "../../utils/validator";
 
 interface Props {
-  type: "shipped-today" | "total-quantity";
   label: string;
   color?: string;
 }
 
-const StatWidget: FC<Props> = ({ type, label, color = "purple" }) => {
-  const [value, setValue] = useState(0);
+const StatWidget: FC<Props> = ({ label, color = "purple" }) => {
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    const fetchAllItems = async () => {
+    const fetchTotalQuantity = async () => {
       try {
-        let total = 0;
         let from = 0;
         const pageSize = 500;
+        let allItems: any[] = [];
 
         while (true) {
           const { data: items, error } = await supabase
             .from("items")
-            .select("quantity,date_shipped")
+            .select("quantity")
             .range(from, from + pageSize - 1);
 
           if (error) throw error;
           if (!items || items.length === 0) break;
 
-          // Convert quantity column from text to number
-          const convertedItems = convertTextColumnsToNumbers(items, [
-            "quantity",
-          ]);
-
-          // Sum the quantities
-          const pageTotal = convertedItems.reduce((sum, i) => {
-            const qty = i.quantity;
-
-            if (type === "shipped-today") {
-              const shipped = i.date_shipped ? new Date(i.date_shipped) : null;
-              if (!shipped) return sum;
-
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const tomorrow = new Date(today);
-              tomorrow.setDate(tomorrow.getDate() + 1);
-
-              if (shipped >= today && shipped < tomorrow) {
-                return sum + qty;
-              }
-              return sum;
-            }
-
-            // total-quantity
-            return sum + qty;
-          }, 0);
-
-          total += pageTotal;
-
-          if (items.length < pageSize) break; // last page
+          allItems = allItems.concat(items);
+          if (items.length < pageSize) break;
           from += pageSize;
         }
 
-        setValue(total);
+        const totalQty = sumQuantity(allItems);
+        setTotal(totalQty);
       } catch (err: any) {
         console.error("StatWidget fetch error:", err);
-        setValue(0);
+        setTotal(0);
       }
     };
 
-    fetchAllItems();
-  }, [type]);
+    fetchTotalQuantity();
+  }, []);
 
   return (
     <div
@@ -80,7 +51,7 @@ const StatWidget: FC<Props> = ({ type, label, color = "purple" }) => {
     >
       <div>
         <h6 className="mb-1">{label}</h6>
-        <h3 className="mb-0">{value}</h3>
+        <h3 className="mb-0">{total}</h3>
       </div>
     </div>
   );
