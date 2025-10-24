@@ -12,7 +12,7 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
-
+import { formatDateShort } from "../../../utils/validator";
 import AddItemModal from "../../../components/AddItemModal";
 
 import {
@@ -171,8 +171,14 @@ export default function SoldItemsPage() {
         ),
     },
     { header: "Is Returned", accessor: "is_returned" },
-    { header: "Date Returned", accessor: "date_returned" },
-    { header: "Date Shipped", accessor: "date_shipped" },
+    {
+      header: "Date Returned",
+      accessor: (row) => formatDateShort(row.date_returned),
+    },
+    {
+      header: "Date Shipped",
+      accessor: (row) => formatDateShort(row.date_shipped),
+    },
 
     {
       header: "Action",
@@ -208,7 +214,7 @@ export default function SoldItemsPage() {
       <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex flex-wrap align-items-center gap-2">
           <button
-            className="btn btn-primary"
+            className="btn btn-success"
             onClick={() => setShowAddModal(true)}
           >
             Add Item

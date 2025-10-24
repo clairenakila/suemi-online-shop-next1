@@ -145,3 +145,16 @@ export const saveCalculatedFields = async (item: {
 
   if (error) toast.error(error.message);
 };
+
+/**
+ * Format ISO date string to MM-DD-YY, it will show dates without timezone in table
+ */
+export const formatDateShort = (dateStr?: string): string => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(-2); // last 2 digits
+  return `${mm}-${dd}-${yy}`;
+};
