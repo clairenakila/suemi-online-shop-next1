@@ -79,53 +79,50 @@ export default function SoldItemsPage() {
   }, [page, pageSize, searchTerm, dateRange]);
 
   const fetchItems = async () => {
-    try {
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
 
-      let query = supabase
-        .from("items")
-        .select("*", { count: "exact" })
-        .order("timestamp", { ascending: false })
-        .range(from, to);
+    let query = supabase
+      .from("items")
+      .select("*", { count: "exact" })
+      .order("timestamp", { ascending: false })
+      .range(from, to);
 
-      // Search term
-      if (searchTerm.trim()) {
-        const term = `%${searchTerm.trim()}%`;
-        query = query.or(
-          `brand.ilike.${term},order_id.ilike.${term},prepared_by.ilike.${term},live_seller.ilike.${term},category.ilike.${term},mined_from.ilike.${term}`
-        );
-      }
+    // ← PUT DATE FILTER HERE
+    if (dateRange.startDate && dateRange.endDate) {
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      end.setHours(23, 59, 59, 999);
 
-      // Date filter
-      if (dateRange.startDate && dateRange.endDate) {
-        const start = new Date(dateRange.startDate);
-        const end = new Date(dateRange.endDate);
-        // set end to 23:59:59 to include full day
-        end.setHours(23, 59, 59, 999);
-
-        query = query
-          .gte("timestamp", start.toISOString())
-          .lte("timestamp", end.toISOString());
-      }
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-
-      const mapped = (data || []).map((i) => ({
-        ...i,
-        category: i.category?.toString() || "",
-        timestamp: parseExcelDate(i.timestamp),
-        date_shipped: parseExcelDate(i.date_shipped),
-        date_returned: parseExcelDate(i.date_returned),
-      }));
-
-      setItems(mapped);
-      setTotalCount(count || 0);
-    } catch (err: any) {
-      toast.error(err.message);
+      query = query
+        .gte("timestamp", start.toISOString())
+        .lte("timestamp", end.toISOString());
     }
+
+    // search filter (optional)
+    if (searchTerm.trim()) {
+      const term = `%${searchTerm.trim()}%`;
+      query = query.or(
+        `brand.ilike.${term},order_id.ilike.${term},prepared_by.ilike.${term},live_seller.ilike.${term},category.ilike.${term},mined_from.ilike.${term}`
+      );
+    }
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+
+    // format for display only
+    const mapped = (data || []).map((i) => ({
+      ...i,
+      timestamp: dateNoTimezone(i.timestamp),
+      date_shipped: dateNoTimezone(i.date_shipped),
+      date_returned: dateNoTimezone(i.date_returned),
+    }));
+
+    setItems(mapped);
+    setTotalCount(count || 0);
   };
+
+  //////////////
 
   // Selection
   const toggleSelectItem = (id: string) =>
