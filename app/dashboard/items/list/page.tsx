@@ -89,21 +89,50 @@ export default function SoldItemsPage() {
         .order("timestamp", { ascending: false })
         .range(from, to);
 
-      // Filter by dateRange in Supabase
+      // --- Date filter ---
       if (dateRange.startDate && dateRange.endDate) {
         const start = new Date(dateRange.startDate);
         const end = new Date(dateRange.endDate);
-        end.setHours(23, 59, 59, 999); // include full day
-
+        end.setHours(23, 59, 59, 999);
         query = query
           .gte("timestamp", start.toISOString())
           .lte("timestamp", end.toISOString());
       }
 
-      const { data, error, count } = await query;
-      if (error) throw error;
+      // --- Search filter on text columns only ---
+      const searchableColumns = [
+        "prepared_by",
+        "brand",
+        "order_id",
+        "live_seller",
+        "category",
+        "mined_from",
+        "shoppee_commission",
+        "discount",
+        "is_returned",
+      ];
 
-      // Map timestamps to MM-DD-YY format
+      if (searchTerm.trim()) {
+        const term = `%${searchTerm.trim().toLowerCase()}%`;
+        const orString = searchableColumns
+          .map((col) => `${col}.ilike.${term}`)
+          .join(",");
+
+        if (orString) {
+          query = query.or(orString);
+          console.log("Supabase search filter:", orString); // debug log
+        }
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error("Supabase fetchItems error:", error);
+        throw error;
+      }
+
+      console.log("Supabase data returned:", data); // debug log
+
       const mapped = (data || []).map((i) => ({
         ...i,
         timestamp: dateNoTimezone(i.timestamp),
@@ -111,28 +140,11 @@ export default function SoldItemsPage() {
         date_returned: dateNoTimezone(i.date_returned),
       }));
 
-      // Filter by searchTerm (client-side)
-      const filtered = mapped.filter((item) => {
-        const term = searchTerm.trim().toLowerCase();
-        if (!term) return true;
-
-        return (
-          (item.brand?.toLowerCase().includes(term) ?? false) ||
-          (item.order_id?.toLowerCase().includes(term) ?? false) ||
-          (item.prepared_by?.toLowerCase().includes(term) ?? false) ||
-          (item.live_seller?.toLowerCase().includes(term) ?? false) ||
-          (item.category?.toLowerCase().includes(term) ?? false) ||
-          (item.mined_from?.toLowerCase().includes(term) ?? false) ||
-          (item.timestamp?.includes(term) ?? false) ||
-          (item.date_shipped?.includes(term) ?? false) ||
-          (item.date_returned?.includes(term) ?? false)
-        );
-      });
-
-      setItems(filtered);
-      setTotalCount(filtered.length);
+      setItems(mapped);
+      setTotalCount(count || 0);
     } catch (err: any) {
-      toast.error(err.message);
+      console.error("fetchItems error caught:", err);
+      toast.error(err.message || "Failed to fetch items");
     }
   };
 
