@@ -22,6 +22,7 @@ interface BulkEditProps {
   selectedIds: string[];
   fields: FieldConfig[];
   onSuccess: () => void;
+  columns?: number;
 }
 
 export default function BulkEdit({

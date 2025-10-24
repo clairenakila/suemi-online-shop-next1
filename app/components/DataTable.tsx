@@ -23,10 +23,6 @@ interface DataTableProps<T> {
   onPageSizeChange: (size: number) => void;
 }
 
-/**
- * Automatically sorts by `created_at` or `timestamp` descending
- * (if either field exists in data rows).
- */
 export function DataTable<T extends Record<string, any>>({
   data,
   columns,
@@ -41,7 +37,7 @@ export function DataTable<T extends Record<string, any>>({
   onPageChange,
   onPageSizeChange,
 }: DataTableProps<T>) {
-  // ✅ Sort by newest created_at/timestamp first
+  // Optional: sort data locally for display (does NOT affect pagination)
   const sortedData = useMemo(() => {
     if (!data?.length) return [];
     if ("created_at" in data[0]) {
@@ -59,12 +55,13 @@ export function DataTable<T extends Record<string, any>>({
     return data;
   }, [data]);
 
+  // ----------------------------
+  // Render table rows (no slicing!)
+  // ----------------------------
+  const rowsToRender = sortedData;
+
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const paginatedData = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [sortedData, page, pageSize]);
 
   return (
     <div>
@@ -77,8 +74,8 @@ export function DataTable<T extends Record<string, any>>({
                   <input
                     type="checkbox"
                     checked={
-                      selectedIds.length === paginatedData.length &&
-                      paginatedData.length > 0
+                      selectedIds.length === rowsToRender.length &&
+                      rowsToRender.length > 0
                     }
                     onChange={(e) => onToggleSelectAll?.(e.target.checked)}
                   />
@@ -98,7 +95,7 @@ export function DataTable<T extends Record<string, any>>({
           </thead>
 
           <tbody>
-            {paginatedData.length === 0 ? (
+            {rowsToRender.length === 0 ? (
               <tr>
                 <td
                   colSpan={selectable ? columns.length + 1 : columns.length}
@@ -108,7 +105,7 @@ export function DataTable<T extends Record<string, any>>({
                 </td>
               </tr>
             ) : (
-              paginatedData.map((row) => (
+              rowsToRender.map((row) => (
                 <tr key={row[rowKey]}>
                   {selectable && (
                     <td className="text-center">

@@ -22,6 +22,7 @@ import {
   calculateCommissionRate,
   parseExcelDate,
 } from "../../../utils/validator";
+import { timeStamp } from "console";
 
 interface Item {
   id?: string;
@@ -57,7 +58,21 @@ export default function SoldItemsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
+  const [employees, setEmployees] = useState<string[]>([]);
+  // Fetch employees on mount
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("name")
+        .eq("is_employee", "Yes");
 
+      if (error) toast.error(error.message);
+      else setEmployees(data?.map((u) => u.name) || []);
+    };
+
+    fetchEmployees();
+  }, []);
   // Fetch items with real pagination + search
   useEffect(() => {
     fetchItems();
@@ -84,9 +99,14 @@ export default function SoldItemsPage() {
 
       // Date filter
       if (dateRange.startDate && dateRange.endDate) {
+        const start = new Date(dateRange.startDate);
+        const end = new Date(dateRange.endDate);
+        // set end to 23:59:59 to include full day
+        end.setHours(23, 59, 59, 999);
+
         query = query
-          .gte("timestamp", dateRange.startDate)
-          .lte("timestamp", dateRange.endDate);
+          .gte("timestamp", start.toISOString())
+          .lte("timestamp", end.toISOString());
       }
 
       const { data, error, count } = await query;
@@ -174,8 +194,10 @@ export default function SoldItemsPage() {
       center: true,
     },
   ];
-
+  //
   const [tableColumns, setTableColumns] = useState(columns);
+
+  //define all bulk edit
 
   return (
     <div className="container my-5">
@@ -201,13 +223,56 @@ export default function SoldItemsPage() {
             table="items"
             selectedIds={selectedItems}
             onSuccess={fetchItems}
+            columns={2}
             fields={[
+              {
+                key: "mined_from",
+                label: "Mined From",
+                type: "select",
+                options: ["Shoppee", "Facebook"],
+              },
+
+              {
+                key: "prepared_by",
+                label: "Prepared By",
+                type: "select",
+                options: employees,
+              },
               { key: "brand", label: "Brand", type: "text" },
+              { key: "category", label: "Category", type: "text" },
+
               { key: "order_id", label: "Order ID", type: "text" },
               { key: "selling_price", label: "Selling Price", type: "number" },
               { key: "quantity", label: "Quantity", type: "number" },
               { key: "capital", label: "Capital", type: "number" },
-              { key: "category", label: "Category", type: "text" },
+              {
+                key: "shoppee_commission",
+                label: "Shoppee Commission",
+                type: "text",
+              },
+              {
+                key: "discount",
+                label: "Discount",
+                type: "text",
+              },
+              {
+                key: "is_returned",
+                label: "Is Returned",
+                type: "select",
+                options: ["Yes", "No"],
+              },
+              {
+                key: "date_returned",
+                label: "Date Returned",
+                placeholder: "Write it like this: 10-21-25",
+                type: "text",
+              },
+              {
+                key: "date_shipped",
+                label: "Date Shipped",
+                placeholder: "Write it like this: 10-21-25",
+                type: "text",
+              },
             ]}
           />
 
