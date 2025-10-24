@@ -12,6 +12,7 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
+
 import AddItemModal from "../../../components/AddItemModal";
 
 import {
@@ -53,43 +54,57 @@ export default function SoldItemsPage() {
   }>({ startDate: null, endDate: null });
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const [newItem, setNewItem] = useState<Item>({
-    timestamp: new Date().toISOString(),
-    prepared_by: "",
-    brand: "",
-    order_id: "",
-    shoppee_commission: "0",
-    selling_price: "0",
-    quantity: "1",
-    capital: "0",
-    order_income: "0",
-    discount: "0",
-    live_seller: "",
-    category: "",
-    mined_from: "",
-    date_shipped: "",
-    date_returned: "",
-    is_returned: "No",
-  });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(100);
+  const [totalCount, setTotalCount] = useState(0);
 
-  // Fetch items
+  // Fetch items with real pagination + search
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [page, pageSize, searchTerm, dateRange]);
 
   const fetchItems = async () => {
-    const { data, error } = await supabase.from("items").select("*");
-    if (error) return toast.error(error.message);
+    try {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
-    const mapped = (data || []).map((i) => ({
-      ...i,
-      category: i.category?.toString() || "",
-      timestamp: parseExcelDate(i.timestamp),
-      date_shipped: parseExcelDate(i.date_shipped),
-      date_returned: parseExcelDate(i.date_returned),
-    }));
+      let query = supabase
+        .from("items")
+        .select("*", { count: "exact" })
+        .order("timestamp", { ascending: false })
+        .range(from, to);
 
-    setItems(mapped);
+      // Search term
+      if (searchTerm.trim()) {
+        const term = `%${searchTerm.trim()}%`;
+        query = query.or(
+          `brand.ilike.${term},order_id.ilike.${term},prepared_by.ilike.${term},live_seller.ilike.${term},category.ilike.${term},mined_from.ilike.${term}`
+        );
+      }
+
+      // Date filter
+      if (dateRange.startDate && dateRange.endDate) {
+        query = query
+          .gte("timestamp", dateRange.startDate)
+          .lte("timestamp", dateRange.endDate);
+      }
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+
+      const mapped = (data || []).map((i) => ({
+        ...i,
+        category: i.category?.toString() || "",
+        timestamp: parseExcelDate(i.timestamp),
+        date_shipped: parseExcelDate(i.date_shipped),
+        date_returned: parseExcelDate(i.date_returned),
+      }));
+
+      setItems(mapped);
+      setTotalCount(count || 0);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   // Selection
@@ -101,32 +116,7 @@ export default function SoldItemsPage() {
   const toggleSelectAll = (checked: boolean) =>
     setSelectedItems(checked ? items.map((i) => i.id!) : []);
 
-  // Filter by search & date
-  const filteredItems = items.filter((i) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = [
-      i.brand,
-      i.order_id,
-      i.prepared_by,
-      i.live_seller,
-      i.mined_from,
-      i.category,
-    ].some((val) => val?.toLowerCase().includes(term));
-
-    let matchesDateRange = true;
-    if (dateRange.startDate && dateRange.endDate && i.timestamp) {
-      const ts = new Date(i.timestamp);
-      const start = new Date(dateRange.startDate);
-      const end = new Date(dateRange.endDate);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-      matchesDateRange = ts >= start && ts <= end;
-    }
-
-    return matchesSearch && matchesDateRange;
-  });
-
-  // Table columns
+  // Columns
   const columns: Column<Item>[] = [
     { header: "Timestamp", accessor: (row) => formatDate(row.timestamp) },
     { header: "Mined From", accessor: "mined_from" },
@@ -181,7 +171,7 @@ export default function SoldItemsPage() {
     },
   ];
 
-  const [tableColumns, setTableColumns] = useState<Column<Item>[]>(columns);
+  const [tableColumns, setTableColumns] = useState(columns);
 
   return (
     <div className="container my-5">
@@ -238,7 +228,7 @@ export default function SoldItemsPage() {
           />
 
           <ExportButton
-            data={filteredItems}
+            data={items}
             headersMap={{
               Timestamp: (row) => row.timestamp || "",
               "Prepared By": "prepared_by",
@@ -280,16 +270,17 @@ export default function SoldItemsPage() {
             value={searchTerm}
             onChange={setSearchTerm}
             options={items.map((i) => i.brand || "")}
+            storageKey="sold_items_search"
           />
+
           <button
             onClick={() => setShowDatePicker(!showDatePicker)}
-            className="p-2 bg-light border rounded-3 d-flex align-items-center justify-content-center shadow-sm"
+            className="p-2 bg-light border rounded-3 shadow-sm"
             style={{ borderRadius: "12px", width: "42px", height: "42px" }}
             title="Filter by date created"
           >
             <i className="bi bi-calendar3 fs-5 text-secondary"></i>
           </button>
-
           <ToggleColumns columns={columns} onChange={setTableColumns} />
         </div>
       </div>
@@ -301,14 +292,18 @@ export default function SoldItemsPage() {
       )}
 
       <DataTable
-        data={filteredItems}
+        data={items}
         columns={tableColumns}
         selectable
         selectedIds={selectedItems}
         onToggleSelect={toggleSelectItem}
         onToggleSelectAll={toggleSelectAll}
         rowKey="id"
-        defaultRecordsPerPage={50}
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
       />
     </div>
   );

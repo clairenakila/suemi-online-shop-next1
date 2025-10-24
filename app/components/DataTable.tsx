@@ -1,11 +1,10 @@
 "use client";
 
-import React, { ReactNode, useState, useMemo } from "react";
+import React, { ReactNode } from "react";
 
 export type Column<T> = {
   header: string;
   accessor: keyof T | ((row: T) => ReactNode);
-  className?: string;
   center?: boolean;
 };
 
@@ -17,7 +16,11 @@ interface DataTableProps<T> {
   onToggleSelect?: (id: string) => void;
   onToggleSelectAll?: (checked: boolean) => void;
   rowKey: keyof T;
-  defaultRecordsPerPage?: number;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -28,59 +31,17 @@ export function DataTable<T extends Record<string, any>>({
   onToggleSelect,
   onToggleSelectAll,
   rowKey,
-  defaultRecordsPerPage = 50,
+  page,
+  pageSize,
+  totalCount,
+  onPageChange,
+  onPageSizeChange,
 }: DataTableProps<T>) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [recordsPerPage, setRecordsPerPage] = useState(defaultRecordsPerPage);
-
-  // 🔽 Sort data by created_at DESC if it exists
-  const sortedData = useMemo(() => {
-    if (data.length === 0) return [];
-
-    return [...data].sort((a, b) => {
-      const getTime = (row: any) => {
-        if ("created_at" in row && row.created_at)
-          return new Date(row.created_at).getTime();
-        if ("timestamp" in row && row.timestamp)
-          return new Date(row.timestamp).getTime();
-        return 0;
-      };
-      return getTime(b) - getTime(a); // descending
-    });
-  }, [data]);
-
-  // 🔢 Pagination calculations
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(sortedData.length / recordsPerPage)),
-    [sortedData.length, recordsPerPage]
-  );
-
-  if (currentPage > totalPages) setCurrentPage(totalPages);
-
-  const startIdx = (currentPage - 1) * recordsPerPage;
-  const paginatedData = useMemo(
-    () => sortedData.slice(startIdx, startIdx + recordsPerPage),
-    [sortedData, startIdx, recordsPerPage]
-  );
-
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-  };
-
-  const handleRecordsPerPageChange = (value: number) => {
-    const newTotalPages = Math.max(1, Math.ceil(sortedData.length / value));
-    setRecordsPerPage(value);
-    setCurrentPage((prev) => Math.min(prev, newTotalPages));
-  };
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <div>
-      {/* Table container */}
-      <div
-        className="table-responsive"
-        style={{ maxHeight: "70vh", overflowY: "auto" }}
-      >
+      <div className="table-responsive" style={{ maxHeight: "70vh" }}>
         <table className="table table-bordered table-striped">
           <thead className="table-light sticky-top">
             <tr>
@@ -89,8 +50,7 @@ export function DataTable<T extends Record<string, any>>({
                   <input
                     type="checkbox"
                     checked={
-                      selectedIds.length === sortedData.length &&
-                      sortedData.length > 0
+                      selectedIds.length === data.length && data.length > 0
                     }
                     onChange={(e) => onToggleSelectAll?.(e.target.checked)}
                   />
@@ -105,7 +65,7 @@ export function DataTable<T extends Record<string, any>>({
           </thead>
 
           <tbody>
-            {paginatedData.length === 0 ? (
+            {data.length === 0 ? (
               <tr>
                 <td
                   colSpan={selectable ? columns.length + 1 : columns.length}
@@ -115,7 +75,7 @@ export function DataTable<T extends Record<string, any>>({
                 </td>
               </tr>
             ) : (
-              paginatedData.map((row) => (
+              data.map((row) => (
                 <tr key={row[rowKey]}>
                   {selectable && (
                     <td className="text-center">
@@ -144,51 +104,43 @@ export function DataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Pagination + Footer */}
+      {/* Pagination */}
       <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
-        {/* Show entries */}
         <div>
-          <label>
-            Show{" "}
-            <select
-              className="form-select d-inline-block w-auto"
-              value={recordsPerPage}
-              onChange={(e) =>
-                handleRecordsPerPageChange(Number(e.target.value))
-              }
-            >
-              {[2, 10, 25, 50, 100].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>{" "}
-            entries
-          </label>
+          Show{" "}
+          <select
+            className="form-select d-inline-block w-auto"
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          >
+            {[50, 100, 200, 500].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>{" "}
+          entries
         </div>
 
-        {/* Page buttons */}
-        {totalPages > 1 && (
-          <div>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <div>
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .slice(Math.max(0, page - 3), Math.min(totalPages, page + 2))
+            .map((p) => (
               <button
-                key={page}
+                key={p}
                 className={`btn btn-sm ${
-                  page === currentPage ? "btn-primary" : "btn-outline-secondary"
+                  p === page ? "btn-primary" : "btn-outline-secondary"
                 } mx-1`}
-                onClick={() => handlePageChange(page)}
+                onClick={() => onPageChange(p)}
               >
-                {page}
+                {p}
               </button>
             ))}
-          </div>
-        )}
+        </div>
 
-        {/* Entry info */}
         <div>
-          Showing {sortedData.length === 0 ? 0 : startIdx + 1} to{" "}
-          {Math.min(startIdx + recordsPerPage, sortedData.length)} of{" "}
-          {sortedData.length} entries
+          Showing {(page - 1) * pageSize + 1}–
+          {Math.min(page * pageSize, totalCount)} of {totalCount} entries
         </div>
       </div>
     </div>
