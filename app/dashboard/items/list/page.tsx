@@ -150,6 +150,10 @@ export default function SoldItemsPage() {
           row.shoppee_commission || "0"
         ),
     },
+    { header: "Is Returned", accessor: "is_returned" },
+    { header: "Date Returned", accessor: "date_returned" },
+    { header: "Date Shipped", accessor: "date_shipped" },
+
     {
       header: "Action",
       accessor: (row) => (

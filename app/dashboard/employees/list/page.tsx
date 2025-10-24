@@ -388,7 +388,7 @@ export default function EmployeesListPage() {
         </div>
       )}
 
-      <DataTable
+      <DataTable<User>
         data={filteredUsers}
         columns={tableColumns}
         selectable
@@ -396,7 +396,11 @@ export default function EmployeesListPage() {
         onToggleSelect={toggleSelectUser}
         onToggleSelectAll={toggleSelectAll}
         rowKey="id"
-        defaultRecordsPerPage={50}
+        page={1} // or your state variable
+        pageSize={50}
+        totalCount={filteredUsers.length}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
       />
     </div>
   );

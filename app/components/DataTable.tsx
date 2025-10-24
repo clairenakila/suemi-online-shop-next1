@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import React, { ReactNode, useMemo } from "react";
 
 export type Column<T> = {
   header: string;
@@ -23,6 +23,10 @@ interface DataTableProps<T> {
   onPageSizeChange: (size: number) => void;
 }
 
+/**
+ * Automatically sorts by `created_at` or `timestamp` descending
+ * (if either field exists in data rows).
+ */
 export function DataTable<T extends Record<string, any>>({
   data,
   columns,
@@ -37,7 +41,30 @@ export function DataTable<T extends Record<string, any>>({
   onPageChange,
   onPageSizeChange,
 }: DataTableProps<T>) {
+  // ✅ Sort by newest created_at/timestamp first
+  const sortedData = useMemo(() => {
+    if (!data?.length) return [];
+    if ("created_at" in data[0]) {
+      return [...data].sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+    if ("timestamp" in data[0]) {
+      return [...data].sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+    }
+    return data;
+  }, [data]);
+
+  // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedData.slice(start, start + pageSize);
+  }, [sortedData, page, pageSize]);
 
   return (
     <div>
@@ -50,14 +77,20 @@ export function DataTable<T extends Record<string, any>>({
                   <input
                     type="checkbox"
                     checked={
-                      selectedIds.length === data.length && data.length > 0
+                      selectedIds.length === paginatedData.length &&
+                      paginatedData.length > 0
                     }
                     onChange={(e) => onToggleSelectAll?.(e.target.checked)}
                   />
                 </th>
               )}
               {columns.map((col, idx) => (
-                <th key={idx} className={col.center ? "text-center" : ""}>
+                <th
+                  key={idx}
+                  className={`${
+                    col.center ? "text-center" : ""
+                  } fw-semibold text-nowrap`}
+                >
                   {col.header}
                 </th>
               ))}
@@ -65,17 +98,17 @@ export function DataTable<T extends Record<string, any>>({
           </thead>
 
           <tbody>
-            {data.length === 0 ? (
+            {paginatedData.length === 0 ? (
               <tr>
                 <td
                   colSpan={selectable ? columns.length + 1 : columns.length}
-                  className="text-center"
+                  className="text-center py-4 text-secondary"
                 >
                   No records found.
                 </td>
               </tr>
             ) : (
-              data.map((row) => (
+              paginatedData.map((row) => (
                 <tr key={row[rowKey]}>
                   {selectable && (
                     <td className="text-center">
@@ -92,7 +125,11 @@ export function DataTable<T extends Record<string, any>>({
                         ? col.accessor(row)
                         : row[col.accessor];
                     return (
-                      <td key={idx} className={col.center ? "text-center" : ""}>
+                      <td
+                        key={idx}
+                        className={col.center ? "text-center" : ""}
+                        style={{ verticalAlign: "middle" }}
+                      >
                         {value}
                       </td>
                     );
@@ -104,8 +141,9 @@ export function DataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+      {/* Pagination footer */}
+      <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+        {/* Page size selector */}
         <div>
           Show{" "}
           <select
@@ -122,15 +160,16 @@ export function DataTable<T extends Record<string, any>>({
           entries
         </div>
 
-        <div>
+        {/* Page buttons */}
+        <div className="d-flex flex-wrap align-items-center justify-content-center">
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .slice(Math.max(0, page - 3), Math.min(totalPages, page + 2))
             .map((p) => (
               <button
                 key={p}
-                className={`btn btn-sm ${
+                className={`btn btn-sm mx-1 ${
                   p === page ? "btn-primary" : "btn-outline-secondary"
-                } mx-1`}
+                }`}
                 onClick={() => onPageChange(p)}
               >
                 {p}
@@ -138,7 +177,8 @@ export function DataTable<T extends Record<string, any>>({
             ))}
         </div>
 
-        <div>
+        {/* Record count summary */}
+        <div className="text-muted small">
           Showing {(page - 1) * pageSize + 1}–
           {Math.min(page * pageSize, totalCount)} of {totalCount} entries
         </div>
