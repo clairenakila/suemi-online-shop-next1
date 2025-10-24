@@ -170,3 +170,19 @@ export const dateNoTimezone = (timestamp?: string) => {
   const yy = String(d.getFullYear()).slice(-2); // last 2 digits
   return `${mm}-${dd}-${yy}`;
 };
+
+//the text are parsed to number, in dashboard statwidget
+export const textToNumber = (
+  val: string | number | null | undefined
+): number => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === "number") return val;
+
+  // Clean string: remove commas, trim spaces
+  const cleaned = String(val).replace(/,/g, "").trim();
+
+  // Convert to number
+  const n = parseFloat(cleaned);
+
+  return isNaN(n) ? 0 : n;
+};

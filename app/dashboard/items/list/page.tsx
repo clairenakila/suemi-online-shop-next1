@@ -83,6 +83,7 @@ export default function SoldItemsPage() {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // Start query
       let query = supabase
         .from("items")
         .select("*", { count: "exact" })
@@ -94,56 +95,53 @@ export default function SoldItemsPage() {
         const start = new Date(dateRange.startDate);
         const end = new Date(dateRange.endDate);
         end.setHours(23, 59, 59, 999);
+
         query = query
           .gte("timestamp", start.toISOString())
           .lte("timestamp", end.toISOString());
       }
 
-      // --- Search filter on text columns only ---
-      const searchableColumns = [
+      // --- Search filter (only text columns) ---
+      const textColumns = [
         "prepared_by",
         "brand",
         "order_id",
         "live_seller",
         "category",
         "mined_from",
-        "shoppee_commission",
-        "discount",
         "is_returned",
       ];
 
       if (searchTerm.trim()) {
-        const term = `%${searchTerm.trim().toLowerCase()}%`;
-        const orString = searchableColumns
+        const term = `%${searchTerm.trim()}%`;
+        const orString = textColumns
           .map((col) => `${col}.ilike.${term}`)
           .join(",");
-
-        if (orString) {
-          query = query.or(orString);
-          console.log("Supabase search filter:", orString); // debug log
-        }
+        query = query.or(orString);
+        console.log("Supabase search filter:", orString);
       }
 
+      // Fetch
       const { data, error, count } = await query;
 
       if (error) {
         console.error("Supabase fetchItems error:", error);
-        throw error;
+        toast.error(error.message || "Failed to fetch items");
+        return;
       }
 
-      console.log("Supabase data returned:", data); // debug log
-
+      // Map dates safely
       const mapped = (data || []).map((i) => ({
         ...i,
-        timestamp: dateNoTimezone(i.timestamp),
-        date_shipped: dateNoTimezone(i.date_shipped),
-        date_returned: dateNoTimezone(i.date_returned),
+        timestamp: i.timestamp ? dateNoTimezone(i.timestamp) : null,
+        date_shipped: i.date_shipped ? dateNoTimezone(i.date_shipped) : null,
+        date_returned: i.date_returned ? dateNoTimezone(i.date_returned) : null,
       }));
 
       setItems(mapped);
       setTotalCount(count || 0);
     } catch (err: any) {
-      console.error("fetchItems error caught:", err);
+      console.error("fetchItems caught error:", err);
       toast.error(err.message || "Failed to fetch items");
     }
   };
