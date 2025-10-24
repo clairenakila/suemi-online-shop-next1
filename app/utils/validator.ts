@@ -186,3 +186,23 @@ export const textToNumber = (
 
   return isNaN(n) ? 0 : n;
 };
+
+/**
+ * Converts multiple text columns of items to numbers safely.
+ *
+ * @param items Array of rows/objects
+ * @param columns Array of column names to convert
+ * @returns A new array of items where the specified columns are converted to numbers
+ */
+export const convertTextColumnsToNumbers = <T extends Record<string, any>>(
+  items: T[],
+  columns: string[]
+): T[] => {
+  return items.map((item) => {
+    const newItem = { ...item };
+    columns.forEach((col) => {
+      newItem[col] = Number(item[col]) || 0;
+    });
+    return newItem;
+  });
+};

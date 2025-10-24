@@ -2,6 +2,7 @@
 
 import { FC, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { convertTextColumnsToNumbers } from "../../utils/validator";
 
 interface Props {
   type: "shipped-today" | "total-quantity";
@@ -28,20 +29,26 @@ const StatWidget: FC<Props> = ({ type, label, color = "purple" }) => {
           if (error) throw error;
           if (!items || items.length === 0) break;
 
-          const pageTotal = items.reduce((sum, i) => {
-            const qty = Number(i.quantity) || 0;
+          // Convert quantity column from text to number
+          const convertedItems = convertTextColumnsToNumbers(items, [
+            "quantity",
+          ]);
+
+          // Sum the quantities
+          const pageTotal = convertedItems.reduce((sum, i) => {
+            const qty = i.quantity;
 
             if (type === "shipped-today") {
               const shipped = i.date_shipped ? new Date(i.date_shipped) : null;
-              if (shipped) {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                if (shipped >= today && shipped < tomorrow) {
-                  return sum + qty;
-                }
-                return sum;
+              if (!shipped) return sum;
+
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const tomorrow = new Date(today);
+              tomorrow.setDate(tomorrow.getDate() + 1);
+
+              if (shipped >= today && shipped < tomorrow) {
+                return sum + qty;
               }
               return sum;
             }
