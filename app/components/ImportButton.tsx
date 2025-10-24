@@ -1,15 +1,16 @@
 "use client";
 
 import { useRef } from "react";
+import Papa from "papaparse";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 
 export interface ImportButtonProps {
-  table: string; // Supabase table name
-  headersMap: Record<string, string>; // { csvHeader: dbColumn }
+  table: string;
+  headersMap: Record<string, string>;
   onSuccess?: () => void;
-  transformRow?: (row: Record<string, any>) => Record<string, any>; // optional transform/validation
-  validateRow?: (row: Record<string, any>) => boolean; // optional row validation, return false to cancel
+  transformRow?: (row: Record<string, any>) => Record<string, any>;
+  validateRow?: (row: Record<string, any>) => boolean;
 }
 
 export default function ImportButton({
@@ -21,29 +22,51 @@ export default function ImportButton({
 }: ImportButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parseCSV = async (file: File): Promise<Record<string, any>[]> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        const lines = text.split(/\r\n|\n/).filter(Boolean);
-        if (!lines.length) return reject(new Error("CSV is empty"));
+  // Normalize header names for matching
+  const normalize = (str = "") =>
+    str
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/\u00A0/g, " ")
+      .toLowerCase();
 
-        const headers = lines[0].split(",").map((h) => h.trim());
-        const rows = lines.slice(1).map((line) => {
-          const values = line.split(",").map((v) => v.trim());
-          const obj: Record<string, any> = {};
-          headers.forEach((h, i) => (obj[h] = values[i] ?? ""));
-          return obj;
-        });
-
-        resolve(rows);
-      };
-      reader.onerror = () => reject(new Error("Failed to read file"));
-      reader.readAsText(file);
+  // Parse CSV with PapaParse
+  const parseCSV = async (file: File): Promise<Record<string, any>[]> =>
+    new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.trim(),
+        complete: (results) => resolve(results.data as Record<string, any>[]),
+        error: (err) => reject(err),
+      });
     });
+
+  // Parse various date formats safely
+  const parseDate = (value: string): string | null => {
+    if (!value) return null;
+    let parsed = Date.parse(value);
+
+    // fallback for common ambiguous formats
+    if (isNaN(parsed)) {
+      const parts = value.split(/[-/]/).map((x) => x.trim());
+      if (parts.length === 3) {
+        const [a, b, c] = parts.map(Number);
+        // MM-DD-YYYY
+        if (a <= 12 && b <= 31 && c >= 1900) {
+          parsed = Date.parse(`${c}-${a}-${b}`);
+        }
+        // DD-MM-YYYY
+        else if (b <= 12 && a <= 31 && c >= 1900) {
+          parsed = Date.parse(`${c}-${b}-${a}`);
+        }
+      }
+    }
+
+    return isNaN(parsed) ? null : new Date(parsed).toISOString();
   };
 
+  // Main import handler
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -56,35 +79,74 @@ export default function ImportButton({
 
       for (const row of rows) {
         const mappedRow: Record<string, any> = {};
+
+        // map CSV headers to DB columns
         for (const [csvHeader, dbColumn] of Object.entries(headersMap)) {
-          mappedRow[dbColumn] = row[csvHeader] ?? null;
+          if (!dbColumn) continue;
+
+          const matchedKey = Object.keys(row).find(
+            (key) => normalize(key) === normalize(csvHeader)
+          );
+          if (!matchedKey) continue;
+
+          let value: any = row[matchedKey];
+
+          if (typeof value === "string") {
+            value = value.trim();
+            if (value === "" || value.toLowerCase() === "null") value = null;
+          }
+
+          // Parse timestamps
+          if (
+            dbColumn &&
+            ["timestamp", "created_at"].includes(dbColumn.toLowerCase())
+          ) {
+            const parsedValue = parseDate(value);
+            if (!parsedValue) {
+              console.warn(`⚠️ Invalid date for ${dbColumn}:`, value);
+            }
+            value = parsedValue;
+          }
+
+          // Convert numeric strings
+          else if (
+            typeof value === "string" &&
+            value.match(/^-?\d+(\.\d+)?$/)
+          ) {
+            value = Number(value);
+          }
+
+          mappedRow[dbColumn] = value;
         }
 
-        let finalRow = mappedRow;
+        if (Object.keys(mappedRow).length === 0) continue;
 
+        // Apply optional transforms and validation
         if (transformRow) {
           const transformed = transformRow(mappedRow);
-          if (!transformed)
-            throw new Error("Import failed due to invalid row data");
-          finalRow = transformed;
+          if (!transformed) continue;
+          Object.assign(mappedRow, transformed);
         }
 
-        if (validateRow && !validateRow(finalRow)) {
-          throw new Error("Import cancelled due to invalid row data");
-        }
+        if (validateRow && !validateRow(mappedRow)) continue;
 
-        mappedData.push(finalRow);
+        mappedData.push(mappedRow);
       }
 
       if (!mappedData.length) throw new Error("No valid rows to import");
 
-      const { error } = await supabase.from(table).insert(mappedData);
-      if (error) throw error;
+      // ✅ Insert in chunks to avoid Supabase 1000-row limit
+      const chunkSize = 1000;
+      for (let i = 0; i < mappedData.length; i += chunkSize) {
+        const chunk = mappedData.slice(i, i + chunkSize);
+        const { error } = await supabase.from(table).insert(chunk);
+        if (error) throw error;
+      }
 
       toast.success(`${mappedData.length} records imported successfully`);
       onSuccess?.();
     } catch (err: any) {
-      console.error(err);
+      console.error("Import error:", err);
       toast.error(err.message || "Failed to import CSV");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -102,9 +164,9 @@ export default function ImportButton({
       <input
         type="file"
         accept=".csv"
-        className="d-none"
         ref={fileInputRef}
         onChange={handleFileChange}
+        className="d-none"
       />
     </>
   );

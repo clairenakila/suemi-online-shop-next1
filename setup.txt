@@ -5,3 +5,7 @@
 export default function SoldItemsPage() {
   return <div>Sold Items</div>;
 }
+
+
+//npm install --save-dev @types/papaparse 
+if component not found declarations
