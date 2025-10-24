@@ -79,47 +79,61 @@ export default function SoldItemsPage() {
   }, [page, pageSize, searchTerm, dateRange]);
 
   const fetchItems = async () => {
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    try {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
-    let query = supabase
-      .from("items")
-      .select("*", { count: "exact" })
-      .order("timestamp", { ascending: false })
-      .range(from, to);
+      let query = supabase
+        .from("items")
+        .select("*", { count: "exact" })
+        .order("timestamp", { ascending: false })
+        .range(from, to);
 
-    // ← PUT DATE FILTER HERE
-    if (dateRange.startDate && dateRange.endDate) {
-      const start = new Date(dateRange.startDate);
-      const end = new Date(dateRange.endDate);
-      end.setHours(23, 59, 59, 999);
+      // Filter by dateRange in Supabase
+      if (dateRange.startDate && dateRange.endDate) {
+        const start = new Date(dateRange.startDate);
+        const end = new Date(dateRange.endDate);
+        end.setHours(23, 59, 59, 999); // include full day
 
-      query = query
-        .gte("timestamp", start.toISOString())
-        .lte("timestamp", end.toISOString());
+        query = query
+          .gte("timestamp", start.toISOString())
+          .lte("timestamp", end.toISOString());
+      }
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+
+      // Map timestamps to MM-DD-YY format
+      const mapped = (data || []).map((i) => ({
+        ...i,
+        timestamp: dateNoTimezone(i.timestamp),
+        date_shipped: dateNoTimezone(i.date_shipped),
+        date_returned: dateNoTimezone(i.date_returned),
+      }));
+
+      // Filter by searchTerm (client-side)
+      const filtered = mapped.filter((item) => {
+        const term = searchTerm.trim().toLowerCase();
+        if (!term) return true;
+
+        return (
+          (item.brand?.toLowerCase().includes(term) ?? false) ||
+          (item.order_id?.toLowerCase().includes(term) ?? false) ||
+          (item.prepared_by?.toLowerCase().includes(term) ?? false) ||
+          (item.live_seller?.toLowerCase().includes(term) ?? false) ||
+          (item.category?.toLowerCase().includes(term) ?? false) ||
+          (item.mined_from?.toLowerCase().includes(term) ?? false) ||
+          (item.timestamp?.includes(term) ?? false) ||
+          (item.date_shipped?.includes(term) ?? false) ||
+          (item.date_returned?.includes(term) ?? false)
+        );
+      });
+
+      setItems(filtered);
+      setTotalCount(filtered.length);
+    } catch (err: any) {
+      toast.error(err.message);
     }
-
-    // search filter (optional)
-    if (searchTerm.trim()) {
-      const term = `%${searchTerm.trim()}%`;
-      query = query.or(
-        `brand.ilike.${term},order_id.ilike.${term},prepared_by.ilike.${term},live_seller.ilike.${term},category.ilike.${term},mined_from.ilike.${term}`
-      );
-    }
-
-    const { data, error, count } = await query;
-    if (error) throw error;
-
-    // format for display only
-    const mapped = (data || []).map((i) => ({
-      ...i,
-      timestamp: dateNoTimezone(i.timestamp),
-      date_shipped: dateNoTimezone(i.date_shipped),
-      date_returned: dateNoTimezone(i.date_returned),
-    }));
-
-    setItems(mapped);
-    setTotalCount(count || 0);
   };
 
   //////////////
