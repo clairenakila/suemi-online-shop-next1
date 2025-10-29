@@ -15,24 +15,43 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [usersMenuOpen, setUsersMenuOpen] = useState(false);
   const [itemsMenuOpen, setItemsMenuOpen] = useState(false);
-
+  const [userName, setUserName] = useState<string>("");
   const router = useRouter();
 
-  // ✅ Delay rendering until after client hydration
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    const fetchUser = async () => {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const user = JSON.parse(stored);
+        setUserName(user.name || "Unknown User");
+      } else {
+        const res = await fetch("/api/me");
+        const data = await res.json();
+        if (data.user) {
+          setUserName(data.user.name || "Unknown User");
+          localStorage.setItem("user", JSON.stringify(data.user));
+        } else {
+          router.push(ROUTES.HOME);
+        }
+      }
+    };
+
+    fetchUser();
+  }, [router]);
 
   const toggleSidebar = () => setCollapsed((prev) => !prev);
   const toggleUsersMenu = () => setUsersMenuOpen((prev) => !prev);
   const toggleItemsMenu = () => setItemsMenuOpen((prev) => !prev);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch("/api/logout", { method: "POST" });
+    localStorage.removeItem("user");
     toast.success("Logged out successfully");
     router.push(ROUTES.HOME);
   };
 
-  // ✅ Avoid hydration mismatch — render nothing until client is ready
   if (!mounted) return null;
 
   return (
@@ -56,7 +75,6 @@ export default function DashboardLayout({
         </div>
 
         <ul className="nav nav-pills flex-column grow">
-          {/* Dashboard */}
           <li className="nav-item mb-2">
             <Link
               href="/dashboard"
@@ -170,8 +188,11 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <div className="d-flex flex-column grow vh-100 overflow-hidden">
+        {/* Header: name left, logout right */}
         <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center shrink-0">
-          <h5 className="mb-0">Dashboard Header</h5>
+          <span className="fw-semibold text-secondary">
+            {userName || "Loading..."}
+          </span>
           <button
             className="btn btn-outline-secondary btn-sm"
             onClick={handleLogout}

@@ -15,13 +15,19 @@ export async function POST(req: NextRequest) {
     .from("users")
     .select("*")
     .eq("email", email)
-    .eq("password", password) // WARNING: plain text for simplicity
+    .eq("password", password) // ⚠️ plain text only for simplicity
     .single();
 
   if (error || !user) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
-  // ✅ Logged in
-  return NextResponse.json({ message: "Login successful", user });
+  // ✅ Set cookie
+  const res = NextResponse.json({ message: "Login successful", user });
+  res.cookies.set("user", JSON.stringify(user), {
+    httpOnly: true,
+    path: "/",
+    maxAge: 60 * 60 * 24, // 1 day
+  });
+  return res;
 }

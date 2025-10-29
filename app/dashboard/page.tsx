@@ -1,11 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import StatWidget from "../components/widgets/StatWidget";
 
 export default function DashboardHome() {
+  const [loading] = useState(false);
+
+  if (loading) return <p className="text-center mt-5">Loading dashboard...</p>;
+
   return (
     <div className="container my-4">
-      <h2>Dashboard</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold">Dashboard</h2>
+      </div>
 
       <div className="row g-3">
         <div className="col-md-3">

@@ -17,7 +17,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Call API route to validate credentials
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,6 +28,9 @@ export default function LoginPage() {
       if (!res.ok) {
         toast.error(data.error || "Invalid credentials");
       } else {
+        // ✅ Save user in localStorage
+        localStorage.setItem("user", JSON.stringify(data.user));
+
         toast.success("Logged in successfully!");
         router.push(ROUTES.DASHBOARD);
       }
@@ -49,13 +51,14 @@ export default function LoginPage() {
       >
         <Link href={ROUTES.HOME}>
           <img
-            src="/images/logo2.png" //logo.png is in public/images
+            src="/images/logo2.png"
             alt="Logo"
-            className="mx-auto"
+            className="mx-auto d-block"
             style={{ width: "120px", cursor: "pointer" }}
           />
         </Link>
         <h2 className="fw-bold text-center mb-3">Login</h2>
+
         <form onSubmit={handleSubmit}>
           <label className="form-label fw-semibold">Email address</label>
           <input
@@ -79,17 +82,6 @@ export default function LoginPage() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-
-        {/* <div className="text-center mt-3">
-          <p className="mb-0">
-            Don’t have an account?{" "}
-            <Link href={ROUTES.REGISTER}>
-              <span className="text-danger fw-semibold  text-decoration-none">
-                Register
-              </span>
-            </Link>
-          </p>
-        </div> */}
       </div>
     </div>
   );
