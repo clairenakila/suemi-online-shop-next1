@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { validateRequired } from "../utils/validator";
 
 export interface Item {
   id?: string;
@@ -22,7 +23,7 @@ export interface Item {
   category?: string;
   mined_from?: string;
   discount?: string;
-  commission_rate?: string; // new hidden field
+  commission_rate?: string;
   date_shipped?: string | null;
   date_returned?: string | null;
 }
@@ -59,7 +60,7 @@ export default function AddItemModal({
     shoppee_commission: "0",
     discount: "0",
     order_income: "0",
-    commission_rate: "0", // default 0
+    commission_rate: "0",
     live_seller: "",
     category: "",
     is_returned: "No",
@@ -68,6 +69,8 @@ export default function AddItemModal({
   });
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({}); // 🆕 Error state
+
   const [employees, setEmployees] = useState<{ id: string; name: string }[]>(
     []
   );
@@ -77,58 +80,52 @@ export default function AddItemModal({
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: empData, error: empError } = await supabase
+      const { data: empData } = await supabase
         .from("users")
         .select("id, name")
         .eq("is_employee", "Yes");
-      if (empError) toast.error(empError.message);
-      else setEmployees(empData || []);
+      setEmployees(empData || []);
 
-      const { data: liveData, error: liveError } = await supabase
+      const { data: liveData } = await supabase
         .from("users")
         .select("id, name")
         .eq("is_live_seller", "Yes");
-      if (liveError) toast.error(liveError.message);
-      else setLiveSellers(liveData || []);
+      setLiveSellers(liveData || []);
     };
-
     fetchData();
   }, []);
 
   const allFields: FieldConfig[] = [
-    { key: "timestamp", label: "Timestamp*", type: "date" },
+    { key: "timestamp", label: "Timestamp*", type: "date", required: true },
     {
       key: "mined_from",
-      label: "Mined From",
+      label: "Mined From*",
       type: "select",
       options: ["Facebook", "Shoppee"],
       required: true,
     },
     {
       key: "prepared_by",
-      label: "Prepared By",
+      label: "Prepared By*",
       type: "select",
       options: employees.map((u) => u.name),
+      required: true,
     },
-    {
-      key: "category",
-      label: "Category",
-      type: "select",
-      options: ["Bag", "Shoes", "Watch", "Clothing", "Other"],
-    },
-    { key: "brand", label: "Brand", type: "text" },
+    { key: "brand", label: "Brand*", type: "text", required: true },
     {
       key: "live_seller",
-      label: "Live Seller",
+      label: "Live Seller*",
       type: "select",
       options: liveSellers.map((u) => u.name),
+      required: true,
     },
     {
       key: "order_id",
-      label: "Order ID",
+      label: "Order ID*",
       type: "text",
       validate: (v) =>
         v.length === 4 ? "" : "Order ID must be exactly 4 characters",
+      required: true,
     },
     { key: "quantity", label: "Quantity", type: "number" },
     { key: "selling_price", label: "Selling Price", type: "float" },
@@ -144,8 +141,7 @@ export default function AddItemModal({
     { key: "date_shipped", label: "Date Shipped", type: "date" },
     { key: "date_returned", label: "Date Returned", type: "date" },
     { key: "order_income", label: "Order Income", type: "text" },
-
-    { key: "commission_rate", label: "Commission Rate", type: "text" }, // hidden
+    { key: "commission_rate", label: "Commission Rate", type: "text" },
   ];
 
   const hiddenKeys: (keyof Item)[] = ["order_income", "commission_rate"];
@@ -156,8 +152,26 @@ export default function AddItemModal({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    const newErrors: Record<string, string> = {};
 
+    // Validate required fields
+    for (const field of allFields.filter((f) => f.required)) {
+      const value = item[field.key] || "";
+      const err = validateRequired(value as string, field.label);
+      if (err) newErrors[field.key] = err;
+    }
+
+    // Run custom validators
+    for (const field of allFields.filter((f) => f.validate)) {
+      const value = item[field.key] || "";
+      const err = field.validate?.(value as string);
+      if (err) newErrors[field.key] = err;
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return; // stop submit
+
+    setLoading(true);
     const { error } = await supabase.from("items").insert([item]);
     setLoading(false);
 
@@ -183,57 +197,72 @@ export default function AddItemModal({
       date_shipped: null,
       date_returned: null,
     });
+    setErrors({});
     onClose();
     onSuccess();
   };
 
   const renderField = (f: FieldConfig, readOnly = false) => {
+    const hasError = errors[f.key as string];
+    const baseClass = `form-control ${hasError ? "is-invalid" : ""}`;
+
     if (f.type === "select")
       return (
-        <select
-          className="form-select"
+        <>
+          <select
+            className={`form-select ${hasError ? "is-invalid" : ""}`}
+            value={item[f.key] || ""}
+            onChange={(e) =>
+              !readOnly && setItem({ ...item, [f.key]: e.target.value })
+            }
+            disabled={readOnly}
+          >
+            <option value="">— Select —</option>
+            {f.options?.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+          {hasError && <div className="invalid-feedback">{hasError}</div>}
+        </>
+      );
+
+    if (f.type === "date")
+      return (
+        <>
+          <DatePicker
+            selected={item[f.key] ? new Date(item[f.key]!) : null}
+            onChange={(date) =>
+              !readOnly &&
+              setItem({ ...item, [f.key]: date ? date.toISOString() : null })
+            }
+            showTimeSelect
+            dateFormat="yyyy-MM-dd HH:mm"
+            placeholderText={f.label}
+            className={baseClass}
+            wrapperClassName="w-100"
+            popperClassName="react-datepicker-popper"
+            disabled={readOnly}
+          />
+          {hasError && <div className="invalid-feedback">{hasError}</div>}
+        </>
+      );
+
+    return (
+      <>
+        <input
+          type="text"
+          className={baseClass}
+          placeholder={f.label}
           value={item[f.key] || ""}
           onChange={(e) =>
             !readOnly && setItem({ ...item, [f.key]: e.target.value })
           }
-          disabled={readOnly}
-        >
-          <option value="">— Select —</option>
-          {f.options?.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      );
-    if (f.type === "date")
-      return (
-        <DatePicker
-          selected={item[f.key] ? new Date(item[f.key]!) : null}
-          onChange={(date) =>
-            !readOnly &&
-            setItem({ ...item, [f.key]: date ? date.toISOString() : null })
-          }
-          showTimeSelect
-          dateFormat="yyyy-MM-dd HH:mm"
-          placeholderText={f.label}
-          className="form-control"
-          wrapperClassName="w-100"
-          popperClassName="react-datepicker-popper"
-          disabled={readOnly}
+          readOnly={readOnly}
         />
-      );
-    return (
-      <input
-        type="text"
-        className="form-control"
-        placeholder={f.label}
-        value={item[f.key] || ""}
-        onChange={(e) =>
-          !readOnly && setItem({ ...item, [f.key]: e.target.value })
-        }
-        readOnly={readOnly}
-      />
+        {hasError && <div className="invalid-feedback">{hasError}</div>}
+      </>
     );
   };
 
@@ -256,7 +285,8 @@ export default function AddItemModal({
               onClick={onClose}
             ></button>
           </div>
-          <form onSubmit={handleSave}>
+
+          <form onSubmit={handleSave} noValidate>
             <div
               className="modal-body"
               style={{ maxHeight: "70vh", overflowY: "auto" }}
@@ -268,24 +298,9 @@ export default function AddItemModal({
                     {renderField(f)}
                   </div>
                 ))}
-
-                {hiddenFields.length > 0 && (
-                  <div className="col-12 mt-4">
-                    <h6 className="text-muted mb-2">
-                      Hidden Fields (Read-Only)
-                    </h6>
-                    <div className="row">
-                      {hiddenFields.map((f) => (
-                        <div className="col-md-6 mb-3" key={f.key}>
-                          <label className="form-label">{f.label}</label>
-                          {renderField(f, true)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
+
             <div className="modal-footer">
               <button
                 type="button"

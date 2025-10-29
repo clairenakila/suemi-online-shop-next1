@@ -201,3 +201,35 @@ export const myNumber = (value: string | number | undefined | null): number => {
 export const sumQuantity = (items: { quantity?: string }[]): number => {
   return items.reduce((sum, item) => sum + myNumber(item.quantity), 0);
 };
+
+/**
+ * Checks if a required field is empty.
+ */
+export const validateRequired = (
+  value: string | null | undefined,
+  fieldName: string
+): string => {
+  if (!value || value.trim() === "") {
+    return `${fieldName} is required`;
+  }
+  return "";
+};
+
+/**
+ * Validates all required fields in a form and shows a toast for the first missing one.
+ * Returns true if all required fields are filled.
+ */
+export const validateItemForm = (
+  item: Record<string, any>,
+  fields: { key: string; label: string; required?: boolean }[]
+): boolean => {
+  for (const f of fields) {
+    if (!f.required) continue;
+    const error = validateRequired(f.label, item[f.key]);
+    if (error) {
+      toast.error(error);
+      return false;
+    }
+  }
+  return true;
+};

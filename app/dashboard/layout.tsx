@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
@@ -11,20 +11,29 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [usersMenuOpen, setUsersMenuOpen] = useState(false); // Users submenu
-  const [itemsMenuOpen, setItemsMenuOpen] = useState(false); // Items submenu
-
-  const toggleSidebar = () => setCollapsed(!collapsed);
-  const toggleUsersMenu = () => setUsersMenuOpen(!usersMenuOpen);
-  const toggleItemsMenu = () => setItemsMenuOpen(!itemsMenuOpen); // Items toggle
+  const [usersMenuOpen, setUsersMenuOpen] = useState(false);
+  const [itemsMenuOpen, setItemsMenuOpen] = useState(false);
 
   const router = useRouter();
+
+  // ✅ Delay rendering until after client hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleSidebar = () => setCollapsed((prev) => !prev);
+  const toggleUsersMenu = () => setUsersMenuOpen((prev) => !prev);
+  const toggleItemsMenu = () => setItemsMenuOpen((prev) => !prev);
 
   const handleLogout = () => {
     toast.success("Logged out successfully");
     router.push(ROUTES.HOME);
   };
+
+  // ✅ Avoid hydration mismatch — render nothing until client is ready
+  if (!mounted) return null;
 
   return (
     <div className="d-flex vh-100 w-100" style={{ overflow: "hidden" }}>
@@ -33,22 +42,21 @@ export default function DashboardLayout({
         className="bg-dark text-white d-flex flex-column p-3"
         style={{
           width: collapsed ? "60px" : "220px",
-          transition: "width 0.3s",
+          transition: "width 0.3s ease",
         }}
       >
         <div className="d-flex justify-content-between align-items-center mb-4">
           {!collapsed && <h4 className="mb-0">Panel</h4>}
-          <div suppressHydrationWarning>
-            <button
-              className="btn btn-outline-light btn-sm"
-              onClick={toggleSidebar}
-            >
-              <i className="bi bi-list"></i>
-            </button>
-          </div>
+          <button
+            className="btn btn-outline-light btn-sm"
+            onClick={toggleSidebar}
+          >
+            <i className="bi bi-list"></i>
+          </button>
         </div>
 
         <ul className="nav nav-pills flex-column grow">
+          {/* Dashboard */}
           <li className="nav-item mb-2">
             <Link
               href="/dashboard"
@@ -59,7 +67,7 @@ export default function DashboardLayout({
             </Link>
           </li>
 
-          {/* Items with Submenu */}
+          {/* Items Section */}
           <li className="nav-item mb-2">
             <button
               className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
@@ -99,7 +107,7 @@ export default function DashboardLayout({
             )}
           </li>
 
-          {/* Users with Submenu */}
+          {/* Users Section */}
           <li className="nav-item mb-2">
             <button
               className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
@@ -147,6 +155,7 @@ export default function DashboardLayout({
             )}
           </li>
 
+          {/* Settings */}
           <li className="nav-item mb-2">
             <Link
               href="/dashboard/settings"
