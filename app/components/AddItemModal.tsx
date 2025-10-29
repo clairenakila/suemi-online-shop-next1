@@ -33,6 +33,7 @@ interface FieldConfig {
   type?: "text" | "number" | "float" | "select" | "date";
   options?: string[];
   validate?: (value: string) => string;
+  required?: boolean;
 }
 
 interface AddItemModalProps {
@@ -95,12 +96,13 @@ export default function AddItemModal({
   }, []);
 
   const allFields: FieldConfig[] = [
-    { key: "timestamp", label: "Timestamp", type: "date" },
+    { key: "timestamp", label: "Timestamp*", type: "date" },
     {
       key: "mined_from",
       label: "Mined From",
       type: "select",
       options: ["Facebook", "Shoppee"],
+      required: true,
     },
     {
       key: "prepared_by",

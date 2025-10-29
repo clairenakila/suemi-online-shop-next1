@@ -38,12 +38,14 @@ export default function DashboardLayout({
       >
         <div className="d-flex justify-content-between align-items-center mb-4">
           {!collapsed && <h4 className="mb-0">Panel</h4>}
-          <button
-            className="btn btn-outline-light btn-sm"
-            onClick={toggleSidebar}
-          >
-            <i className="bi bi-list"></i>
-          </button>
+          <div suppressHydrationWarning>
+            <button
+              className="btn btn-outline-light btn-sm"
+              onClick={toggleSidebar}
+            >
+              <i className="bi bi-list"></i>
+            </button>
+          </div>
         </div>
 
         <ul className="nav nav-pills flex-column grow">
