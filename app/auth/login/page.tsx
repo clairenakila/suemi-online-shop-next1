@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
+import Image from "next/image";
 import { ROUTES } from "../../routes";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState(""); // ✅ email state
-  const [password, setPassword] = useState(""); // ✅ password state
-  const [loading, setLoading] = useState(false); // ✅ loading state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
@@ -21,15 +22,18 @@ export default function LoginPage() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }), // ✅ now these exist
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Invalid credentials"); // ✅ toast exists
+        toast.error(data.error || "Invalid credentials");
       } else {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        // Safe localStorage use: only in browser
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
         toast.success("Logged in successfully!");
         router.push(ROUTES.DASHBOARD);
       }
@@ -44,18 +48,22 @@ export default function LoginPage() {
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100 bg-white">
       <Toaster position="top-center" />
+
       <div
         className="card shadow-lg p-4"
         style={{ maxWidth: "400px", borderRadius: "12px", width: "100%" }}
       >
         <Link href={ROUTES.HOME}>
-          <img
+          <Image
             src="/images/logo2.png"
             alt="Logo"
+            width={120}
+            height={50} // adjust to your logo
             className="mx-auto d-block"
-            style={{ width: "120px", cursor: "pointer" }}
+            style={{ cursor: "pointer" }}
           />
         </Link>
+
         <h2 className="fw-bold text-center mb-3">Login</h2>
 
         <form onSubmit={handleSubmit}>
