@@ -12,13 +12,13 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
+import AddItemModal from "../../../components/AddItemModal";
 import {
   dateNoTimezone,
   applyDiscount,
   calculateOrderIncome,
   calculateCommissionRate,
 } from "../../../utils/validator";
-import AddItemModal from "../../../components/AddItemModal";
 
 interface Item {
   id?: string;
@@ -40,11 +40,10 @@ interface Item {
   date_returned?: string;
 }
 
-// User object returned from /api/me
 interface User {
   name: string;
   role?: {
-    name: string; // role name resolved from role_id
+    name: string;
   };
 }
 
@@ -56,7 +55,10 @@ export default function SoldItemsPage() {
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
-  }>({ startDate: null, endDate: null });
+  }>({
+    startDate: null,
+    endDate: null,
+  });
   const [showAddModal, setShowAddModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
@@ -64,13 +66,15 @@ export default function SoldItemsPage() {
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Fetch logged-in user from /api/me
+  const [tableColumns, setTableColumns] = useState<Column<Item>[]>([]);
+
+  // Fetch logged-in user
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/me");
         const json = await res.json();
-        setUser(json.user); // user = { name, role: { name } }
+        setUser(json.user);
       } catch (err) {
         console.error("Failed to fetch user:", err);
         setUser(null);
@@ -79,14 +83,13 @@ export default function SoldItemsPage() {
     fetchUser();
   }, []);
 
-  // Fetch items after user is loaded or filters change
+  // Fetch items when user or filters change
   useEffect(() => {
     if (user) fetchItems();
   }, [user, page, pageSize, searchTerm, dateRange]);
 
   const fetchItems = async () => {
     if (!user) return;
-
     try {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -97,7 +100,7 @@ export default function SoldItemsPage() {
         .order("timestamp", { ascending: false })
         .range(from, to);
 
-      // Filter by prepared_by for non-Superadmin users
+      // Filter by user if not Superadmin
       if (user.role?.name !== "Superadmin") {
         query = query.ilike("prepared_by", user.name.trim());
       }
@@ -151,63 +154,59 @@ export default function SoldItemsPage() {
     }
   };
 
-  // Selection
-  const toggleSelectItem = (id: string) =>
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+  // Build columns dynamically after user loads
+  useEffect(() => {
+    if (!user) return;
 
-  const toggleSelectAll = (checked: boolean) =>
-    setSelectedItems(checked ? items.map((i) => i.id!) : []);
-
-  // Columns
-  const columns: Column<Item>[] = [
-    { header: "Timestamp", accessor: (row) => dateNoTimezone(row.timestamp) },
-    { header: "Mined From", accessor: "mined_from" },
-    { header: "Prepared By", accessor: "prepared_by" },
-    { header: "Category", accessor: "category" },
-    { header: "Brand", accessor: "brand" },
-    { header: "Quantity", accessor: "quantity" },
-    { header: "Live Seller", accessor: "live_seller" },
-    { header: "Order ID", accessor: "order_id" },
-    { header: "Capital", accessor: "capital" },
-    {
-      header: "Selling Price",
-      accessor: (row) =>
-        applyDiscount(row.selling_price || "0", row.discount || "0"),
-    },
-    { header: "Discount", accessor: "discount" },
-    { header: "Shoppee Commission", accessor: "shoppee_commission" },
-    {
-      header: "Order Income",
-      accessor: (row) =>
-        calculateOrderIncome(
+    const cols: Column<Item>[] = [
+      { header: "Timestamp", accessor: (row) => dateNoTimezone(row.timestamp) },
+      { header: "Mined From", accessor: "mined_from" },
+      { header: "Prepared By", accessor: "prepared_by" },
+      { header: "Category", accessor: "category" },
+      { header: "Brand", accessor: "brand" },
+      { header: "Quantity", accessor: "quantity" },
+      { header: "Live Seller", accessor: "live_seller" },
+      { header: "Order ID", accessor: "order_id" },
+      { header: "Capital", accessor: "capital" },
+      {
+        header: "Selling Price",
+        accessor: (row) =>
           applyDiscount(row.selling_price || "0", row.discount || "0"),
-          row.shoppee_commission || "0"
-        ),
-    },
-    {
-      header: "Commission Rate (%)",
-      accessor: (row) =>
-        calculateCommissionRate(
-          applyDiscount(row.selling_price || "0", row.discount || "0"),
-          row.shoppee_commission || "0"
-        ),
-    },
-    { header: "Is Returned", accessor: "is_returned" },
-    {
-      header: "Date Returned",
-      accessor: (row) => dateNoTimezone(row.date_returned),
-    },
-    {
-      header: "Date Shipped",
-      accessor: (row) => dateNoTimezone(row.date_shipped),
-    },
+      },
+      { header: "Discount", accessor: "discount" },
+      { header: "Shoppee Commission", accessor: "shoppee_commission" },
+      {
+        header: "Order Income",
+        accessor: (row) =>
+          calculateOrderIncome(
+            applyDiscount(row.selling_price || "0", row.discount || "0"),
+            row.shoppee_commission || "0"
+          ),
+      },
+      {
+        header: "Commission Rate (%)",
+        accessor: (row) =>
+          calculateCommissionRate(
+            applyDiscount(row.selling_price || "0", row.discount || "0"),
+            row.shoppee_commission || "0"
+          ),
+      },
+      { header: "Is Returned", accessor: "is_returned" },
+      {
+        header: "Date Returned",
+        accessor: (row) => dateNoTimezone(row.date_returned),
+      },
+      {
+        header: "Date Shipped",
+        accessor: (row) => dateNoTimezone(row.date_shipped),
+      },
+    ];
 
-    {
-      header: "Action",
-      accessor: (row) =>
-        user?.role?.name === "Superadmin" ? (
+    // Add Action column only for Superadmin
+    if (user.role?.name === "Superadmin") {
+      cols.push({
+        header: "Action",
+        accessor: (row) => (
           <ConfirmDelete
             confirmMessage={`Are you sure you want to delete item ${row.id}?`}
             onConfirm={async () => {
@@ -221,12 +220,21 @@ export default function SoldItemsPage() {
           >
             Delete
           </ConfirmDelete>
-        ) : null, // hide button for non-Superadmin
-      center: true,
-    },
-  ];
+        ),
+        center: true,
+      });
+    }
 
-  const [tableColumns, setTableColumns] = useState(columns);
+    setTableColumns(cols);
+  }, [user]);
+
+  const toggleSelectItem = (id: string) =>
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+
+  const toggleSelectAll = (checked: boolean) =>
+    setSelectedItems(checked ? items.map((i) => i.id!) : []);
 
   return (
     <div className="container my-5">
@@ -242,6 +250,7 @@ export default function SoldItemsPage() {
           >
             Add Item
           </button>
+
           <AddItemModal
             isOpen={showAddModal}
             onClose={() => setShowAddModal(false)}
@@ -281,17 +290,18 @@ export default function SoldItemsPage() {
               {
                 key: "date_returned",
                 label: "Date Returned",
-                placeholder: "MM-DD-YY",
                 type: "text",
+                placeholder: "MM-DD-YY",
               },
               {
                 key: "date_shipped",
                 label: "Date Shipped",
-                placeholder: "MM-DD-YY",
                 type: "text",
+                placeholder: "MM-DD-YY",
               },
             ]}
           />
+
           {user?.role?.name === "Superadmin" && (
             <ImportButton
               table="items"
@@ -333,6 +343,7 @@ export default function SoldItemsPage() {
             }}
             filename="sold_items.xlsx"
           />
+
           {user?.role?.name === "Superadmin" && (
             <ConfirmDelete
               confirmMessage="Are you sure you want to delete selected items?"
@@ -360,7 +371,6 @@ export default function SoldItemsPage() {
             options={items.map((i) => i.brand || "")}
             storageKey="sold_items_search"
           />
-
           <button
             onClick={() => setShowDatePicker(!showDatePicker)}
             className="p-2 bg-light border rounded-3 shadow-sm"
@@ -369,8 +379,7 @@ export default function SoldItemsPage() {
           >
             <i className="bi bi-calendar3 fs-5 text-secondary"></i>
           </button>
-
-          <ToggleColumns columns={columns} onChange={setTableColumns} />
+          <ToggleColumns columns={tableColumns} onChange={setTableColumns} />
         </div>
       </div>
 
