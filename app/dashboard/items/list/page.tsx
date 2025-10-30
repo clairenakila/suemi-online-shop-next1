@@ -262,12 +262,6 @@ export default function SoldItemsPage() {
                 options: ["Shoppee", "Facebook"],
               },
 
-              {
-                key: "prepared_by",
-                label: "Prepared By",
-                type: "select",
-                options: employees,
-              },
               { key: "brand", label: "Brand", type: "text" },
               { key: "category", label: "Category", type: "text" },
 
