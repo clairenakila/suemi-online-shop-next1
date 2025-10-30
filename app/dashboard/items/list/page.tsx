@@ -256,51 +256,56 @@ export default function SoldItemsPage() {
             onClose={() => setShowAddModal(false)}
             onSuccess={fetchItems}
           />
-
-          <BulkEdit
-            table="items"
-            selectedIds={selectedItems}
-            onSuccess={fetchItems}
-            columns={2}
-            fields={[
-              {
-                key: "mined_from",
-                label: "Mined From",
-                type: "select",
-                options: ["Shoppee", "Facebook"],
-              },
-              { key: "brand", label: "Brand", type: "text" },
-              { key: "category", label: "Category", type: "text" },
-              { key: "order_id", label: "Order ID", type: "text" },
-              { key: "selling_price", label: "Selling Price", type: "number" },
-              { key: "quantity", label: "Quantity", type: "number" },
-              { key: "capital", label: "Capital", type: "number" },
-              {
-                key: "shoppee_commission",
-                label: "Shoppee Commission",
-                type: "text",
-              },
-              { key: "discount", label: "Discount", type: "text" },
-              {
-                key: "is_returned",
-                label: "Is Returned",
-                type: "select",
-                options: ["Yes", "No"],
-              },
-              {
-                key: "date_returned",
-                label: "Date Returned",
-                type: "text",
-                placeholder: "MM-DD-YY",
-              },
-              {
-                key: "date_shipped",
-                label: "Date Shipped",
-                type: "text",
-                placeholder: "MM-DD-YY",
-              },
-            ]}
-          />
+          {user?.role?.name === "Superadmin" && (
+            <BulkEdit
+              table="items"
+              selectedIds={selectedItems}
+              onSuccess={fetchItems}
+              columns={2}
+              fields={[
+                {
+                  key: "mined_from",
+                  label: "Mined From",
+                  type: "select",
+                  options: ["Shoppee", "Facebook"],
+                },
+                { key: "brand", label: "Brand", type: "text" },
+                { key: "category", label: "Category", type: "text" },
+                { key: "order_id", label: "Order ID", type: "text" },
+                {
+                  key: "selling_price",
+                  label: "Selling Price",
+                  type: "number",
+                },
+                { key: "quantity", label: "Quantity", type: "number" },
+                { key: "capital", label: "Capital", type: "number" },
+                {
+                  key: "shoppee_commission",
+                  label: "Shoppee Commission",
+                  type: "text",
+                },
+                { key: "discount", label: "Discount", type: "text" },
+                {
+                  key: "is_returned",
+                  label: "Is Returned",
+                  type: "select",
+                  options: ["Yes", "No"],
+                },
+                {
+                  key: "date_returned",
+                  label: "Date Returned",
+                  type: "text",
+                  placeholder: "MM-DD-YY",
+                },
+                {
+                  key: "date_shipped",
+                  label: "Date Shipped",
+                  type: "text",
+                  placeholder: "MM-DD-YY",
+                },
+              ]}
+            />
+          )}
 
           {user?.role?.name === "Superadmin" && (
             <ImportButton
@@ -323,26 +328,27 @@ export default function SoldItemsPage() {
               onSuccess={fetchItems}
             />
           )}
-
-          <ExportButton
-            data={items}
-            headersMap={{
-              Timestamp: (row) => row.timestamp || "",
-              "Prepared By": "prepared_by",
-              Brand: "brand",
-              "Order ID": "order_id",
-              "Shoppee Commission": "shoppee_commission",
-              "Selling Price": "selling_price",
-              Quantity: "quantity",
-              Capital: "capital",
-              "Order Income": "order_income",
-              Discount: "discount",
-              "Live Seller": "live_seller",
-              Category: "category",
-              "Mined From": "mined_from",
-            }}
-            filename="sold_items.xlsx"
-          />
+          {user?.role?.name === "Superadmin" && (
+            <ExportButton
+              data={items}
+              headersMap={{
+                Timestamp: (row) => row.timestamp || "",
+                "Prepared By": "prepared_by",
+                Brand: "brand",
+                "Order ID": "order_id",
+                "Shoppee Commission": "shoppee_commission",
+                "Selling Price": "selling_price",
+                Quantity: "quantity",
+                Capital: "capital",
+                "Order Income": "order_income",
+                Discount: "discount",
+                "Live Seller": "live_seller",
+                Category: "category",
+                "Mined From": "mined_from",
+              }}
+              filename="sold_items.xlsx"
+            />
+          )}
 
           {user?.role?.name === "Superadmin" && (
             <ConfirmDelete
