@@ -132,14 +132,19 @@ export default function DashboardLayout({
             </button>
             {itemsMenuOpen && !collapsed && (
               <ul className="nav flex-column ms-3 mt-2">
-                <li className="nav-item mb-1">
-                  <button
-                    className="nav-link text-white btn btn-dark text-start w-100"
-                    onClick={() => handleNavClick("/dashboard/categories/list")}
-                  >
-                    Categories
-                  </button>
-                </li>
+                {roleName === "Superadmin" && (
+                  <li className="nav-item mb-1">
+                    <button
+                      className="nav-link text-white btn btn-dark text-start w-100"
+                      onClick={() =>
+                        handleNavClick("/dashboard/categories/list")
+                      }
+                    >
+                      Categories
+                    </button>
+                  </li>
+                )}
+
                 <li className="nav-item mb-1">
                   <button
                     className="nav-link text-white btn btn-dark text-start w-100"
@@ -148,16 +153,18 @@ export default function DashboardLayout({
                     Sold Items
                   </button>
                 </li>
-                <li className="nav-item mb-1">
-                  <button
-                    className="nav-link text-white btn btn-dark text-start w-100"
-                    onClick={() =>
-                      handleNavClick("/dashboard/inventories/list")
-                    }
-                  >
-                    Inventories
-                  </button>
-                </li>
+                {roleName === "Superadmin" && (
+                  <li className="nav-item mb-1">
+                    <button
+                      className="nav-link text-white btn btn-dark text-start w-100"
+                      onClick={() =>
+                        handleNavClick("/dashboard/inventories/list")
+                      }
+                    >
+                      Inventories
+                    </button>
+                  </li>
+                )}
               </ul>
             )}
           </li>

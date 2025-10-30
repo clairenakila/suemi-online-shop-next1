@@ -301,7 +301,7 @@ export default function EmployeesListPage() {
               },
             ]}
           />
-          <ImportButton
+          {/* <ImportButton
             table="users"
             headersMap={{
               Name: "name",
@@ -367,7 +367,7 @@ export default function EmployeesListPage() {
                 "✅ Users imported successfully (Role skipped, rates fixed)"
               );
             }}
-          />
+          /> */}
           <ExportButton
             data={filteredUsers}
             headersMap={{
