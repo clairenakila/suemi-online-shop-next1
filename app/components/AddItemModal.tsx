@@ -48,63 +48,22 @@ export default function AddItemModal({
   onClose,
   onSuccess,
 }: AddItemModalProps) {
-  //fetch logged in user in prepared_by
   const [loggedUser, setLoggedUser] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [liveSellers, setLiveSellers] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const fetchLoggedUser = async () => {
-      const stored = localStorage.getItem("user");
-      if (stored) {
-        const user = JSON.parse(stored);
-        setLoggedUser(user.name || "");
-        // Set as default prepared_by
-        setItem((prev) => ({ ...prev, prepared_by: user.name || "" }));
-      } else {
-        try {
-          const res = await fetch("/api/me");
-          const data = await res.json();
-          if (data.user) {
-            setLoggedUser(data.user.name || "");
-            setItem((prev) => ({ ...prev, prepared_by: data.user.name || "" }));
-            localStorage.setItem("user", JSON.stringify(data.user));
-          }
-        } catch (err) {
-          console.error("Failed to fetch logged user", err);
-        }
-      }
-    };
-
-    if (isOpen) fetchLoggedUser();
-  }, [isOpen]);
-
-  ///disbale fields, and continue in renderfield
   const disabledFields: (keyof Item)[] = [
     "prepared_by",
     "timestamp",
     "commission_rate",
   ];
-
-  //fetch categories
-  const [categories, setCategories] = useState<string[]>([]);
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("description");
-
-      if (error) {
-        console.error("Failed to fetch categories:", error.message);
-        return;
-      }
-
-      if (data) {
-        const options = data.map((c: any) => c.description);
-        setCategories(options);
-      }
-    };
-
-    fetchCategories();
-  }, []);
 
   const [item, setItem] = useState<Item>({
     timestamp: new Date().toISOString(),
@@ -126,16 +85,47 @@ export default function AddItemModal({
     date_returned: null,
   });
 
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({}); // 🆕 Error state
+  // Fetch logged-in user
+  useEffect(() => {
+    const fetchLoggedUser = async () => {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const user = JSON.parse(stored);
+        setLoggedUser(user.name || "");
+        setItem((prev) => ({ ...prev, prepared_by: user.name || "" }));
+      } else {
+        try {
+          const res = await fetch("/api/me");
+          const data = await res.json();
+          if (data.user) {
+            setLoggedUser(data.user.name || "");
+            setItem((prev) => ({ ...prev, prepared_by: data.user.name || "" }));
+            localStorage.setItem("user", JSON.stringify(data.user));
+          }
+        } catch (err) {
+          console.error("Failed to fetch logged user", err);
+        }
+      }
+    };
+    if (isOpen) fetchLoggedUser();
+  }, [isOpen]);
 
-  const [employees, setEmployees] = useState<{ id: string; name: string }[]>(
-    []
-  );
-  const [liveSellers, setLiveSellers] = useState<
-    { id: string; name: string }[]
-  >([]);
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("description");
+      if (error) {
+        console.error("Failed to fetch categories:", error.message);
+        return;
+      }
+      if (data) setCategories(data.map((c: any) => c.description));
+    };
+    fetchCategories();
+  }, []);
 
+  // Fetch employees and live sellers
   useEffect(() => {
     const fetchData = async () => {
       const { data: empData } = await supabase
@@ -143,7 +133,6 @@ export default function AddItemModal({
         .select("id, name")
         .eq("is_employee", "Yes");
       setEmployees(empData || []);
-
       const { data: liveData } = await supabase
         .from("users")
         .select("id, name")
@@ -166,7 +155,7 @@ export default function AddItemModal({
       key: "prepared_by",
       label: "Prepared By",
       type: "select",
-      options: employees.map((u) => u.name),
+      options: loggedUser ? [loggedUser] : [],
       required: true,
     },
     {
@@ -174,7 +163,7 @@ export default function AddItemModal({
       label: "Category",
       type: "select",
       options: categories,
-      required: true, // optional
+      required: true,
     },
     { key: "brand", label: "Brand", type: "text", required: true },
     {
@@ -247,53 +236,46 @@ export default function AddItemModal({
 
   const hiddenKeys: (keyof Item)[] = ["order_income", "commission_rate"];
   const visibleFields = allFields.filter((f) => !hiddenKeys.includes(f.key));
-  const hiddenFields = allFields.filter((f) => hiddenKeys.includes(f.key));
 
   if (!isOpen) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-
-    // Validate required fields
     for (const field of allFields.filter((f) => f.required)) {
       const value = item[field.key] || "";
       const err = validateRequired(value as string, field.label);
       if (err) newErrors[field.key] = err;
     }
-
-    // Run custom validators
     for (const field of allFields.filter((f) => f.validate)) {
       const value = item[field.key] || "";
       const err = field.validate?.(value as string);
       if (err) newErrors[field.key] = err;
     }
-
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return; // stop submit
+    if (Object.keys(newErrors).length > 0) return;
 
     setLoading(true);
     const { error } = await supabase.from("items").insert([item]);
     setLoading(false);
-
     if (error) return toast.error(error.message);
 
     toast.success("Item added successfully!");
     setItem({
       timestamp: new Date().toISOString(),
       mined_from: "",
-      prepared_by: "",
+      prepared_by: loggedUser,
+      category: "",
       brand: "",
       quantity: "",
       order_id: "",
       selling_price: "",
       capital: "",
-      shoppee_commission: "",
-      discount: "",
-      order_income: "",
-      commission_rate: "",
+      shoppee_commission: "0",
+      discount: "0",
+      order_income: "0",
+      commission_rate: "0",
       live_seller: "",
-      category: "",
       is_returned: "No",
       date_shipped: null,
       date_returned: null,
@@ -306,7 +288,6 @@ export default function AddItemModal({
   const renderField = (f: FieldConfig) => {
     const hasError = errors[f.key as string];
     const baseClass = `form-control ${hasError ? "is-invalid" : ""}`;
-
     const isDisabled = disabledFields.includes(f.key);
 
     if (f.type === "select")
@@ -318,7 +299,7 @@ export default function AddItemModal({
             onChange={(e) =>
               !isDisabled && setItem({ ...item, [f.key]: e.target.value })
             }
-            disabled={isDisabled} // ✅ disabled
+            disabled={isDisabled}
           >
             <option value="">— Select —</option>
             {f.options?.map((opt) => (
@@ -346,7 +327,7 @@ export default function AddItemModal({
             className={baseClass}
             wrapperClassName="w-100"
             popperClassName="react-datepicker-popper"
-            disabled={isDisabled} // ✅ disabled
+            disabled={isDisabled}
           />
           {hasError && <div className="invalid-feedback">{hasError}</div>}
         </>
@@ -362,7 +343,7 @@ export default function AddItemModal({
           onChange={(e) =>
             !isDisabled && setItem({ ...item, [f.key]: e.target.value })
           }
-          disabled={isDisabled} // ✅ disabled
+          disabled={isDisabled}
         />
         {hasError && <div className="invalid-feedback">{hasError}</div>}
       </>
