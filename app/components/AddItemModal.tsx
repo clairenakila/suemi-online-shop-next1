@@ -48,10 +48,69 @@ export default function AddItemModal({
   onClose,
   onSuccess,
 }: AddItemModalProps) {
+  //fetch logged in user in prepared_by
+  const [loggedUser, setLoggedUser] = useState<string>("");
+
+  useEffect(() => {
+    const fetchLoggedUser = async () => {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const user = JSON.parse(stored);
+        setLoggedUser(user.name || "");
+        // Set as default prepared_by
+        setItem((prev) => ({ ...prev, prepared_by: user.name || "" }));
+      } else {
+        try {
+          const res = await fetch("/api/me");
+          const data = await res.json();
+          if (data.user) {
+            setLoggedUser(data.user.name || "");
+            setItem((prev) => ({ ...prev, prepared_by: data.user.name || "" }));
+            localStorage.setItem("user", JSON.stringify(data.user));
+          }
+        } catch (err) {
+          console.error("Failed to fetch logged user", err);
+        }
+      }
+    };
+
+    if (isOpen) fetchLoggedUser();
+  }, [isOpen]);
+
+  ///disbale fields, and continue in renderfield
+  const disabledFields: (keyof Item)[] = [
+    "prepared_by",
+    "timestamp",
+    "commission_rate",
+  ];
+
+  //fetch categories
+  const [categories, setCategories] = useState<string[]>([]);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("description");
+
+      if (error) {
+        console.error("Failed to fetch categories:", error.message);
+        return;
+      }
+
+      if (data) {
+        const options = data.map((c: any) => c.description);
+        setCategories(options);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const [item, setItem] = useState<Item>({
     timestamp: new Date().toISOString(),
     mined_from: "",
     prepared_by: "",
+    category: "",
     brand: "",
     quantity: "",
     order_id: "",
@@ -62,7 +121,6 @@ export default function AddItemModal({
     order_income: "0",
     commission_rate: "0",
     live_seller: "",
-    category: "",
     is_returned: "No",
     date_shipped: null,
     date_returned: null,
@@ -111,10 +169,17 @@ export default function AddItemModal({
       options: employees.map((u) => u.name),
       required: true,
     },
+    {
+      key: "category",
+      label: "Category",
+      type: "select",
+      options: categories,
+      required: true, // optional
+    },
     { key: "brand", label: "Brand", type: "text", required: true },
     {
       key: "live_seller",
-      label: "Live Seller*",
+      label: "Live Seller",
       type: "select",
       options: liveSellers.map((u) => u.name),
       required: true,
@@ -238,9 +303,11 @@ export default function AddItemModal({
     onSuccess();
   };
 
-  const renderField = (f: FieldConfig, readOnly = false) => {
+  const renderField = (f: FieldConfig) => {
     const hasError = errors[f.key as string];
     const baseClass = `form-control ${hasError ? "is-invalid" : ""}`;
+
+    const isDisabled = disabledFields.includes(f.key);
 
     if (f.type === "select")
       return (
@@ -249,9 +316,9 @@ export default function AddItemModal({
             className={`form-select ${hasError ? "is-invalid" : ""}`}
             value={item[f.key] || ""}
             onChange={(e) =>
-              !readOnly && setItem({ ...item, [f.key]: e.target.value })
+              !isDisabled && setItem({ ...item, [f.key]: e.target.value })
             }
-            disabled={readOnly}
+            disabled={isDisabled} // ✅ disabled
           >
             <option value="">— Select —</option>
             {f.options?.map((opt) => (
@@ -270,7 +337,7 @@ export default function AddItemModal({
           <DatePicker
             selected={item[f.key] ? new Date(item[f.key]!) : null}
             onChange={(date) =>
-              !readOnly &&
+              !isDisabled &&
               setItem({ ...item, [f.key]: date ? date.toISOString() : null })
             }
             showTimeSelect
@@ -279,7 +346,7 @@ export default function AddItemModal({
             className={baseClass}
             wrapperClassName="w-100"
             popperClassName="react-datepicker-popper"
-            disabled={readOnly}
+            disabled={isDisabled} // ✅ disabled
           />
           {hasError && <div className="invalid-feedback">{hasError}</div>}
         </>
@@ -293,9 +360,9 @@ export default function AddItemModal({
           placeholder={f.label}
           value={item[f.key] || ""}
           onChange={(e) =>
-            !readOnly && setItem({ ...item, [f.key]: e.target.value })
+            !isDisabled && setItem({ ...item, [f.key]: e.target.value })
           }
-          readOnly={readOnly}
+          disabled={isDisabled} // ✅ disabled
         />
         {hasError && <div className="invalid-feedback">{hasError}</div>}
       </>
