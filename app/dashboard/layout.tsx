@@ -16,26 +16,42 @@ export default function DashboardLayout({
   const [usersMenuOpen, setUsersMenuOpen] = useState(false);
   const [itemsMenuOpen, setItemsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
+  const [roleName, setRoleName] = useState<string>("");
   const router = useRouter();
 
+  // Fetch user and role info
   useEffect(() => {
     setMounted(true);
 
     const fetchUser = async () => {
+      let user: any = null;
+
       const stored = localStorage.getItem("user");
       if (stored) {
-        const user = JSON.parse(stored);
-        setUserName(user.name || "Unknown User");
+        user = JSON.parse(stored);
+        // If role is missing, fetch fresh from API
+        if (!user.role) {
+          const res = await fetch("/api/me");
+          const data = await res.json();
+          if (data.user) {
+            user = data.user;
+            localStorage.setItem("user", JSON.stringify(user));
+          }
+        }
       } else {
         const res = await fetch("/api/me");
         const data = await res.json();
         if (data.user) {
-          setUserName(data.user.name || "Unknown User");
-          localStorage.setItem("user", JSON.stringify(data.user));
+          user = data.user;
+          localStorage.setItem("user", JSON.stringify(user));
         } else {
           router.push(ROUTES.HOME);
+          return;
         }
       }
+
+      setUserName(user.name || "Unknown User");
+      setRoleName(user.role?.name || "");
     };
 
     fetchUser();
@@ -75,6 +91,7 @@ export default function DashboardLayout({
         </div>
 
         <ul className="nav nav-pills flex-column grow">
+          {/* Dashboard */}
           <li className="nav-item mb-2">
             <Link
               href="/dashboard"
@@ -125,73 +142,78 @@ export default function DashboardLayout({
             )}
           </li>
 
-          {/* Users Section */}
-          <li className="nav-item mb-2">
-            <button
-              className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
-              onClick={toggleUsersMenu}
-            >
-              <span className="d-flex align-items-center">
-                <i className="bi bi-people me-2"></i>
-                {!collapsed && "Users"}
-              </span>
-              {!collapsed && (
-                <i
-                  className={`bi ${
-                    usersMenuOpen ? "bi-chevron-up" : "bi-chevron-down"
-                  }`}
-                ></i>
+          {/* Users Section - role based */}
+          {roleName === "Superadmin" && (
+            <li className="nav-item mb-2">
+              <button
+                className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
+                onClick={toggleUsersMenu}
+              >
+                <span className="d-flex align-items-center">
+                  <i className="bi bi-people me-2"></i>
+                  {!collapsed && "Users"}
+                </span>
+                {!collapsed && (
+                  <i
+                    className={`bi ${
+                      usersMenuOpen ? "bi-chevron-up" : "bi-chevron-down"
+                    }`}
+                  ></i>
+                )}
+              </button>
+              {usersMenuOpen && !collapsed && (
+                <ul className="nav flex-column ms-3 mt-2">
+                  <li className="nav-item mb-1">
+                    <Link
+                      href="/dashboard/employees/list"
+                      className="nav-link text-white"
+                    >
+                      Employees
+                    </Link>
+                  </li>
+                  <li className="nav-item mb-1">
+                    <Link
+                      href="/dashboard/suppliers/list"
+                      className="nav-link text-white"
+                    >
+                      Suppliers
+                    </Link>
+                  </li>
+                  <li className="nav-item mb-1">
+                    <Link
+                      href="/dashboard/users/create"
+                      className="nav-link text-white"
+                    >
+                      Roles
+                    </Link>
+                  </li>
+                </ul>
               )}
-            </button>
-            {usersMenuOpen && !collapsed && (
-              <ul className="nav flex-column ms-3 mt-2">
-                <li className="nav-item mb-1">
-                  <Link
-                    href="/dashboard/employees/list"
-                    className="nav-link text-white"
-                  >
-                    Employees
-                  </Link>
-                </li>
-                <li className="nav-item mb-1">
-                  <Link
-                    href="/dashboard/suppliers/list"
-                    className="nav-link text-white"
-                  >
-                    Suppliers
-                  </Link>
-                </li>
-                <li className="nav-item mb-1">
-                  <Link
-                    href="/dashboard/users/create"
-                    className="nav-link text-white"
-                  >
-                    Roles
-                  </Link>
-                </li>
-              </ul>
-            )}
-          </li>
+            </li>
+          )}
 
           {/* Settings */}
-          <li className="nav-item mb-2">
-            <Link
-              href="/dashboard/settings"
-              className="nav-link text-white d-flex align-items-center"
-            >
-              <i className="bi bi-gear me-2"></i>
-              {!collapsed && "Settings"}
-            </Link>
-          </li>
+          {["Superadmin"].includes(roleName) && (
+            <li className="nav-item mb-2">
+              <Link
+                href="/dashboard/settings"
+                className="nav-link text-white d-flex align-items-center"
+              >
+                <i className="bi bi-gear me-2"></i>
+                {!collapsed && "Settings"}
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
 
       {/* Main Content */}
       <div className="d-flex flex-column grow vh-100 overflow-hidden">
-        {/* Header: name left, logout right */}
+        {/* Header: name + role left, logout right */}
         <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center shrink-0">
           <span className="fw-semibold text-secondary">
             {userName || "Loading..."}
+            {roleName ? ` - ${roleName}` : ""}
           </span>
           <button
             className="btn btn-outline-secondary btn-sm"
