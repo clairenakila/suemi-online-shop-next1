@@ -14,6 +14,7 @@ import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
 import { mapRoleNameToId, formatNumberForText } from "../../../utils/validator";
+import bcrypt from "bcryptjs";
 
 interface User {
   id?: string;
@@ -160,6 +161,12 @@ export default function EmployeesListPage() {
     return matchesSearch && matchesDateRange;
   });
 
+  //hash password function
+  async function hashPassword(password: string) {
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(password, salt);
+  }
+
   // Columns
   const columns: Column<User>[] = [
     {
@@ -256,7 +263,6 @@ export default function EmployeesListPage() {
               },
             ]}
           />
-
           <BulkEdit
             table="users"
             selectedIds={selectedUsers}
@@ -295,36 +301,73 @@ export default function EmployeesListPage() {
               },
             ]}
           />
-
           <ImportButton
             table="users"
             headersMap={{
               Name: "name",
               Email: "email",
-              "Contact Number": "contact_number", // ✅ added
+              "Contact Number": "contact_number",
               Password: "password",
-              "SSS Number": "sss_number",
-              "PhilHealth Number": "philhealth_number",
-              "Pagibig Number": "pagibig_number",
               "Hourly Rate": "hourly_rate",
               "Daily Rate": "daily_rate",
-              "Is Employee": "is_employee",
+              "SSS Number": "sss_number",
+              "Pagibig Number": "pagibig_number",
+              "Philhealth Number": "philhealth_number",
               "Is Live Seller": "is_live_seller",
-              Role: "role_id",
+              "Is Employee": "is_employee",
+              // ❌ Role is intentionally excluded — ignored if present
             }}
-            transformRow={(row) => {
-              const roleId = mapRoleNameToId(roles, row.role_id);
-              if (!roleId) throw new Error(`Invalid role: ${row.role_id}`);
-              return {
-                ...row,
-                role_id: roleId,
-                hourly_rate: formatNumberForText(row.hourly_rate, 3),
-                daily_rate: formatNumberForText(row.daily_rate, 3),
-              };
-            }}
-            onSuccess={fetchUsers}
-          />
+            transformRow={async (row) => {
+              const get = (key: string) =>
+                key in row && row[key] != null ? String(row[key]).trim() : "";
 
+              // ✅ Clean and format rates
+              const hourly = get("hourly_rate").replace(/,/g, "");
+              const daily = get("daily_rate").replace(/,/g, "");
+
+              const formattedHourly =
+                hourly && !isNaN(Number(hourly))
+                  ? Number(hourly).toFixed(2) // "5000.50"
+                  : "0.00";
+
+              const formattedDaily =
+                daily && !isNaN(Number(daily))
+                  ? Number(daily).toFixed(2) // "1000.00"
+                  : "0.00";
+
+              // ✅ Hash password securely
+              const plainPassword = get("password") || "default123";
+              const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+              // ✅ Build user data (no role)
+              const userData: Record<string, any> = {};
+
+              if (get("name")) userData.name = get("name");
+              if (get("email")) userData.email = get("email");
+              if (get("contact_number"))
+                userData.contact_number = get("contact_number");
+              if (get("sss_number")) userData.sss_number = get("sss_number");
+              if (get("pagibig_number"))
+                userData.pagibig_number = get("pagibig_number");
+              if (get("philhealth_number"))
+                userData.philhealth_number = get("philhealth_number");
+              if (get("is_employee")) userData.is_employee = get("is_employee");
+              if (get("is_live_seller"))
+                userData.is_live_seller = get("is_live_seller");
+
+              userData.password = hashedPassword;
+              userData.hourly_rate = formattedHourly;
+              userData.daily_rate = formattedDaily;
+
+              return userData;
+            }}
+            onSuccess={async () => {
+              await fetchUsers();
+              toast.success(
+                "✅ Users imported successfully (Role skipped, rates fixed)"
+              );
+            }}
+          />
           <ExportButton
             data={filteredUsers}
             headersMap={{
@@ -343,7 +386,6 @@ export default function EmployeesListPage() {
             }}
             filename="employees.xlsx"
           />
-
           <ConfirmDelete
             confirmMessage="Are you sure you want to delete selected users?"
             onConfirm={async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import Papa from "papaparse";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -21,11 +21,8 @@ export default function ImportButton({
   validateRow,
 }: ImportButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Prevent state update on every render
   const [fileName, setFileName] = useState<string | null>(null);
 
-  // Normalize header names for matching
   const normalize = (str = "") =>
     str
       .trim()
@@ -33,7 +30,6 @@ export default function ImportButton({
       .replace(/\u00A0/g, " ")
       .toLowerCase();
 
-  // Parse CSV with PapaParse
   const parseCSV = async (file: File): Promise<Record<string, any>[]> =>
     new Promise((resolve, reject) => {
       Papa.parse(file, {
@@ -45,45 +41,46 @@ export default function ImportButton({
       });
     });
 
-  // Parse various date formats safely
   const parseDate = (value: string): string | null => {
     if (!value) return null;
     let parsed = Date.parse(value);
 
-    // fallback for common ambiguous formats
     if (isNaN(parsed)) {
       const parts = value.split(/[-/]/).map((x) => x.trim());
       if (parts.length === 3) {
         const [a, b, c] = parts.map(Number);
-        // MM-DD-YYYY
         if (a <= 12 && b <= 31 && c >= 1900)
           parsed = Date.parse(`${c}-${a}-${b}`);
-        // DD-MM-YYYY
         else if (b <= 12 && a <= 31 && c >= 1900)
           parsed = Date.parse(`${c}-${b}-${a}`);
       }
     }
-
     return isNaN(parsed) ? null : new Date(parsed).toISOString();
   };
 
-  // Main import handler
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      setFileName(file.name); // Set the filename once file is selected
-
+      setFileName(file.name);
       const rows = await parseCSV(file);
       if (!rows.length) throw new Error("No data found in CSV");
 
       const mappedData: Record<string, any>[] = [];
+      const csvHeaders = Object.keys(rows[0]);
 
       for (const row of rows) {
+        // ✅ Check first 2 columns in CSV
+        const firstTwoCols = csvHeaders.slice(0, 2);
+        const firstTwoValues = firstTwoCols.map((col) => row[col]);
+        const hasFirstTwoFilled = firstTwoValues.every(
+          (v) => v !== null && v !== undefined && String(v).trim() !== ""
+        );
+        if (!hasFirstTwoFilled) continue;
+
         const mappedRow: Record<string, any> = {};
 
-        // map CSV headers to DB columns
         for (const [csvHeader, dbColumn] of Object.entries(headersMap)) {
           if (!dbColumn) continue;
 
@@ -93,22 +90,17 @@ export default function ImportButton({
           if (!matchedKey) continue;
 
           let value: any = row[matchedKey];
-
           if (typeof value === "string") {
             value = value.trim();
             if (value === "" || value.toLowerCase() === "null") value = null;
           }
 
-          // Parse timestamps
           if (["timestamp", "created_at"].includes(dbColumn.toLowerCase())) {
             const parsedValue = parseDate(value);
             if (!parsedValue)
               console.warn(`⚠️ Invalid date for ${dbColumn}:`, value);
             value = parsedValue;
-          }
-
-          // Convert numeric strings
-          else if (
+          } else if (
             typeof value === "string" &&
             value.match(/^-?\d+(\.\d+)?$/)
           ) {
@@ -118,17 +110,6 @@ export default function ImportButton({
           mappedRow[dbColumn] = value;
         }
 
-        if (Object.keys(mappedRow).length === 0) continue;
-
-        // ✅ Skip rows if first two columns (in order) are empty
-        const firstTwoValues = Object.values(mappedRow).slice(0, 2);
-        const isValidRow = firstTwoValues.every(
-          (val) =>
-            val !== null && val !== undefined && String(val).trim() !== ""
-        );
-        if (!isValidRow) continue;
-
-        // Apply optional transform + validation
         if (transformRow) {
           const transformed = transformRow(mappedRow);
           if (!transformed) continue;
@@ -142,7 +123,7 @@ export default function ImportButton({
 
       if (!mappedData.length) throw new Error("No valid rows to import");
 
-      // ✅ Insert in chunks to bypass Supabase 1000-row limit
+      // ✅ Insert in chunks (Supabase 1000-row limit)
       const chunkSize = 1000;
       for (let i = 0; i < mappedData.length; i += chunkSize) {
         const chunk = mappedData.slice(i, i + chunkSize);
@@ -175,7 +156,6 @@ export default function ImportButton({
         onChange={handleFileChange}
         className="d-none"
       />
-      {/* {fileName && <div>Selected File: {fileName}</div>} */}
     </>
   );
 }

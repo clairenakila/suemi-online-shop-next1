@@ -23,6 +23,12 @@ interface DataTableProps<T> {
   onPageSizeChange: (size: number) => void;
 }
 
+/**
+ * DataTable component
+ * - Shows server-side paginated data (no frontend slicing)
+ * - Keeps pagination controls and size selector
+ * - All records come directly from the DB
+ */
 export function DataTable<T extends Record<string, any>>({
   data,
   columns,
@@ -37,7 +43,7 @@ export function DataTable<T extends Record<string, any>>({
   onPageChange,
   onPageSizeChange,
 }: DataTableProps<T>) {
-  // Optional: sort data locally for display
+  // Sort data for display
   const sortedData = useMemo(() => {
     if (!data?.length) return [];
     if ("created_at" in data[0]) {
@@ -55,7 +61,7 @@ export function DataTable<T extends Record<string, any>>({
     return data;
   }, [data]);
 
-  // Render all rows (no slicing!)
+  // All rows are from DB (no frontend pagination)
   const rowsToRender = sortedData;
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -69,6 +75,7 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
+      {/* Table */}
       <div className="table-responsive" style={{ maxHeight: "70vh" }}>
         <table className="table table-bordered table-striped">
           <thead className="table-light sticky-top">
@@ -151,7 +158,7 @@ export function DataTable<T extends Record<string, any>>({
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
           >
-            {[50, 100, 200, 500].map((n) => (
+            {[100, 500, 700, 1000].map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
