@@ -250,57 +250,61 @@ export default function SoldItemsPage() {
           >
             Add Item
           </button>
-
           <AddItemModal
             isOpen={showAddModal}
             onClose={() => setShowAddModal(false)}
             onSuccess={fetchItems}
           />
-
-          <BulkEdit
-            table="items"
-            selectedIds={selectedItems}
-            onSuccess={fetchItems}
-            columns={2}
-            fields={[
-              {
-                key: "mined_from",
-                label: "Mined From",
-                type: "select",
-                options: ["Shoppee", "Facebook"],
-              },
-              { key: "brand", label: "Brand", type: "text" },
-              { key: "category", label: "Category", type: "text" },
-              { key: "order_id", label: "Order ID", type: "text" },
-              { key: "selling_price", label: "Selling Price", type: "number" },
-              { key: "quantity", label: "Quantity", type: "number" },
-              { key: "capital", label: "Capital", type: "number" },
-              {
-                key: "shoppee_commission",
-                label: "Shoppee Commission",
-                type: "text",
-              },
-              { key: "discount", label: "Discount", type: "text" },
-              {
-                key: "is_returned",
-                label: "Is Returned",
-                type: "select",
-                options: ["Yes", "No"],
-              },
-              {
-                key: "date_returned",
-                label: "Date Returned",
-                type: "text",
-                placeholder: "MM-DD-YY",
-              },
-              {
-                key: "date_shipped",
-                label: "Date Shipped",
-                type: "text",
-                placeholder: "MM-DD-YY",
-              },
-            ]}
-          />
+          {user?.role?.name === "Superadmin" && (
+            <BulkEdit
+              table="items"
+              selectedIds={selectedItems}
+              onSuccess={fetchItems}
+              columns={2}
+              fields={[
+                {
+                  key: "mined_from",
+                  label: "Mined From",
+                  type: "select",
+                  options: ["Shoppee", "Facebook"],
+                },
+                { key: "brand", label: "Brand", type: "text" },
+                { key: "category", label: "Category", type: "text" },
+                { key: "order_id", label: "Order ID", type: "text" },
+                {
+                  key: "selling_price",
+                  label: "Selling Price",
+                  type: "number",
+                },
+                { key: "quantity", label: "Quantity", type: "number" },
+                { key: "capital", label: "Capital", type: "number" },
+                {
+                  key: "shoppee_commission",
+                  label: "Shoppee Commission",
+                  type: "text",
+                },
+                { key: "discount", label: "Discount", type: "text" },
+                {
+                  key: "is_returned",
+                  label: "Is Returned",
+                  type: "select",
+                  options: ["Yes", "No"],
+                },
+                {
+                  key: "date_returned",
+                  label: "Date Returned",
+                  type: "text",
+                  placeholder: "MM-DD-YY",
+                },
+                {
+                  key: "date_shipped",
+                  label: "Date Shipped",
+                  type: "text",
+                  placeholder: "MM-DD-YY",
+                },
+              ]}
+            />
+          )}
 
           {user?.role?.name === "Superadmin" && (
             <ImportButton
@@ -323,27 +327,27 @@ export default function SoldItemsPage() {
               onSuccess={fetchItems}
             />
           )}
-
-          <ExportButton
-            data={items}
-            headersMap={{
-              Timestamp: (row) => row.timestamp || "",
-              "Prepared By": "prepared_by",
-              Brand: "brand",
-              "Order ID": "order_id",
-              "Shoppee Commission": "shoppee_commission",
-              "Selling Price": "selling_price",
-              Quantity: "quantity",
-              Capital: "capital",
-              "Order Income": "order_income",
-              Discount: "discount",
-              "Live Seller": "live_seller",
-              Category: "category",
-              "Mined From": "mined_from",
-            }}
-            filename="sold_items.xlsx"
-          />
-
+          {user?.role?.name === "Superadmin" && (
+            <ExportButton
+              data={items}
+              headersMap={{
+                Timestamp: (row) => row.timestamp || "",
+                "Prepared By": "prepared_by",
+                Brand: "brand",
+                "Order ID": "order_id",
+                "Shoppee Commission": "shoppee_commission",
+                "Selling Price": "selling_price",
+                Quantity: "quantity",
+                Capital: "capital",
+                "Order Income": "order_income",
+                Discount: "discount",
+                "Live Seller": "live_seller",
+                Category: "category",
+                "Mined From": "mined_from",
+              }}
+              filename="sold_items.xlsx"
+            />
+          )}
           {user?.role?.name === "Superadmin" && (
             <ConfirmDelete
               confirmMessage="Are you sure you want to delete selected items?"
@@ -386,6 +390,33 @@ export default function SoldItemsPage() {
       {showDatePicker && (
         <div className="bg-white p-3 shadow-md rounded-4 mb-3 w-fit">
           <DateRangePicker onChange={setDateRange} />
+        </div>
+      )}
+
+      {/* total cleaned bags */}
+      {/* Summary Widget — visible only for non-Superadmin */}
+      {user?.role?.name !== "Superadmin" && (
+        <div className="mb-4">
+          <div className="bg-white shadow-sm rounded-4 p-4 border d-flex align-items-center justify-content-between">
+            <div>
+              <h5 className="mb-1 text-secondary">Total Cleaned Bags</h5>
+              <h2 className="fw-bold mb-0 text-success">
+                {items
+                  .filter((i) => i.prepared_by?.trim() === user?.name?.trim())
+                  .reduce(
+                    (sum, i) => sum + (parseFloat(i.quantity || "0") || 0),
+                    0
+                  )
+                  .toLocaleString()}
+              </h2>
+            </div>
+            <div
+              className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center"
+              style={{ width: "60px", height: "60px" }}
+            >
+              <i className="bi bi-bag-check-fill text-success fs-3"></i>
+            </div>
+          </div>
         </div>
       )}
 
