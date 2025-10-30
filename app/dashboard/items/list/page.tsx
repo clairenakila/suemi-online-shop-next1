@@ -206,21 +206,22 @@ export default function SoldItemsPage() {
 
     {
       header: "Action",
-      accessor: (row) => (
-        <ConfirmDelete
-          confirmMessage={`Are you sure you want to delete item ${row.id}?`}
-          onConfirm={async () => {
-            const { error } = await supabase
-              .from("items")
-              .delete()
-              .eq("id", row.id!);
-            if (error) throw error;
-            fetchItems();
-          }}
-        >
-          Delete
-        </ConfirmDelete>
-      ),
+      accessor: (row) =>
+        user?.role?.name === "Superadmin" ? (
+          <ConfirmDelete
+            confirmMessage={`Are you sure you want to delete item ${row.id}?`}
+            onConfirm={async () => {
+              const { error } = await supabase
+                .from("items")
+                .delete()
+                .eq("id", row.id!);
+              if (error) throw error;
+              fetchItems();
+            }}
+          >
+            Delete
+          </ConfirmDelete>
+        ) : null, // hide button for non-Superadmin
       center: true,
     },
   ];
