@@ -9,7 +9,7 @@ import Link from "next/link";
 import bcrypt from "bcryptjs";
 
 export default function RegisterPage() {
-  const [mounted, setMounted] = useState(false); // Prevent hydration mismatch
+  const [mounted, setMounted] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -17,9 +17,10 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
 
-  // Mark as mounted to avoid SSR/client mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -48,7 +49,6 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // 1️⃣ Check if email exists
       const { data: existingUser, error: fetchError } = await supabase
         .from("users")
         .select("id")
@@ -67,10 +67,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // 2️⃣ Hash password
       const hashedPassword = await bcrypt.hash(form.password, 10);
 
-      // 3️⃣ Ensure "Guest" role exists
       let guestRoleId: number;
       const { data: guestRole } = await supabase
         .from("roles")
@@ -98,7 +96,6 @@ export default function RegisterPage() {
         guestRoleId = newRole.id;
       }
 
-      // 4️⃣ Insert user
       const { error: insertError } = await supabase.from("users").insert([
         {
           name: form.name,
@@ -124,7 +121,7 @@ export default function RegisterPage() {
     }
   };
 
-  if (!mounted) return null; // Prevent SSR hydration mismatch
+  if (!mounted) return null;
 
   return (
     <div className="container d-flex justify-content-center align-items-start min-vh-100 bg-white py-5">
@@ -170,28 +167,50 @@ export default function RegisterPage() {
           />
 
           <label className="form-label fw-semibold">Password</label>
-          <input
-            type="password"
-            name="password"
-            className="form-control mb-3"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            required
-            maxLength={50}
-          />
+          <div className="input-group mb-3">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              className="form-control"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              maxLength={50}
+            />
+            <span
+              className="input-group-text"
+              style={{ cursor: "pointer" }}
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              <i
+                className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
+              ></i>
+            </span>
+          </div>
 
           <label className="form-label fw-semibold">Confirm Password</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            className="form-control mb-4"
-            placeholder="Confirm Password"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            required
-            maxLength={50}
-          />
+          <div className="input-group mb-4">
+            <input
+              type={showConfirm ? "text" : "password"}
+              name="confirmPassword"
+              className="form-control"
+              placeholder="Confirm Password"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              required
+              maxLength={50}
+            />
+            <span
+              className="input-group-text"
+              style={{ cursor: "pointer" }}
+              onClick={() => setShowConfirm((prev) => !prev)}
+            >
+              <i
+                className={`bi ${showConfirm ? "bi-eye-slash" : "bi-eye"}`}
+              ></i>
+            </span>
+          </div>
 
           <button
             type="submit"

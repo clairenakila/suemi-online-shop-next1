@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 👈 added
 
   const router = useRouter();
 
@@ -30,7 +31,6 @@ export default function LoginPage() {
       if (!res.ok) {
         toast.error(data.error || "Invalid credentials");
       } else {
-        // Safe localStorage use: only in browser
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(data.user));
         }
@@ -58,7 +58,7 @@ export default function LoginPage() {
             src="/images/logo2.png"
             alt="Logo"
             width={120}
-            height={50} // adjust to your logo
+            height={50}
             className="mx-auto d-block"
             style={{ cursor: "pointer" }}
           />
@@ -77,18 +77,31 @@ export default function LoginPage() {
           />
 
           <label className="form-label fw-semibold">Password</label>
-          <input
-            type="password"
-            className="form-control mb-4"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          {/* 👇 added input-group with toggle icon */}
+          <div className="input-group mb-4">
+            <input
+              type={showPassword ? "text" : "password"}
+              className="form-control"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <span
+              className="input-group-text"
+              style={{ cursor: "pointer" }}
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              <i
+                className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
+              ></i>
+            </span>
+          </div>
 
           <button className="btn btn-rose w-100 fw-bold" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+
         <div className="text-center mt-3">
           <p className="mb-0">
             Doesn't have an account?{" "}
