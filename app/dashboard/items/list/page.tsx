@@ -12,17 +12,13 @@ import DateRangePicker from "../../../components/DateRangePicker";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
-import { formatDateShort, dateNoTimezone } from "../../../utils/validator";
-import AddItemModal from "../../../components/AddItemModal";
-
 import {
-  formatDate,
+  dateNoTimezone,
   applyDiscount,
   calculateOrderIncome,
   calculateCommissionRate,
-  parseExcelDate,
 } from "../../../utils/validator";
-import { timeStamp } from "console";
+import AddItemModal from "../../../components/AddItemModal";
 
 interface Item {
   id?: string;
@@ -44,6 +40,14 @@ interface Item {
   date_returned?: string;
 }
 
+// User object returned from /api/me
+interface User {
+  name: string;
+  role?: {
+    name: string; // role name resolved from role_id
+  };
+}
+
 export default function SoldItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -54,54 +58,61 @@ export default function SoldItemsPage() {
     endDate: string | null;
   }>({ startDate: null, endDate: null });
   const [showAddModal, setShowAddModal] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
-  const [employees, setEmployees] = useState<string[]>([]);
-  // Fetch employees on mount
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("name")
-        .eq("is_employee", "Yes");
 
-      if (error) toast.error(error.message);
-      else setEmployees(data?.map((u) => u.name) || []);
+  // Fetch logged-in user from /api/me
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/me");
+        const json = await res.json();
+        setUser(json.user); // user = { name, role: { name } }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+        setUser(null);
+      }
     };
-
-    fetchEmployees();
+    fetchUser();
   }, []);
-  // Fetch items with real pagination + search
+
+  // Fetch items after user is loaded or filters change
   useEffect(() => {
-    fetchItems();
-  }, [page, pageSize, searchTerm, dateRange]);
+    if (user) fetchItems();
+  }, [user, page, pageSize, searchTerm, dateRange]);
 
   const fetchItems = async () => {
+    if (!user) return;
+
     try {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // Start query
       let query = supabase
         .from("items")
         .select("*", { count: "exact" })
         .order("timestamp", { ascending: false })
         .range(from, to);
 
-      // --- Date filter ---
+      // Filter by prepared_by for non-Superadmin users
+      if (user.role?.name !== "Superadmin") {
+        query = query.ilike("prepared_by", user.name.trim());
+      }
+
+      // Date filter
       if (dateRange.startDate && dateRange.endDate) {
         const start = new Date(dateRange.startDate);
         const end = new Date(dateRange.endDate);
         end.setHours(23, 59, 59, 999);
-
         query = query
           .gte("timestamp", start.toISOString())
           .lte("timestamp", end.toISOString());
       }
 
-      // --- Search filter (only text columns) ---
+      // Search filter
       const textColumns = [
         "prepared_by",
         "brand",
@@ -111,26 +122,21 @@ export default function SoldItemsPage() {
         "mined_from",
         "is_returned",
       ];
-
       if (searchTerm.trim()) {
         const term = `%${searchTerm.trim()}%`;
         const orString = textColumns
           .map((col) => `${col}.ilike.${term}`)
           .join(",");
         query = query.or(orString);
-        console.log("Supabase search filter:", orString);
       }
 
-      // Fetch
       const { data, error, count } = await query;
 
       if (error) {
-        console.error("Supabase fetchItems error:", error);
         toast.error(error.message || "Failed to fetch items");
         return;
       }
 
-      // Map dates safely
       const mapped = (data || []).map((i) => ({
         ...i,
         timestamp: i.timestamp ? dateNoTimezone(i.timestamp) : null,
@@ -141,12 +147,9 @@ export default function SoldItemsPage() {
       setItems(mapped);
       setTotalCount(count || 0);
     } catch (err: any) {
-      console.error("fetchItems caught error:", err);
       toast.error(err.message || "Failed to fetch items");
     }
   };
-
-  //////////////
 
   // Selection
   const toggleSelectItem = (id: string) =>
@@ -159,10 +162,7 @@ export default function SoldItemsPage() {
 
   // Columns
   const columns: Column<Item>[] = [
-    {
-      header: "Timestamp",
-      accessor: (row) => dateNoTimezone(row.timestamp),
-    },
+    { header: "Timestamp", accessor: (row) => dateNoTimezone(row.timestamp) },
     { header: "Mined From", accessor: "mined_from" },
     { header: "Prepared By", accessor: "prepared_by" },
     { header: "Category", accessor: "category" },
@@ -203,7 +203,6 @@ export default function SoldItemsPage() {
       header: "Date Shipped",
       accessor: (row) => dateNoTimezone(row.date_shipped),
     },
-
     {
       header: "Action",
       accessor: (row) => (
@@ -224,10 +223,8 @@ export default function SoldItemsPage() {
       center: true,
     },
   ];
-  //
-  const [tableColumns, setTableColumns] = useState(columns);
 
-  //define all bulk edit
+  const [tableColumns, setTableColumns] = useState(columns);
 
   return (
     <div className="container my-5">
@@ -261,10 +258,8 @@ export default function SoldItemsPage() {
                 type: "select",
                 options: ["Shoppee", "Facebook"],
               },
-
               { key: "brand", label: "Brand", type: "text" },
               { key: "category", label: "Category", type: "text" },
-
               { key: "order_id", label: "Order ID", type: "text" },
               { key: "selling_price", label: "Selling Price", type: "number" },
               { key: "quantity", label: "Quantity", type: "number" },
@@ -274,11 +269,7 @@ export default function SoldItemsPage() {
                 label: "Shoppee Commission",
                 type: "text",
               },
-              {
-                key: "discount",
-                label: "Discount",
-                type: "text",
-              },
+              { key: "discount", label: "Discount", type: "text" },
               {
                 key: "is_returned",
                 label: "Is Returned",
@@ -288,13 +279,13 @@ export default function SoldItemsPage() {
               {
                 key: "date_returned",
                 label: "Date Returned",
-                placeholder: "Write it like this: 10-21-25",
+                placeholder: "MM-DD-YY",
                 type: "text",
               },
               {
                 key: "date_shipped",
                 label: "Date Shipped",
-                placeholder: "Write it like this: 10-21-25",
+                placeholder: "MM-DD-YY",
                 type: "text",
               },
             ]}
@@ -374,6 +365,7 @@ export default function SoldItemsPage() {
           >
             <i className="bi bi-calendar3 fs-5 text-secondary"></i>
           </button>
+
           <ToggleColumns columns={columns} onChange={setTableColumns} />
         </div>
       </div>
