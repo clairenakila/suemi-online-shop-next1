@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { ROUTES } from "../routes";
+import Loader from "./../components/Loader";
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,7 @@ export default function DashboardLayout({
   const [itemsMenuOpen, setItemsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [roleName, setRoleName] = useState<string>("");
+  const [loading, setLoading] = useState(false); // 👈 added
   const router = useRouter();
 
   // Fetch user and role info
@@ -29,7 +31,6 @@ export default function DashboardLayout({
       const stored = localStorage.getItem("user");
       if (stored) {
         user = JSON.parse(stored);
-        // If role is missing, fetch fresh from API
         if (!user.role) {
           const res = await fetch("/api/me");
           const data = await res.json();
@@ -68,10 +69,19 @@ export default function DashboardLayout({
     router.push(ROUTES.HOME);
   };
 
+  // 👇 helper for link clicks
+  const handleNavClick = (path: string) => {
+    setLoading(true);
+    router.push(path);
+  };
+
   if (!mounted) return null;
 
   return (
     <div className="d-flex vh-100 w-100" style={{ overflow: "hidden" }}>
+      {/* Loader shown when navigating */}
+      {loading && <Loader />}
+
       {/* Sidebar */}
       <nav
         className="bg-dark text-white d-flex flex-column p-3"
@@ -93,13 +103,13 @@ export default function DashboardLayout({
         <ul className="nav nav-pills flex-column grow">
           {/* Dashboard */}
           <li className="nav-item mb-2">
-            <Link
-              href="/dashboard"
-              className="nav-link text-white d-flex align-items-center"
+            <button
+              className="nav-link text-white d-flex align-items-center btn btn-dark w-100 text-start"
+              onClick={() => handleNavClick("/dashboard")}
             >
               <i className="bi bi-speedometer2 me-2"></i>
               {!collapsed && "Dashboard"}
-            </Link>
+            </button>
           </li>
 
           {/* Items Section */}
@@ -123,26 +133,28 @@ export default function DashboardLayout({
             {itemsMenuOpen && !collapsed && (
               <ul className="nav flex-column ms-3 mt-2">
                 <li className="nav-item mb-1">
-                  <Link
-                    href="/dashboard/items/list"
-                    className="nav-link text-white"
+                  <button
+                    className="nav-link text-white btn btn-dark text-start w-100"
+                    onClick={() => handleNavClick("/dashboard/items/list")}
                   >
                     Sold Items
-                  </Link>
+                  </button>
                 </li>
                 <li className="nav-item mb-1">
-                  <Link
-                    href="/dashboard/items/inventories"
-                    className="nav-link text-white"
+                  <button
+                    className="nav-link text-white btn btn-dark text-start w-100"
+                    onClick={() =>
+                      handleNavClick("/dashboard/items/inventories")
+                    }
                   >
                     Inventories
-                  </Link>
+                  </button>
                 </li>
               </ul>
             )}
           </li>
 
-          {/* Users Section - role based */}
+          {/* Users Section */}
           {roleName === "Superadmin" && (
             <li className="nav-item mb-2">
               <button
@@ -164,28 +176,32 @@ export default function DashboardLayout({
               {usersMenuOpen && !collapsed && (
                 <ul className="nav flex-column ms-3 mt-2">
                   <li className="nav-item mb-1">
-                    <Link
-                      href="/dashboard/employees/list"
-                      className="nav-link text-white"
+                    <button
+                      className="nav-link text-white btn btn-dark text-start w-100"
+                      onClick={() =>
+                        handleNavClick("/dashboard/employees/list")
+                      }
                     >
                       Employees
-                    </Link>
+                    </button>
                   </li>
                   <li className="nav-item mb-1">
-                    <Link
-                      href="/dashboard/suppliers/list"
-                      className="nav-link text-white"
+                    <button
+                      className="nav-link text-white btn btn-dark text-start w-100"
+                      onClick={() =>
+                        handleNavClick("/dashboard/suppliers/list")
+                      }
                     >
                       Suppliers
-                    </Link>
+                    </button>
                   </li>
                   <li className="nav-item mb-1">
-                    <Link
-                      href="/dashboard/users/create"
-                      className="nav-link text-white"
+                    <button
+                      className="nav-link text-white btn btn-dark text-start w-100"
+                      onClick={() => handleNavClick("/dashboard/users/create")}
                     >
                       Roles
-                    </Link>
+                    </button>
                   </li>
                 </ul>
               )}
@@ -195,13 +211,13 @@ export default function DashboardLayout({
           {/* Settings */}
           {["Superadmin"].includes(roleName) && (
             <li className="nav-item mb-2">
-              <Link
-                href="/dashboard/settings"
-                className="nav-link text-white d-flex align-items-center"
+              <button
+                className="nav-link text-white d-flex align-items-center btn btn-dark w-100 text-start"
+                onClick={() => handleNavClick("/dashboard/settings")}
               >
                 <i className="bi bi-gear me-2"></i>
                 {!collapsed && "Settings"}
-              </Link>
+              </button>
             </li>
           )}
         </ul>
@@ -209,7 +225,6 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <div className="d-flex flex-column grow vh-100 overflow-hidden">
-        {/* Header: name + role left, logout right */}
         <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center shrink-0">
           <span className="fw-semibold text-secondary">
             {userName || "Loading..."}
