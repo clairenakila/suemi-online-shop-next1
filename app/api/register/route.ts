@@ -1,74 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
-  const { email, password, name } = await req.json();
+  const { name, email, password, role_id } = await req.json();
 
-  if (!email || !password || !name) {
-    return NextResponse.json(
-      { error: "All fields are required" },
-      { status: 400 }
-    );
+  if (!name || !email || !password || !role_id) {
+    return NextResponse.json({ error: "All fields required" }, { status: 400 });
   }
 
-  // 1️⃣ Ensure "Shopper" role exists
-  let { data: shopperRole, error: roleError } = await supabase
-    .from("roles")
-    .select("*")
-    .eq("name", "Shopper")
-    .single();
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  if (roleError || !shopperRole) {
-    const { data: newRole, error: createRoleError } = await supabase
-      .from("roles")
-      .insert([{ name: "Shopper" }])
-      .select()
-      .single();
-
-    if (createRoleError) {
-      return NextResponse.json(
-        { error: "Failed to create default role" },
-        { status: 500 }
-      );
-    }
-
-    shopperRole = newRole;
-  }
-
-  // 2️⃣ Create user in Supabase Auth
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { name },
-    },
-  });
-
-  if (signUpError) {
-    return NextResponse.json({ error: signUpError.message }, { status: 400 });
-  }
-
-  const user = signUpData.user;
-  if (!user) {
-    return NextResponse.json(
-      { error: "Failed to create user" },
-      { status: 500 }
-    );
-  }
-
-  // 3️⃣ Add to `users` table
-  const { error: insertError } = await supabase.from("users").insert([
+  const { error } = await supabase.from("users").insert([
     {
-      id: user.id,
       name,
       email,
-      role_id: shopperRole.id,
+      password: hashedPassword,
+      role_id,
     },
   ]);
 
-  if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
-  }
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ message: "Registration successful", user });
+  return NextResponse.json({ message: "Registration successful" });
 }

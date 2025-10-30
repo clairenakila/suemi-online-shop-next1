@@ -6,46 +6,35 @@ import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import { ROUTES } from "../../routes";
 import Link from "next/link";
+import bcrypt from "bcryptjs";
 
 export default function RegisterPage() {
+  const [mounted, setMounted] = useState(false); // Prevent hydration mismatch
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role_id: 0, // default empty, will be selected
   });
-  const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Fetch roles from Supabase
+  // Mark as mounted to avoid SSR/client mismatch
   useEffect(() => {
-    const fetchRoles = async () => {
-      const { data, error } = await supabase.from("roles").select("*");
-      if (error) {
-        console.error("Failed to fetch roles:", error.message);
-      } else {
-        setRoles(data);
-      }
-    };
-    fetchRoles();
+    setMounted(true);
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
-    if (name === "name") {
-      setForm({ ...form, [name]: value.replace(/[^a-zA-Z .-]/g, "") });
-    } else if (name === "email") {
-      setForm({ ...form, [name]: value.replace(/[^a-zA-Z0-9.@]/g, "") });
-    } else if (name === "role_id") {
-      setForm({ ...form, [name]: Number(value) });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+    setForm((prev) => ({
+      ...prev,
+      [name]:
+        name === "name"
+          ? value.replace(/[^a-zA-Z .-]/g, "")
+          : name === "email"
+          ? value.replace(/[^a-zA-Z0-9.@]/g, "")
+          : value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,39 +45,72 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!form.role_id) {
-      toast.error("Please select a role");
-      return;
-    }
-
     setLoading(true);
-    try {
-      // Create Supabase auth user
-      const { data, error } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-      });
 
-      if (error) {
-        toast.error(error.message);
+    try {
+      // 1️⃣ Check if email exists
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", form.email)
+        .single();
+
+      if (fetchError && fetchError.code !== "PGRST116") {
+        toast.error(fetchError.message);
+        setLoading(false);
         return;
       }
 
-      // Insert additional info into your "users" table
-      const { data: userData, error: insertError } = await supabase
-        .from("users")
-        .insert([
-          {
-            auth_id: data.user?.id,
-            name: form.name,
-            email: form.email,
-            password: form.password,
-            role_id: form.role_id,
-          },
-        ]);
+      if (existingUser) {
+        toast.error("Email already registered");
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Hash password
+      const hashedPassword = await bcrypt.hash(form.password, 10);
+
+      // 3️⃣ Ensure "Guest" role exists
+      let guestRoleId: number;
+      const { data: guestRole } = await supabase
+        .from("roles")
+        .select("id")
+        .eq("name", "Guest")
+        .single();
+
+      if (guestRole) {
+        guestRoleId = guestRole.id;
+      } else {
+        const { data: newRole, error: insertRoleError } = await supabase
+          .from("roles")
+          .insert([{ name: "Guest" }])
+          .select()
+          .single();
+
+        if (!newRole || insertRoleError) {
+          toast.error(
+            insertRoleError?.message || "Failed to create Guest role"
+          );
+          setLoading(false);
+          return;
+        }
+
+        guestRoleId = newRole.id;
+      }
+
+      // 4️⃣ Insert user
+      const { error: insertError } = await supabase.from("users").insert([
+        {
+          name: form.name,
+          email: form.email,
+          password: hashedPassword,
+          role_id: guestRoleId,
+        },
+      ]);
 
       if (insertError) {
         toast.error(insertError.message);
+        setLoading(false);
         return;
       }
 
@@ -102,6 +124,8 @@ export default function RegisterPage() {
     }
   };
 
+  if (!mounted) return null; // Prevent SSR hydration mismatch
+
   return (
     <div className="container d-flex justify-content-center align-items-start min-vh-100 bg-white py-5">
       <Toaster position="top-center" />
@@ -111,17 +135,17 @@ export default function RegisterPage() {
       >
         <Link href={ROUTES.HOME}>
           <img
-            src="/images/logo2.png" // make sure logo.png is in public/images
+            src="/images/logo2.png"
             alt="Logo"
             className="mx-auto"
             style={{ width: "120px", cursor: "pointer" }}
           />
         </Link>
+
         <h2 className="fw-bold text-center mb-3">Register</h2>
+
         <form onSubmit={handleSubmit}>
-          <label htmlFor="name" className="form-label fw-semibold">
-            Name
-          </label>
+          <label className="form-label fw-semibold">Name</label>
           <input
             type="text"
             name="name"
@@ -133,9 +157,7 @@ export default function RegisterPage() {
             maxLength={50}
           />
 
-          <label htmlFor="email" className="form-label fw-semibold">
-            Email address
-          </label>
+          <label className="form-label fw-semibold">Email address</label>
           <input
             type="email"
             name="email"
@@ -147,9 +169,7 @@ export default function RegisterPage() {
             maxLength={50}
           />
 
-          <label htmlFor="password" className="form-label fw-semibold">
-            Password
-          </label>
+          <label className="form-label fw-semibold">Password</label>
           <input
             type="password"
             name="password"
@@ -161,13 +181,11 @@ export default function RegisterPage() {
             maxLength={50}
           />
 
-          <label htmlFor="confirmPassword" className="form-label fw-semibold">
-            Confirm Password
-          </label>
+          <label className="form-label fw-semibold">Confirm Password</label>
           <input
             type="password"
             name="confirmPassword"
-            className="form-control mb-3"
+            className="form-control mb-4"
             placeholder="Confirm Password"
             value={form.confirmPassword}
             onChange={handleChange}
@@ -175,25 +193,11 @@ export default function RegisterPage() {
             maxLength={50}
           />
 
-          <label htmlFor="role_id" className="form-label fw-semibold">
-            Role
-          </label>
-          <select
-            name="role_id"
-            className="form-control mb-4"
-            value={form.role_id}
-            onChange={handleChange}
-            required
+          <button
+            type="submit"
+            className="btn btn-rose w-100 fw-bold"
+            disabled={loading}
           >
-            <option value="">Select role</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
-            ))}
-          </select>
-
-          <button className="btn btn-rose w-100 fw-bold" disabled={loading}>
             {loading ? "Registering..." : "Register"}
           </button>
         </form>

@@ -7,9 +7,10 @@ import Link from "next/link";
 import { ROUTES } from "../../routes";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState(""); // ✅ email state
+  const [password, setPassword] = useState(""); // ✅ password state
+  const [loading, setLoading] = useState(false); // ✅ loading state
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,17 +21,15 @@ export default function LoginPage() {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password }), // ✅ now these exist
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Invalid credentials");
+        toast.error(data.error || "Invalid credentials"); // ✅ toast exists
       } else {
-        // ✅ Save user in localStorage
         localStorage.setItem("user", JSON.stringify(data.user));
-
         toast.success("Logged in successfully!");
         router.push(ROUTES.DASHBOARD);
       }
