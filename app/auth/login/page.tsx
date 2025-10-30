@@ -89,6 +89,17 @@ export default function LoginPage() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+        <div className="text-center mt-3">
+          <p className="mb-0">
+            Doesn't have an account?{" "}
+            <Link
+              href={ROUTES.REGISTER}
+              className="text-danger text-decoration-none fw-semibold"
+            >
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

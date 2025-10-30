@@ -36,12 +36,12 @@ export default function HomePage() {
           >
             Login
           </Link>
-          {/* <Link
+          <Link
             href={ROUTES.REGISTER}
             className="px-6 py-3 font-semibold rounded-lg bg-black text-white hover:bg-gray-800 transition"
           >
             Register
-          </Link> */}
+          </Link>
         </div>
       </section>
 
