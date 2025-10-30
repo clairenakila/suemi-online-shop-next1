@@ -53,10 +53,10 @@ export default function AddItemModal({
     mined_from: "",
     prepared_by: "",
     brand: "",
-    quantity: "1",
+    quantity: "",
     order_id: "",
-    selling_price: "0",
-    capital: "0",
+    selling_price: "",
+    capital: "",
     shoppee_commission: "0",
     discount: "0",
     order_income: "0",
@@ -96,22 +96,22 @@ export default function AddItemModal({
   }, []);
 
   const allFields: FieldConfig[] = [
-    { key: "timestamp", label: "Timestamp*", type: "date", required: true },
+    { key: "timestamp", label: "Timestamp", type: "date", required: true },
     {
       key: "mined_from",
-      label: "Mined From*",
+      label: "Mined From",
       type: "select",
       options: ["Facebook", "Shoppee"],
       required: true,
     },
     {
       key: "prepared_by",
-      label: "Prepared By*",
+      label: "Prepared By",
       type: "select",
       options: employees.map((u) => u.name),
       required: true,
     },
-    { key: "brand", label: "Brand*", type: "text", required: true },
+    { key: "brand", label: "Brand", type: "text", required: true },
     {
       key: "live_seller",
       label: "Live Seller*",
@@ -121,17 +121,53 @@ export default function AddItemModal({
     },
     {
       key: "order_id",
-      label: "Order ID*",
+      label: "Order ID",
       type: "text",
       validate: (v) =>
         v.length === 4 ? "" : "Order ID must be exactly 4 characters",
       required: true,
     },
-    { key: "quantity", label: "Quantity", type: "number" },
-    { key: "selling_price", label: "Selling Price", type: "float" },
-    { key: "capital", label: "Capital", type: "float" },
-    { key: "shoppee_commission", label: "Shoppee Commission", type: "float" },
-    { key: "discount", label: "Discount", type: "text" },
+    {
+      key: "quantity",
+      label: "Quantity",
+      type: "number",
+      required: true,
+      validate: (v) =>
+        !v || isNaN(Number(v)) || Number(v) < 1
+          ? "Quantity must be a number (1 or more)"
+          : "",
+    },
+    {
+      key: "selling_price",
+      label: "Selling Price",
+      type: "float",
+      required: true,
+      validate: (v) =>
+        !v || isNaN(Number(v)) || Number(v) < 0
+          ? "Selling must be a number (0 or more)"
+          : "",
+    },
+    {
+      key: "capital",
+      label: "Capital",
+      type: "float",
+      required: true,
+      validate: (v) =>
+        !v || isNaN(Number(v)) || Number(v) < 0
+          ? "Capital must be a number (0 or more)"
+          : "",
+    },
+    {
+      key: "shoppee_commission",
+      label: "Shoppee Commission",
+      type: "float",
+      required: true,
+      validate: (v) =>
+        !v || isNaN(Number(v)) || Number(v) < 0
+          ? "Commission must be a number (0 or more)"
+          : "",
+    },
+    { key: "discount", label: "Discount", type: "float", required: true },
     {
       key: "is_returned",
       label: "Is Returned?",
