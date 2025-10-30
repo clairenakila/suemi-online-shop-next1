@@ -233,3 +233,15 @@ export const validateItemForm = (
   }
   return true;
 };
+
+/**
+ * Calculate total = quantity * price
+ */
+export const calculateInventoryTotal = (
+  quantity: string,
+  price: string
+): string => {
+  const q = parseNumber(quantity);
+  const p = parseNumber(price);
+  return (q * p).toFixed(2);
+};

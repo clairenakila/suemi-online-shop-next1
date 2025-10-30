@@ -345,7 +345,7 @@ export default function SoldItemsPage() {
                 Category: "category",
                 "Mined From": "mined_from",
               }}
-              filename="sold_items.xlsx"
+              filename="sold_items.csv"
             />
           )}
           {user?.role?.name === "Superadmin" && (

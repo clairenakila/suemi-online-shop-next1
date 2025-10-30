@@ -135,6 +135,14 @@ export default function DashboardLayout({
                 <li className="nav-item mb-1">
                   <button
                     className="nav-link text-white btn btn-dark text-start w-100"
+                    onClick={() => handleNavClick("/dashboard/categories/list")}
+                  >
+                    Categories
+                  </button>
+                </li>
+                <li className="nav-item mb-1">
+                  <button
+                    className="nav-link text-white btn btn-dark text-start w-100"
                     onClick={() => handleNavClick("/dashboard/items/list")}
                   >
                     Sold Items
@@ -144,7 +152,7 @@ export default function DashboardLayout({
                   <button
                     className="nav-link text-white btn btn-dark text-start w-100"
                     onClick={() =>
-                      handleNavClick("/dashboard/items/inventories")
+                      handleNavClick("/dashboard/inventories/list")
                     }
                   >
                     Inventories
@@ -198,7 +206,7 @@ export default function DashboardLayout({
                   <li className="nav-item mb-1">
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() => handleNavClick("/dashboard/users/create")}
+                      onClick={() => handleNavClick("/dashboard/roles/list")}
                     >
                       Roles
                     </button>
