@@ -192,25 +192,26 @@ export default function AddItemModal({
           : "",
     },
     {
-      key: "selling_price",
-      label: "Selling Price",
-      type: "float",
-      required: true,
-      validate: (v) =>
-        !v || isNaN(Number(v)) || Number(v) < 0
-          ? "Selling must be a number (0 or more)"
-          : "",
-    },
-    {
       key: "capital",
       label: "Capital",
       type: "float",
       required: true,
       validate: (v) =>
-        !v || isNaN(Number(v)) || Number(v) < 0
-          ? "Capital must be a number (0 or more)"
+        !v || isNaN(Number(v)) || Number(v) < 1
+          ? "Capital must be a number (1 or more)"
           : "",
     },
+    {
+      key: "selling_price",
+      label: "Selling Price",
+      type: "float",
+      required: true,
+      validate: (v) =>
+        !v || isNaN(Number(v)) || Number(v) < 1
+          ? "Selling must be a number (1 or more)"
+          : "",
+    },
+
     {
       key: "shoppee_commission",
       label: "Shoppee Commission",
