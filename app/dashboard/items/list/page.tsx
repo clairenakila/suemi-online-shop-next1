@@ -203,6 +203,7 @@ export default function SoldItemsPage() {
       header: "Date Shipped",
       accessor: (row) => dateNoTimezone(row.date_shipped),
     },
+
     {
       header: "Action",
       accessor: (row) => (
@@ -290,26 +291,27 @@ export default function SoldItemsPage() {
               },
             ]}
           />
-
-          <ImportButton
-            table="items"
-            headersMap={{
-              Timestamp: "timestamp",
-              "Prepared By": "prepared_by",
-              Brand: "brand",
-              "Order ID": "order_id",
-              "Shoppee Commission": "shoppee_commission",
-              "Selling Price": "selling_price",
-              Quantity: "quantity",
-              Capital: "capital",
-              "Order Income": "order_income",
-              Discount: "discount",
-              "Live Seller": "live_seller",
-              Category: "category",
-              "Mined From": "mined_from",
-            }}
-            onSuccess={fetchItems}
-          />
+          {user?.role?.name === "Superadmin" && (
+            <ImportButton
+              table="items"
+              headersMap={{
+                Timestamp: "timestamp",
+                "Prepared By": "prepared_by",
+                Brand: "brand",
+                "Order ID": "order_id",
+                "Shoppee Commission": "shoppee_commission",
+                "Selling Price": "selling_price",
+                Quantity: "quantity",
+                Capital: "capital",
+                "Order Income": "order_income",
+                Discount: "discount",
+                "Live Seller": "live_seller",
+                Category: "category",
+                "Mined From": "mined_from",
+              }}
+              onSuccess={fetchItems}
+            />
+          )}
 
           <ExportButton
             data={items}
@@ -330,22 +332,23 @@ export default function SoldItemsPage() {
             }}
             filename="sold_items.xlsx"
           />
-
-          <ConfirmDelete
-            confirmMessage="Are you sure you want to delete selected items?"
-            onConfirm={async () => {
-              if (!selectedItems.length) throw new Error("No items selected");
-              const { error } = await supabase
-                .from("items")
-                .delete()
-                .in("id", selectedItems);
-              if (error) throw error;
-              setSelectedItems([]);
-              fetchItems();
-            }}
-          >
-            Delete Selected
-          </ConfirmDelete>
+          {user?.role?.name === "Superadmin" && (
+            <ConfirmDelete
+              confirmMessage="Are you sure you want to delete selected items?"
+              onConfirm={async () => {
+                if (!selectedItems.length) throw new Error("No items selected");
+                const { error } = await supabase
+                  .from("items")
+                  .delete()
+                  .in("id", selectedItems);
+                if (error) throw error;
+                setSelectedItems([]);
+                fetchItems();
+              }}
+            >
+              Delete Selected
+            </ConfirmDelete>
+          )}
         </div>
 
         <div className="d-flex align-items-center gap-2">
