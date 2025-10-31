@@ -12,10 +12,14 @@ import AddInventoryModal from "../../../components/AddInventoryModal";
 import EditInventoryModal from "../../../components/EditInventoryModal";
 import ExportButton from "../../../components/ExportButton";
 import ToggleColumns from "../../../components/ToggleColumns";
-import { dateNoTimezone } from "../../../utils/validator";
-
+import ImportButton from "../../../components/ImportButton";
 import type { Category, Supplier, Inventory } from "../../../types/inventory";
-import { calculateInventoryTotal } from "../../../utils/validator";
+import { parseNumber, dateNoTimezone } from "../../../utils/validator";
+
+interface User {
+  name: string;
+  role?: { name: string };
+}
 
 export default function InventoriesPage() {
   const [inventories, setInventories] = useState<Inventory[]>([]);
@@ -33,12 +37,15 @@ export default function InventoriesPage() {
     endDate: string | null;
   }>({ startDate: null, endDate: null });
   const [tableColumns, setTableColumns] = useState<Column<Inventory>[]>([]);
+  const [user, setUser] = useState<User | null>(null);
 
+  // Fetch suppliers and categories on mount
   useEffect(() => {
     fetchSuppliers();
     fetchCategories();
   }, []);
 
+  // Fetch inventories after suppliers and categories are loaded
   useEffect(() => {
     if (suppliers.length && categories.length) fetchInventories();
   }, [suppliers, categories]);
@@ -59,17 +66,40 @@ export default function InventoriesPage() {
     const { data, error } = await supabase.from("inventories").select("*");
     if (error) return toast.error(error.message);
 
-    // Map dates without timezone
-    const mapped = (data || []).map((inv) => ({
-      ...inv,
-      date_arrived: dateNoTimezone(inv.date_arrived), // <--- normalize
-    }));
+    // Normalize quantities, prices, totals, and dates
+    const mapped = (data || []).map((inv) => {
+      const quantity = parseNumber(inv.quantity).toFixed(2);
+      const price = parseNumber(inv.price).toFixed(2);
+      const total = (
+        parseNumber(inv.quantity) * parseNumber(inv.price)
+      ).toFixed(2);
+
+      return {
+        ...inv,
+        quantity,
+        price,
+        total,
+        date_arrived: dateNoTimezone(inv.date_arrived),
+      };
+    });
 
     setInventories(mapped);
   };
-  const selectedInventories = inventories.filter((inv) =>
-    selectedInventoryIds.includes(inv.id!)
-  );
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/me");
+        const json = await res.json();
+        setUser(json.user);
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const toggleSelectInventory = (id: string) =>
     setSelectedInventoryIds((prev) =>
@@ -84,6 +114,7 @@ export default function InventoriesPage() {
     const matchesSearch = [inv.box_number, inv.supplier, inv.category].some(
       (val) => val?.toLowerCase().includes(term)
     );
+
     let matchesDateRange = true;
     if (dateRange.startDate && dateRange.endDate && inv.date_arrived) {
       const arrived = new Date(inv.date_arrived);
@@ -93,24 +124,18 @@ export default function InventoriesPage() {
       end.setHours(23, 59, 59, 999);
       matchesDateRange = arrived >= start && arrived <= end;
     }
+
     return matchesSearch && matchesDateRange;
   });
 
   const columns: Column<Inventory>[] = [
-    {
-      header: "Date Arrived",
-      accessor: (row) => row.date_arrived || "",
-    },
+    { header: "Date Arrived", accessor: (row) => row.date_arrived || "" },
     { header: "Box Number", accessor: "box_number" },
     { header: "Supplier", accessor: "supplier" },
     { header: "Category", accessor: "category" },
     { header: "Quantity", accessor: "quantity" },
     { header: "Price", accessor: "price" },
-    {
-      header: "Total",
-      accessor: (row) =>
-        calculateInventoryTotal(row.quantity || "0", row.price || "0"),
-    },
+    { header: "Total", accessor: "total" },
     {
       header: "Action",
       accessor: (row) => (
@@ -176,7 +201,23 @@ export default function InventoriesPage() {
               onSuccess={fetchInventories}
               suppliers={suppliers}
               categories={categories}
-              inventoryIds={selectedInventoryIds} // NEW
+              inventoryIds={selectedInventoryIds}
+            />
+          )}
+
+          {user?.role?.name === "Superadmin" && (
+            <ImportButton
+              table="inventories"
+              headersMap={{
+                "Date Arrived": "date_arrived",
+                "Box Number": "box_number",
+                Supplier: "supplier",
+                Category: "category",
+                Quantity: "quantity",
+                Price: "price",
+                Total: "total",
+              }}
+              onSuccess={fetchInventories}
             />
           )}
 
@@ -188,10 +229,11 @@ export default function InventoriesPage() {
               Supplier: "supplier",
               Category: "category",
               Quantity: "quantity",
-              Price: "price",
-              Total: "total",
+              Price: (row) => parseNumber(row.price).toFixed(2),
+              Total: (row) =>
+                (parseNumber(row.quantity) * parseNumber(row.price)).toFixed(2),
             }}
-            filename="inventories.xlsx"
+            filename="inventories.csv"
           />
 
           <ConfirmDelete
