@@ -198,6 +198,7 @@ export default function AddInventoryModal({
                     }`}
                     dateFormat="yyyy-MM-dd"
                     placeholderText="Select date"
+                    wrapperClassName="w-100"
                   />
                   {errors.date_arrived && (
                     <div className="invalid-feedback">
