@@ -234,14 +234,22 @@ export const validateItemForm = (
   return true;
 };
 
-/**
- * Calculate total = quantity * price
- */
-export const calculateInventoryTotal = (
-  quantity: string,
-  price: string
-): string => {
-  const q = parseNumber(quantity);
-  const p = parseNumber(price);
-  return (q * p).toFixed(2);
+export const calculateInventoryTotal = (quantity: string, price: string) => {
+  const qty = parseFloat(quantity.replace(/,/g, "")) || 0;
+  const prc = parseFloat(price.replace(/,/g, "")) || 0;
+  return (qty * prc).toFixed(2);
+};
+
+export const saveInventoryTotal = async (item: {
+  id: string;
+  quantity: string;
+  price: string;
+}) => {
+  const total = calculateInventoryTotal(item.quantity, item.price);
+  const { error } = await supabase
+    .from("inventories")
+    .update({ total })
+    .eq("id", item.id);
+
+  if (error) toast.error(error.message);
 };
