@@ -20,7 +20,7 @@ interface User {
   id?: string;
   name: string;
   email: string;
-  password: string;
+  password?: string;
   role_id: string;
   role_name?: string;
   contact_number?: string; // ✅ added
@@ -110,10 +110,19 @@ export default function EmployeesListPage() {
     if (!userData.role_id) return toast.error("Please select a role");
     const cleanData = sanitizeUserData(userData);
 
+    // ✅ Hash the password if present
+    if (userData.password) {
+      cleanData.password = await hashPassword(userData.password);
+    }
+
     if (editId) {
+      // If password is empty, don't update it
+      const updateData = { ...cleanData };
+      if (!userData.password) delete updateData.password;
+
       const { error } = await supabase
         .from("users")
-        .update(cleanData)
+        .update(updateData)
         .eq("id", editId);
       if (error) return toast.error(error.message);
       toast.success("User updated successfully");
