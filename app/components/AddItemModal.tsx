@@ -111,17 +111,35 @@ export default function AddItemModal({
   }, [isOpen]);
 
   // Fetch categories
+  // Fetch categories with robust error handling
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("description");
-      if (error) {
-        console.error("Failed to fetch categories:", error.message);
-        return;
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .select("description");
+
+        if (error) {
+          console.error("Supabase error fetching categories:", error);
+          toast.error("Failed to fetch categories from server.");
+          return;
+        }
+
+        if (data) {
+          setCategories(data.map((c: any) => c.description));
+        } else {
+          console.warn("No categories returned from Supabase.");
+          setCategories([]);
+        }
+      } catch (err: any) {
+        console.error("Network or unexpected error fetching categories:", err);
+        toast.error(
+          "Cannot fetch categories. Check your network or Supabase config."
+        );
+        setCategories([]);
       }
-      if (data) setCategories(data.map((c: any) => c.description));
     };
+
     fetchCategories();
   }, []);
 

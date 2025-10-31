@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { ROUTES } from "../routes";
 import Loader from "./../components/Loader";
@@ -18,17 +17,26 @@ export default function DashboardLayout({
   const [itemsMenuOpen, setItemsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [roleName, setRoleName] = useState<string>("");
-  const [loading, setLoading] = useState(false); // 👈 added
+  const [loading, setLoading] = useState(false); // loader state
   const router = useRouter();
+  const pathname = usePathname();
 
-  // Fetch user and role info
+  // Hide loader after route change or flash for 0.3s
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => setLoading(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, loading]);
+
+  // Fetch user info
   useEffect(() => {
     setMounted(true);
 
     const fetchUser = async () => {
       let user: any = null;
-
       const stored = localStorage.getItem("user");
+
       if (stored) {
         user = JSON.parse(stored);
         if (!user.role) {
@@ -69,7 +77,7 @@ export default function DashboardLayout({
     router.push(ROUTES.HOME);
   };
 
-  // 👇 helper for link clicks
+  // Show loader briefly on every nav click
   const handleNavClick = (path: string) => {
     setLoading(true);
     router.push(path);
@@ -79,7 +87,6 @@ export default function DashboardLayout({
 
   return (
     <div className="d-flex vh-100 w-100" style={{ overflow: "hidden" }}>
-      {/* Loader shown when navigating */}
       {loading && <Loader />}
 
       {/* Sidebar */}
@@ -144,7 +151,6 @@ export default function DashboardLayout({
                     </button>
                   </li>
                 )}
-
                 <li className="nav-item mb-1">
                   <button
                     className="nav-link text-white btn btn-dark text-start w-100"
