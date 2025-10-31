@@ -50,3 +50,28 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { ids } = body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { error: "No inventory IDs provided" },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabase.from("inventories").delete().in("id", ids);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, deleted: ids.length });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Failed to delete" },
+      { status: 500 }
+    );
+  }
+}
