@@ -12,6 +12,7 @@ import AddInventoryModal from "../../../components/AddInventoryModal";
 import EditInventoryModal from "../../../components/EditInventoryModal";
 import ExportButton from "../../../components/ExportButton";
 import ToggleColumns from "../../../components/ToggleColumns";
+import { dateNoTimezone } from "../../../utils/validator";
 
 import type { Category, Supplier, Inventory } from "../../../types/inventory";
 import { calculateInventoryTotal } from "../../../utils/validator";
@@ -57,9 +58,15 @@ export default function InventoriesPage() {
   const fetchInventories = async () => {
     const { data, error } = await supabase.from("inventories").select("*");
     if (error) return toast.error(error.message);
-    setInventories(data || []);
-  };
 
+    // Map dates without timezone
+    const mapped = (data || []).map((inv) => ({
+      ...inv,
+      date_arrived: dateNoTimezone(inv.date_arrived), // <--- normalize
+    }));
+
+    setInventories(mapped);
+  };
   const selectedInventories = inventories.filter((inv) =>
     selectedInventoryIds.includes(inv.id!)
   );
@@ -90,7 +97,10 @@ export default function InventoriesPage() {
   });
 
   const columns: Column<Inventory>[] = [
-    { header: "Date Arrived", accessor: (row) => row.date_arrived || "" },
+    {
+      header: "Date Arrived",
+      accessor: (row) => row.date_arrived || "",
+    },
     { header: "Box Number", accessor: "box_number" },
     { header: "Supplier", accessor: "supplier" },
     { header: "Category", accessor: "category" },
