@@ -19,4 +19,6 @@ export interface Inventory {
   price?: string;
   total?: string;
   created_at?: string;
+  quantity_left?: string;
+  total_left?: string;
 }

@@ -253,3 +253,50 @@ export const saveInventoryTotal = async (item: {
 
   if (error) toast.error(error.message);
 };
+
+/**
+ * Calculates quantity_left and total_left for an inventory
+ * based on sold items (oryany) with is_returned logic.
+ */
+export function calculateInventoryLeft(
+  inventory: {
+    quantity: string | number;
+    total: string | number;
+    price: string | number;
+  },
+  items: {
+    quantity: string | number;
+    selling_price: string | number;
+    is_returned: string;
+  }[]
+) {
+  const inventoryQty = parseNumber(inventory.quantity);
+  const inventoryTotal = parseNumber(inventory.total);
+
+  let totalSoldQty = 0;
+  let totalSoldValue = 0;
+  let totalReturnedQty = 0;
+  let totalReturnedValue = 0;
+
+  for (const item of items) {
+    const qty = parseNumber(item.quantity);
+    const val = parseNumber(item.selling_price);
+
+    if (item.is_returned === "No") {
+      totalSoldQty += qty;
+      totalSoldValue += val;
+    } else if (item.is_returned === "Yes") {
+      totalReturnedQty += qty;
+      totalReturnedValue += val;
+    }
+  }
+
+  // Start from original inventory
+  const quantity_left = inventoryQty - totalSoldQty + totalReturnedQty;
+  const total_left = inventoryTotal - totalSoldValue + totalReturnedValue;
+
+  return {
+    quantity_left: quantity_left.toFixed(2),
+    total_left: total_left.toFixed(2),
+  };
+}

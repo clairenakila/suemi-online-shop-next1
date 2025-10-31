@@ -13,8 +13,14 @@ import EditInventoryModal from "../../../components/EditInventoryModal";
 import ExportButton from "../../../components/ExportButton";
 import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
+
 import type { Category, Supplier, Inventory } from "../../../types/inventory";
-import { parseNumber, dateNoTimezone } from "../../../utils/validator";
+import {
+  parseNumber,
+  dateNoTimezone,
+  calculateInventoryLeft,
+  calculateInventoryTotal,
+} from "../../../utils/validator";
 
 interface User {
   name: string;
@@ -35,17 +41,20 @@ export default function InventoriesPage() {
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
-  }>({ startDate: null, endDate: null });
+  }>({
+    startDate: null,
+    endDate: null,
+  });
   const [tableColumns, setTableColumns] = useState<Column<Inventory>[]>([]);
   const [user, setUser] = useState<User | null>(null);
 
-  // Fetch suppliers and categories on mount
+  /** ─── Load suppliers and categories ───────────────────────────── */
   useEffect(() => {
     fetchSuppliers();
     fetchCategories();
   }, []);
 
-  // Fetch inventories after suppliers and categories are loaded
+  /** ─── Fetch inventories once suppliers & categories ready ─────── */
   useEffect(() => {
     if (suppliers.length && categories.length) fetchInventories();
   }, [suppliers, categories]);
@@ -62,31 +71,64 @@ export default function InventoriesPage() {
     setCategories(data || []);
   };
 
+  /** ─── Main inventories fetch ─────────────────────────────────── */
   const fetchInventories = async () => {
-    const { data, error } = await supabase.from("inventories").select("*");
-    if (error) return toast.error(error.message);
+    try {
+      const { data: inventoriesData, error: invError } = await supabase
+        .from("inventories")
+        .select("*");
+      if (invError) throw invError;
 
-    // Normalize quantities, prices, totals, and dates
-    const mapped = (data || []).map((inv) => {
-      const quantity = parseNumber(inv.quantity).toFixed(2);
-      const price = parseNumber(inv.price).toFixed(2);
-      const total = (
-        parseNumber(inv.quantity) * parseNumber(inv.price)
-      ).toFixed(2);
+      const { data: itemsData, error: itemsError } = await supabase
+        .from("items")
+        .select("*");
+      if (itemsError) throw itemsError;
 
-      return {
-        ...inv,
-        quantity,
-        price,
-        total,
-        date_arrived: dateNoTimezone(inv.date_arrived),
-      };
-    });
+      // Sort inventories FIFO
+      const sortedInventories = (inventoriesData || []).sort(
+        (a, b) =>
+          new Date(a.date_arrived).getTime() -
+          new Date(b.date_arrived).getTime()
+      );
 
-    setInventories(mapped);
+      // Prepare mapped data
+      const mapped = sortedInventories.map((inv) => {
+        const quantity = parseNumber(inv.quantity);
+        const price = parseNumber(inv.price);
+        const total = calculateInventoryTotal(
+          quantity.toFixed(2),
+          price.toFixed(2)
+        );
+
+        // Only match items by category
+        const relatedItems = (itemsData || []).filter(
+          (item) => item.category === inv.category
+        );
+
+        // Handle return logic only in validator
+        const { quantity_left, total_left } = calculateInventoryLeft(
+          { quantity: quantity.toFixed(2), total, price },
+          relatedItems as any
+        );
+
+        return {
+          ...inv,
+          quantity: quantity.toFixed(2),
+          price: price.toFixed(2),
+          total,
+          quantity_left,
+          total_left,
+          date_arrived: dateNoTimezone(inv.date_arrived),
+        };
+      });
+
+      setInventories(mapped);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch inventories");
+    }
   };
 
-  // Fetch current user
+  /** ─── Fetch logged-in user for permissions ────────────────────── */
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -101,6 +143,7 @@ export default function InventoriesPage() {
     fetchUser();
   }, []);
 
+  /** ─── Table selection controls ────────────────────────────────── */
   const toggleSelectInventory = (id: string) =>
     setSelectedInventoryIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -109,6 +152,7 @@ export default function InventoriesPage() {
   const toggleSelectAll = (checked: boolean) =>
     setSelectedInventoryIds(checked ? inventories.map((i) => i.id!) : []);
 
+  /** ─── Search + date filtering ─────────────────────────────────── */
   const filteredInventories = inventories.filter((inv) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = [inv.box_number, inv.supplier, inv.category].some(
@@ -128,14 +172,17 @@ export default function InventoriesPage() {
     return matchesSearch && matchesDateRange;
   });
 
+  /** ─── Table columns ───────────────────────────────────────────── */
   const columns: Column<Inventory>[] = [
     { header: "Date Arrived", accessor: (row) => row.date_arrived || "" },
     { header: "Box Number", accessor: "box_number" },
     { header: "Supplier", accessor: "supplier" },
     { header: "Category", accessor: "category" },
     { header: "Quantity", accessor: "quantity" },
+    { header: "Quantity Left", accessor: "quantity_left" },
     { header: "Price", accessor: "price" },
     { header: "Total", accessor: "total" },
+    { header: "Total Left", accessor: "total_left" },
     {
       header: "Action",
       accessor: (row) => (
@@ -161,6 +208,7 @@ export default function InventoriesPage() {
 
   useEffect(() => setTableColumns(columns), [inventories]);
 
+  /** ─── Render ──────────────────────────────────────────────────── */
   return (
     <div className="container my-5">
       <Toaster />
@@ -168,6 +216,7 @@ export default function InventoriesPage() {
 
       <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex flex-wrap align-items-center gap-2">
+          {/* ─── Add Inventory ─── */}
           <button
             className="btn btn-success"
             onClick={() => setShowAddModal(true)}
@@ -184,6 +233,7 @@ export default function InventoriesPage() {
             />
           )}
 
+          {/* ─── Edit Inventory ─── */}
           <button
             className="btn btn-warning"
             onClick={() => {
@@ -205,6 +255,7 @@ export default function InventoriesPage() {
             />
           )}
 
+          {/* ─── Import (Superadmin only) ─── */}
           {user?.role?.name === "Superadmin" && (
             <ImportButton
               table="inventories"
@@ -221,6 +272,7 @@ export default function InventoriesPage() {
             />
           )}
 
+          {/* ─── Export ─── */}
           <ExportButton
             data={filteredInventories}
             headersMap={{
@@ -236,6 +288,7 @@ export default function InventoriesPage() {
             filename="inventories.csv"
           />
 
+          {/* ─── Delete Selected ─── */}
           <ConfirmDelete
             confirmMessage="Delete selected inventories?"
             onConfirm={async () => {
