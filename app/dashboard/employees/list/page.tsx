@@ -7,23 +7,23 @@ import { supabase } from "@/lib/supabase";
 import SearchBar from "../../../components/SearchBar";
 import ConfirmDelete from "../../../components/ConfirmDelete";
 import { DataTable, Column } from "../../../components/DataTable";
-import BulkEdit from "../../../components/BulkEdit";
 import DateRangePicker from "../../../components/DateRangePicker";
-import AddButton from "../../../components/AddButton";
-import ToggleColumns from "../../../components/ToggleColumns";
+import AddEmployeeModal from "../../../components/AddEmployeeModal";
+import EditEmployeeModal from "../../../components/EditEmployeeModal";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
-import { mapRoleNameToId, formatNumberForText } from "../../../utils/validator";
+import ToggleColumns from "../../../components/ToggleColumns";
+
 import bcrypt from "bcryptjs";
 
 interface User {
-  id?: string;
+  id: string;
   name: string;
   email: string;
-  password?: string;
+  password: string;
   role_id: string;
   role_name?: string;
-  contact_number?: string; // ✅ added
+  contact_number?: string;
   sss_number?: string;
   philhealth_number?: string;
   pagibig_number?: string;
@@ -42,31 +42,18 @@ interface Role {
 export default function EmployeesListPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [form, setForm] = useState<User>({
-    name: "",
-    email: "",
-    password: "",
-    contact_number: "",
-    role_id: "",
-    sss_number: "",
-    philhealth_number: "",
-    pagibig_number: "",
-    hourly_rate: "",
-    daily_rate: "",
-    is_employee: "Yes",
-    is_live_seller: "No",
-  });
-  const [editId, setEditId] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
   }>({ startDate: null, endDate: null });
+  const [tableColumns, setTableColumns] = useState<Column<User>[]>([]);
 
-  // Fetch roles & users
+  // Fetch roles and users
   useEffect(() => {
     fetchRoles();
   }, []);
@@ -90,59 +77,17 @@ export default function EmployeesListPage() {
     setUsers(mapped);
   };
 
-  const handleUserEdit = (user: User) => {
-    setForm(user);
-    setEditId(user.id || null);
-    setShowModal(true);
-  };
-  const closeModal = () => {
-    setShowModal(false);
-    setEditId(null);
-  };
+  // Selected user objects for bulk edit
+  const selectedUsers = users.filter((u) => selectedUserIds.includes(u.id!));
 
-  const sanitizeUserData = (data: User) => ({
-    ...data,
-    hourly_rate: data.hourly_rate?.toString() || "0.00",
-    daily_rate: data.daily_rate?.toString() || "0.00",
-  });
-
-  const handleSubmit = async (userData: User) => {
-    if (!userData.role_id) return toast.error("Please select a role");
-    const cleanData = sanitizeUserData(userData);
-
-    // ✅ Hash the password if present
-    if (userData.password) {
-      cleanData.password = await hashPassword(userData.password);
-    }
-
-    if (editId) {
-      // If password is empty, don't update it
-      const updateData = { ...cleanData };
-      if (!userData.password) delete updateData.password;
-
-      const { error } = await supabase
-        .from("users")
-        .update(updateData)
-        .eq("id", editId);
-      if (error) return toast.error(error.message);
-      toast.success("User updated successfully");
-    } else {
-      const { error } = await supabase.from("users").insert([cleanData]);
-      if (error) return toast.error(error.message);
-      toast.success("User added successfully");
-    }
-
-    fetchUsers();
-    closeModal();
-  };
-
-  // Selection
+  // Table selection
   const toggleSelectUser = (id: string) =>
-    setSelectedUsers((prev) =>
+    setSelectedUserIds((prev) =>
       prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
     );
+
   const toggleSelectAll = (checked: boolean) =>
-    setSelectedUsers(checked ? users.map((u) => u.id!) : []);
+    setSelectedUserIds(checked ? users.map((u) => u.id!) : []);
 
   // Filtering
   const filteredUsers = users.filter((u) => {
@@ -150,7 +95,7 @@ export default function EmployeesListPage() {
     const matchesSearch = [
       u.name,
       u.email,
-      u.contact_number, // ✅ included
+      u.contact_number,
       u.sss_number,
       u.philhealth_number,
       u.pagibig_number,
@@ -170,12 +115,6 @@ export default function EmployeesListPage() {
     return matchesSearch && matchesDateRange;
   });
 
-  //hash password function
-  async function hashPassword(password: string) {
-    const salt = await bcrypt.genSalt(10);
-    return await bcrypt.hash(password, salt);
-  }
-
   // Columns
   const columns: Column<User>[] = [
     {
@@ -185,7 +124,7 @@ export default function EmployeesListPage() {
     },
     { header: "Name", accessor: "name" },
     { header: "Email", accessor: "email" },
-    { header: "Contact Number", accessor: "contact_number" }, // ✅ added
+    { header: "Contact Number", accessor: "contact_number" },
     { header: "SSS Number", accessor: "sss_number" },
     { header: "PhilHealth Number", accessor: "philhealth_number" },
     { header: "Pagibig Number", accessor: "pagibig_number" },
@@ -215,7 +154,9 @@ export default function EmployeesListPage() {
     },
   ];
 
-  const [tableColumns, setTableColumns] = useState<Column<User>[]>(columns);
+  useEffect(() => {
+    setTableColumns(columns);
+  }, [users]);
 
   return (
     <div className="container my-5">
@@ -225,92 +166,45 @@ export default function EmployeesListPage() {
       {/* Toolbar */}
       <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div className="d-flex flex-wrap align-items-center gap-2">
-          <AddButton
-            table="users"
-            onSuccess={fetchUsers}
-            fields={[
-              { key: "name", label: "Name", type: "text" },
-              { key: "email", label: "Email", type: "text" },
-              { key: "contact_number", label: "Contact Number", type: "text" }, // ✅ added
-              { key: "password", label: "Password", type: "text" },
-              { key: "sss_number", label: "SSS Number", type: "text" },
-              {
-                key: "philhealth_number",
-                label: "PhilHealth Number",
-                type: "text",
-              },
-              { key: "pagibig_number", label: "Pagibig Number", type: "text" },
-              {
-                key: "hourly_rate",
-                label: "Hourly Rate",
-                type: "float",
-                defaultValue: 0,
-              },
-              {
-                key: "daily_rate",
-                label: "Daily Rate",
-                type: "float",
-                defaultValue: 0,
-              },
-              {
-                key: "is_employee",
-                label: "Is Employee?",
-                type: "select",
-                options: ["Yes", "No"],
-              },
-              {
-                key: "is_live_seller",
-                label: "Is Live Seller?",
-                type: "select",
-                options: ["Yes", "No"],
-              },
-              {
-                key: "role_id",
-                label: "Role",
-                type: "select",
-                options: roles.map((r) => ({ label: r.name, value: r.id })),
-              },
-            ]}
-          />
-          <BulkEdit
-            table="users"
-            selectedIds={selectedUsers}
-            onSuccess={fetchUsers}
-            fields={[
-              { key: "name", label: "Name", type: "text" },
-              { key: "email", label: "Email", type: "text" },
-              { key: "contact_number", label: "Contact Number", type: "text" }, // ✅ added
-              { key: "password", label: "Password", type: "text" },
-              { key: "sss_number", label: "SSS Number", type: "text" },
-              {
-                key: "philhealth_number",
-                label: "PhilHealth Number",
-                type: "text",
-              },
-              { key: "pagibig_number", label: "Pagibig Number", type: "text" },
-              { key: "hourly_rate", label: "Hourly Rate", type: "number" },
-              { key: "daily_rate", label: "Daily Rate", type: "number" },
-              {
-                key: "is_employee",
-                label: "Is Employee?",
-                type: "select",
-                options: ["Yes", "No"],
-              },
-              {
-                key: "is_live_seller",
-                label: "Is Live Seller?",
-                type: "select",
-                options: ["Yes", "No"],
-              },
-              {
-                key: "role_id",
-                label: "Role",
-                type: "select",
-                options: roles.map((r) => ({ label: r.name, value: r.id })),
-              },
-            ]}
-          />
-          {/* <ImportButton
+          {/* Add Employee */}
+          <button
+            className="btn btn-success"
+            onClick={() => setShowAddModal(true)}
+          >
+            Add Employee
+          </button>
+          {showAddModal && (
+            <AddEmployeeModal
+              isOpen={showAddModal}
+              onClose={() => setShowAddModal(false)}
+              onSuccess={fetchUsers}
+              roles={roles}
+            />
+          )}
+
+          {/* Edit Employees */}
+          <button
+            className="btn btn-warning"
+            onClick={() => {
+              if (!selectedUserIds.length)
+                return toast.error("Select at least one user");
+              setShowEditModal(true);
+            }}
+          >
+            Edit
+          </button>
+          {showEditModal && (
+            <EditEmployeeModal
+              isOpen={showEditModal}
+              onClose={() => setShowEditModal(false)}
+              onSuccess={fetchUsers}
+              roles={roles}
+              selectedUsers={selectedUsers} // bulk edit
+            />
+          )}
+
+          {/* Import / Export
+          <ImportButton
             table="users"
             headersMap={{
               Name: "name",
@@ -324,66 +218,50 @@ export default function EmployeesListPage() {
               "Philhealth Number": "philhealth_number",
               "Is Live Seller": "is_live_seller",
               "Is Employee": "is_employee",
-              // ❌ Role is intentionally excluded — ignored if present
             }}
             transformRow={async (row) => {
               const get = (key: string) =>
                 key in row && row[key] != null ? String(row[key]).trim() : "";
-
-              // ✅ Clean and format rates
               const hourly = get("hourly_rate").replace(/,/g, "");
               const daily = get("daily_rate").replace(/,/g, "");
+              const hashedPassword = await bcrypt.hash(
+                get("password") || "default123",
+                10
+              );
 
-              const formattedHourly =
-                hourly && !isNaN(Number(hourly))
-                  ? Number(hourly).toFixed(2) // "5000.50"
-                  : "0.00";
-
-              const formattedDaily =
-                daily && !isNaN(Number(daily))
-                  ? Number(daily).toFixed(2) // "1000.00"
-                  : "0.00";
-
-              // ✅ Hash password securely
-              const plainPassword = get("password") || "default123";
-              const hashedPassword = await bcrypt.hash(plainPassword, 10);
-
-              // ✅ Build user data (no role)
-              const userData: Record<string, any> = {};
-
-              if (get("name")) userData.name = get("name");
-              if (get("email")) userData.email = get("email");
-              if (get("contact_number"))
-                userData.contact_number = get("contact_number");
-              if (get("sss_number")) userData.sss_number = get("sss_number");
-              if (get("pagibig_number"))
-                userData.pagibig_number = get("pagibig_number");
-              if (get("philhealth_number"))
-                userData.philhealth_number = get("philhealth_number");
-              if (get("is_employee")) userData.is_employee = get("is_employee");
-              if (get("is_live_seller"))
-                userData.is_live_seller = get("is_live_seller");
-
-              userData.password = hashedPassword;
-              userData.hourly_rate = formattedHourly;
-              userData.daily_rate = formattedDaily;
-
-              return userData;
+              return {
+                name: get("name") || undefined,
+                email: get("email") || undefined,
+                contact_number: get("contact_number") || undefined,
+                sss_number: get("sss_number") || undefined,
+                philhealth_number: get("philhealth_number") || undefined,
+                pagibig_number: get("pagibig_number") || undefined,
+                is_employee: get("is_employee") || undefined,
+                is_live_seller: get("is_live_seller") || undefined,
+                password: hashedPassword,
+                hourly_rate:
+                  hourly && !isNaN(Number(hourly))
+                    ? Number(hourly).toFixed(2)
+                    : "0.00",
+                daily_rate:
+                  daily && !isNaN(Number(daily))
+                    ? Number(daily).toFixed(2)
+                    : "0.00",
+              };
             }}
             onSuccess={async () => {
               await fetchUsers();
-              toast.success(
-                "✅ Users imported successfully (Role skipped, rates fixed)"
-              );
+              toast.success("✅ Users imported successfully");
             }}
           /> */}
+
           <ExportButton
             data={filteredUsers}
             headersMap={{
               "Created At": (row) => row.created_at || "",
               Name: "name",
               Email: "email",
-              "Contact Number": "contact_number", // ✅ added
+              "Contact Number": "contact_number",
               "SSS Number": "sss_number",
               "PhilHealth Number": "philhealth_number",
               "Pagibig Number": "pagibig_number",
@@ -395,16 +273,18 @@ export default function EmployeesListPage() {
             }}
             filename="employees.xlsx"
           />
+
+          {/* Delete Selected */}
           <ConfirmDelete
             confirmMessage="Are you sure you want to delete selected users?"
             onConfirm={async () => {
-              if (!selectedUsers.length) throw new Error("No users selected");
+              if (!selectedUserIds.length) throw new Error("No users selected");
               const { error } = await supabase
                 .from("users")
                 .delete()
-                .in("id", selectedUsers);
+                .in("id", selectedUserIds);
               if (error) throw error;
-              setSelectedUsers([]);
+              setSelectedUserIds([]);
               fetchUsers();
             }}
           >
@@ -412,7 +292,7 @@ export default function EmployeesListPage() {
           </ConfirmDelete>
         </div>
 
-        {/* Search + Calendar */}
+        {/* Search + Date filter + Columns toggle */}
         <div className="d-flex align-items-center gap-2">
           <SearchBar
             placeholder="Search employees..."
@@ -428,7 +308,6 @@ export default function EmployeesListPage() {
           >
             <i className="bi bi-calendar3 fs-5 text-secondary"></i>
           </button>
-
           <ToggleColumns columns={columns} onChange={setTableColumns} />
         </div>
       </div>
@@ -443,11 +322,11 @@ export default function EmployeesListPage() {
         data={filteredUsers}
         columns={tableColumns}
         selectable
-        selectedIds={selectedUsers}
+        selectedIds={selectedUserIds}
         onToggleSelect={toggleSelectUser}
         onToggleSelectAll={toggleSelectAll}
         rowKey="id"
-        page={1} // or your state variable
+        page={1}
         pageSize={50}
         totalCount={filteredUsers.length}
         onPageChange={() => {}}
