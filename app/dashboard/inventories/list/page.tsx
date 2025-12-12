@@ -1,27 +1,17 @@
 "use client";
 import AddButton from "../../../components/AddButton";
 import BulkEdit from "../../../components/BulkEdit";
-import ImportButton from "../../../components/ImportButton";
-
-
-
 
 export default function InventoriesPage() {
-
-    const handleSuccess = () => {  // ← Gawa ng function
-    console.log("Success!");
-  };
-
-  const headersMap = {  // ← Add headersMap
-    "Product Name": "name",
-    "Quantity": "quantity",
-    "Price": "price"
-  };
   return (
-    <div className="p-6">
-      <p className="text-xl font-bold">Inventory List</p>
+    <div className="container my-5 ">
+      {/* Header */}
+      <div className="mb-6">
+        <p className="mb-4 text-3xl ">Inventory List</p>
+      </div>
       
-      <div className="flex gap-4">
+      {/* Buttons */}
+      <div className="flex gap-3 mb-6">
         <AddButton 
           table="inventories"
           fields={[]}
@@ -33,12 +23,9 @@ export default function InventoriesPage() {
           selectedIds={[]}
           onSuccess={() => {}}
         />
-        <ImportButton 
-          table="inventories"
-          onSuccess={handleSuccess}
-          headersMap={headersMap}
-        />
       </div>
+      
+      {/* Dito mo ilalagay yung DataTable later */}
     </div>
   );
 }
