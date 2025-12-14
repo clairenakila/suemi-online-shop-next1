@@ -144,6 +144,7 @@ export default function AddButton({
                   className="btn btn-secondary"
                   onClick={() => setShowModal(false)}
                   disabled={loading}
+                  
                 >
                   Cancel
                 </button>
