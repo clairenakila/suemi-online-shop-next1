@@ -122,6 +122,40 @@ export default function InventoriesPage() {
       amount: 400,
       total: 20000,
     },
+    {
+      id: "5",
+      created_at: "2025-14-05",
+      category_id: 105,
+      date_arrived: "2025-16-12",
+      supplier_id: 505,
+      box_number: "BOX-004",
+      quantity: 52,
+      amount: 400,
+      total: 20000,
+    },
+    {
+      id: "6",
+      created_at: "2025-14-05",
+      category_id: 105,
+      date_arrived: "2025-16-12",
+      supplier_id: 505,
+      box_number: "BOX-004",
+      quantity: 52,
+      amount: 400,
+      total: 20000,
+    }, 
+      {
+      id: "7",
+      created_at: "2025-14-05",
+      category_id: 105,
+      date_arrived: "2025-16-12",
+      supplier_id: 505,
+      box_number: "BOX-004",
+      quantity: 52,
+      amount: 400,
+      total: 20000,
+    }, 
+    
     // dagdagan mo pa ng 5-10 rows para may pagination
   ];
   // 2. State at handlers – DAPAT NASA BABA NG ARRAY
