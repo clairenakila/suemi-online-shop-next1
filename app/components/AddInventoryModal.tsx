@@ -136,6 +136,7 @@ export default function AddInventoryModal({
                       })
                     }
                     className="form-control"
+                    wrapperClassName="w-100"
                   />
                   {errors.date_arrived && (
                     <div className="text-danger">{errors.date_arrived}</div>
