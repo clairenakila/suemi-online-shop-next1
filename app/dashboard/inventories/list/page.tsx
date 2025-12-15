@@ -1,36 +1,8 @@
 "use client";
-import AddButton from "../../../components/AddButton";
 import BulkEdit from "../../../components/BulkEdit";
 import { Column, DataTable } from "../../../components/DataTable";
+import AddInventoryModal from "../../../components/AddInventoryModal";
 import { useState } from "react";
-
-// export const Columns: Column<any>[] = [
-//   {
-//     header: "Select",
-//     accessor: "select",
-//     center: true,
-//     cell: (row) => (
-//       <input
-//         type="checkbox"
-//         checked={false}
-//         onChange={() => {}}
-//       />
-//     ),
-//   },
-//   {
-//     header: "Created At",
-//     accessor: "created_at",
-//   },
-//   {
-//     header: "Date Arrived",
-//     accessor: "date_arrived",
-//   },
-//   {
-//     header: "Category ID",
-//     accessor: "category_id",
-//     center: true,
-//   },
-// ];
 
 export const Columns: Column<any>[] = [
   {
@@ -76,10 +48,9 @@ export const Columns: Column<any>[] = [
 ];
 
 export default function InventoriesPage() {
-  // Fake data muna – palitan mamaya ng totoong from DB
   const arrivalsData = [
     {
-      id: "1", // importante may "id" kasi rowKey="id"
+      id: "1",
       created_at: "2025-12-01",
       category_id: 101,
       date_arrived: "2025-12-10",
@@ -143,8 +114,8 @@ export default function InventoriesPage() {
       quantity: 52,
       amount: 400,
       total: 20000,
-    }, 
-      {
+    },
+    {
       id: "7",
       created_at: "2025-14-05",
       category_id: 105,
@@ -154,12 +125,11 @@ export default function InventoriesPage() {
       quantity: 52,
       amount: 400,
       total: 20000,
-    }, 
-    
-    // dagdagan mo pa ng 5-10 rows para may pagination
+    },
   ];
-  // 2. State at handlers – DAPAT NASA BABA NG ARRAY
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]); // ← Fixed: added state for selected IDs
+  const [openAddModal, setOpenAddModal] = useState(false);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
@@ -175,38 +145,43 @@ export default function InventoriesPage() {
       setSelectedIds([]);
     }
   };
+
   return (
     <div className="container my-5">
       {/* Header */}
-      <div className="mb-4">
-        <p className="text-3xl text-blue-50">Inventory List</p>
+      <div className="mb-3">
+        <h2>Inventory List</h2>
       </div>
 
       {/* Buttons */}
       <div className="d-flex gap-2 mb-3">
-        <div className="Addbtn">
-          <AddButton
-            table="inventories"
-            fields={[]}
-            onSuccess={() => {}}
-            className="btn btn-success"
-            buttonText="Add Item"
-          />
-        </div>
-        <div className="BulkEditbtn">
-          <BulkEdit
-            table="inventories"
-            fields={[]}
-            selectedIds={[]}
-            onSuccess={() => {}}
-            // className="btn btn-warning"
-            // buttonText="Bulk Edit"
-          />
-        </div>
+        <button
+          className="btn btn-success"
+          onClick={() => setOpenAddModal(true)}
+        >
+          Add Inventory
+        </button>
+
+        <BulkEdit
+          table="inventories"
+          fields={[]}
+          selectedIds={selectedIds} // ← Fixed: use state, not empty array
+          onSuccess={() => {}}
+        />
       </div>
 
-      {/* Dito mo ilalagay yung DataTable later */}
-      <div className="container mx-auto ">
+      {/* Add Inventory Modal */}
+      <AddInventoryModal
+        isOpen={openAddModal}
+        onClose={() => setOpenAddModal(false)}
+        onSuccess={() => {
+          setOpenAddModal(false);
+          // Refresh data or show success message
+        }}
+      />
+
+      {/* DataTable */}
+      <div className="container mx-auto">
         <DataTable
           data={arrivalsData}
           columns={Columns}
