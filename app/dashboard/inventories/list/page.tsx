@@ -2,7 +2,8 @@
 import BulkEdit from "../../../components/BulkEdit";
 import { Column, DataTable } from "../../../components/DataTable";
 import AddInventoryModal from "../../../components/AddInventoryModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export const Columns: Column<any>[] = [
   {
@@ -16,13 +17,13 @@ export const Columns: Column<any>[] = [
     center: false,
   },
   {
-    header: "Category ID",
-    accessor: "category_id",
+    header: "Category",
+    accessor: "category",
     center: true,
   },
   {
-    header: "Supplier ID",
-    accessor: "supplier_id",
+    header: "Supplier",
+    accessor: "supplier",
     center: true,
   },
   {
@@ -35,11 +36,7 @@ export const Columns: Column<any>[] = [
     accessor: "quantity",
     center: true,
   },
-  {
-    header: "Amount",
-    accessor: "amount",
-    center: true,
-  },
+
   {
     header: "Total",
     accessor: "total",
@@ -48,88 +45,38 @@ export const Columns: Column<any>[] = [
 ];
 
 export default function InventoriesPage() {
-  const arrivalsData = [
-    {
-      id: "1",
-      created_at: "2025-12-01",
-      category_id: 101,
-      date_arrived: "2025-12-10",
-      supplier_id: 501,
-      box_number: "BOX-001",
-      quantity: 100,
-      amount: 250,
-      total: 25000,
-    },
-    {
-      id: "2",
-      created_at: "2025-12-05",
-      category_id: 102,
-      date_arrived: "2025-12-12",
-      supplier_id: 502,
-      box_number: "BOX-002",
-      quantity: 50,
-      amount: 400,
-      total: 20000,
-    },
-    {
-      id: "3",
-      created_at: "2025-13-05",
-      category_id: 103,
-      date_arrived: "2025-14-12",
-      supplier_id: 503,
-      box_number: "BOX-003",
-      quantity: 51,
-      amount: 400,
-      total: 20000,
-    },
-    {
-      id: "4",
-      created_at: "2025-14-05",
-      category_id: 104,
-      date_arrived: "2025-16-12",
-      supplier_id: 505,
-      box_number: "BOX-004",
-      quantity: 52,
-      amount: 400,
-      total: 20000,
-    },
-    {
-      id: "5",
-      created_at: "2025-14-05",
-      category_id: 105,
-      date_arrived: "2025-16-12",
-      supplier_id: 505,
-      box_number: "BOX-004",
-      quantity: 52,
-      amount: 400,
-      total: 20000,
-    },
-    {
-      id: "6",
-      created_at: "2025-14-05",
-      category_id: 105,
-      date_arrived: "2025-16-12",
-      supplier_id: 505,
-      box_number: "BOX-004",
-      quantity: 52,
-      amount: 400,
-      total: 20000,
-    },
-    {
-      id: "7",
-      created_at: "2025-14-05",
-      category_id: 105,
-      date_arrived: "2025-16-12",
-      supplier_id: 505,
-      box_number: "BOX-004",
-      quantity: 52,
-      amount: 400,
-      total: 20000,
-    },
-  ];
-
+  const [arrivalsData, setArrivalsData] = useState<any[]>([]); // Sample data can be set here
   const [selectedIds, setSelectedIds] = useState<string[]>([]); // ← Fixed: added state for selected IDs
   const [openAddModal, setOpenAddModal] = useState(false);
+
+  // useEffect to fetch inventories
+  useEffect(() => {
+    const fetchInventories = async () => {
+      const { data, error } = await supabase
+        .from("inventories")
+        .select(`
+          id,
+          created_at,
+          date_arrived,
+          category,
+          supplier,
+          box_number,
+          quantity,
+          total
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Fetch error:", error);
+        return;
+      }
+
+      setArrivalsData(data || []);
+    };
+
+    fetchInventories();
+  }, []);
+
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
@@ -149,7 +96,7 @@ export default function InventoriesPage() {
   return (
     <div className="container my-5">
       {/* Header */}
-      <div className="mb-3">
+      <div className="mb-4">
         <h2>Inventory List</h2>
       </div>
 
