@@ -2,6 +2,9 @@
 import BulkEdit from "../../../components/BulkEdit";
 import { Column, DataTable } from "../../../components/DataTable";
 import AddInventoryModal from "../../../components/AddInventoryModal";
+import ImportButton from "../../../components/ImportButton";
+import ExportButton from "../../../components/ExportButton";
+import SearchBar from "../../../components/SearchBar";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -54,7 +57,8 @@ export default function InventoriesPage() {
     const fetchInventories = async () => {
       const { data, error } = await supabase
         .from("inventories")
-        .select(`
+        .select(
+          `
           id,
           created_at,
           date_arrived,
@@ -63,7 +67,8 @@ export default function InventoriesPage() {
           box_number,
           quantity,
           total
-        `)
+        `
+        )
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -77,7 +82,7 @@ export default function InventoriesPage() {
     fetchInventories();
   }, []);
 
-
+  // Handlers for selection
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -99,8 +104,8 @@ export default function InventoriesPage() {
       <div className="mb-4">
         <h2>Inventory List</h2>
       </div>
-
       {/* Buttons */}
+      {/* Add Inventory Button */}
       <div className="d-flex gap-2 mb-3">
         <button
           className="btn btn-success"
@@ -108,13 +113,43 @@ export default function InventoriesPage() {
         >
           Add Inventory
         </button>
-
+        {/* Edit Btn */}
         <BulkEdit
           table="inventories"
           fields={[]}
           selectedIds={selectedIds} // ← Fixed: use state, not empty array
           onSuccess={() => {}}
         />
+        {/* Import Button */}
+        <ImportButton
+          table="inventories"
+          headersMap={{
+            date_arrived: "Date Arrived",
+            category: "Category",
+            supplier: "Supplier",
+            box_number: "Box Number",
+            quantity: "Quantity",
+            total: "Total",
+          }}
+          onSuccess={() => {
+            // optional: refetch inventories
+          }}
+        />
+        <ExportButton
+          data={arrivalsData}
+          headersMap={{
+            created_at: "Created At",
+            date_arrived: "Date Arrived",
+            category_id: "Category ID",
+            supplier_id: "Supplier ID",
+            box_number: "Box Number",
+            quantity: "Quantity",
+            amount: "Amount",
+            total: "Total",
+          }}
+        />
+          {/* RIGHT: search bar */}
+          {/* <SearchBar /> */}
       </div>
 
       {/* Add Inventory Modal */}
