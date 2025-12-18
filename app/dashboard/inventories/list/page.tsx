@@ -52,7 +52,7 @@ export default function InventoriesPage() {
   const [arrivalsData, setArrivalsData] = useState<any[]>([]); // Sample data can be set here
   const [selectedIds, setSelectedIds] = useState<string[]>([]); // ← Fixed: added state for selected IDs
   const [openAddModal, setOpenAddModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+ 
 
   // useEffect to fetch inventories
   useEffect(() => {
@@ -145,12 +145,12 @@ export default function InventoriesPage() {
         <ImportButton
           table="inventories"
           headersMap={{
-            date_arrived: "Date Arrived",
-            category: "Category",
-            supplier: "Supplier",
-            box_number: "Box Number",
-            quantity: "Quantity",
-            total: "Total",
+            date_arrived: "date_arrived",
+            category: "category",
+            supplier: "supplier",
+            box_number: "box_number",
+            quantity: "quantity",
+            total: "total",
           }}
           onSuccess={() => {
             // optional: refetch inventories
@@ -159,14 +159,13 @@ export default function InventoriesPage() {
         <ExportButton
           data={arrivalsData}
           headersMap={{
-            created_at: "Created At",
-            date_arrived: "Date Arrived",
-            category_id: "Category ID",
-            supplier_id: "Supplier ID",
-            box_number: "Box Number",
-            quantity: "Quantity",
-            amount: "Amount",
-            total: "Total",
+            created_at: "created At",
+            date_arrived: "date_arrived",
+            category_id: "category",
+            supplier_id: "supplier",
+            box_number: "box_number",
+            quantity: "quantity",
+            total: "total",
           }}
         />
 
