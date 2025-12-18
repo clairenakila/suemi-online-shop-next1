@@ -4,6 +4,7 @@ import { Column, DataTable } from "../../../components/DataTable";
 import AddInventoryModal from "../../../components/AddInventoryModal";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
+import ConfirmDelete from "../../../components/ConfirmDelete";
 import SearchBar from "../../../components/SearchBar";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -51,6 +52,7 @@ export default function InventoriesPage() {
   const [arrivalsData, setArrivalsData] = useState<any[]>([]); // Sample data can be set here
   const [selectedIds, setSelectedIds] = useState<string[]>([]); // ← Fixed: added state for selected IDs
   const [openAddModal, setOpenAddModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
   // useEffect to fetch inventories
   useEffect(() => {
@@ -97,7 +99,26 @@ export default function InventoriesPage() {
       setSelectedIds([]);
     }
   };
+  // Handler for delete action
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
 
+    const { error } = await supabase
+      .from("inventories")
+      .delete()
+      .in("id", selectedIds);
+
+    if (error) {
+      console.error("Delete error:", error);
+      return;
+    }
+
+    // Refresh data
+    setArrivalsData((prev) =>
+      prev.filter((item) => !selectedIds.includes(item.id))
+    );
+    setSelectedIds([]);
+  };
   return (
     <div className="container my-5">
       {/* Header */}
@@ -148,8 +169,25 @@ export default function InventoriesPage() {
             total: "Total",
           }}
         />
-          {/* RIGHT: search bar */}
-          {/* <SearchBar /> */}
+
+        {/* ConfirmDelete */}
+        <ConfirmDelete
+          onConfirm={handleDelete}
+          confirmMessage={`Are you sure you want to delete ${selectedIds.length} item(s)?`}
+        >
+          <span
+            className="text-white"
+            style={{
+              pointerEvents: selectedIds.length === 0 ? "none" : "auto",
+            }}
+          >
+            Delete Selected
+          </span>
+        </ConfirmDelete>
+
+        
+        {/* RIGHT: search bar */}
+        {/* <SearchBar /> */}
       </div>
 
       {/* Add Inventory Modal */}
