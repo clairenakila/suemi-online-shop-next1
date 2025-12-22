@@ -6,8 +6,9 @@ import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
 import ConfirmDelete from "../../../components/ConfirmDelete";
 import SearchBar from "../../../components/SearchBar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+
 
 export const Columns: Column<any>[] = [
   {
@@ -51,7 +52,8 @@ export const Columns: Column<any>[] = [
 export default function InventoriesPage() {
   const [arrivalsData, setArrivalsData] = useState<any[]>([]); // Sample data can be set here
   const [selectedIds, setSelectedIds] = useState<string[]>([]); // ← Fixed: added state for selected IDs
-  const [openAddModal, setOpenAddModal] = useState(false);
+  const [openAddModal, setOpenAddModal] = useState(false); // State for Add Inventory Modal
+  const [search, setSearch] = useState(""); // Search state
  
 
   // useEffect to fetch inventories
@@ -93,12 +95,13 @@ export default function InventoriesPage() {
 
   const handleToggleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIdsOnPage = arrivalsData.map((row) => row.id);
+      const allIdsOnPage = filteredData.map((row) => row.id);
       setSelectedIds(allIdsOnPage);
     } else {
       setSelectedIds([]);
     }
   };
+
   // Handler for delete action
   const handleDelete = async () => {
     if (selectedIds.length === 0) return;
@@ -119,6 +122,19 @@ export default function InventoriesPage() {
     );
     setSelectedIds([]);
   };
+  // Search state and filtering
+  const filteredData = arrivalsData.filter((row) =>
+    Object.values(row).some((value) =>
+      String(value).toLowerCase().includes(search.toLowerCase())
+    )
+  );
+ // Memoized search options for SearchBar
+  const searchOptions = useMemo(() => {
+    return arrivalsData.flatMap((row) =>
+      Object.values(row).map((v) => String(v))
+    );
+  }, [arrivalsData]);
+
   return (
     <div className="container my-5">
       {/* Header */}
@@ -156,8 +172,9 @@ export default function InventoriesPage() {
             // optional: refetch inventories
           }}
         />
+        {/* Export Button */}
         <ExportButton
-          data={arrivalsData}
+          data={filteredData}
           headersMap={{
             created_at: "created At",
             date_arrived: "date_arrived",
@@ -184,9 +201,15 @@ export default function InventoriesPage() {
           </span>
         </ConfirmDelete>
 
-        
         {/* RIGHT: search bar */}
         {/* <SearchBar /> */}
+        <SearchBar
+          placeholder="Search inventory..."
+          value={search}
+          onChange={setSearch}
+          options={searchOptions} // ✅ STABLE
+          storageKey="inventory-search"
+        />
       </div>
 
       {/* Add Inventory Modal */}
@@ -202,12 +225,12 @@ export default function InventoriesPage() {
       {/* DataTable */}
       <div className="container mx-auto">
         <DataTable
-          data={arrivalsData}
+          data={filteredData}
           columns={Columns}
           rowKey="id"
           page={1}
           pageSize={10}
-          totalCount={arrivalsData.length}
+          totalCount={filteredData.length}
           onPageChange={() => {}}
           onPageSizeChange={() => {}}
           selectable
