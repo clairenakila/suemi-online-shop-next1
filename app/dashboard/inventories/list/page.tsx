@@ -9,7 +9,6 @@ import SearchBar from "../../../components/SearchBar";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 
-
 export const Columns: Column<any>[] = [
   {
     header: "Created At",
@@ -54,7 +53,6 @@ export default function InventoriesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]); // ← Fixed: added state for selected IDs
   const [openAddModal, setOpenAddModal] = useState(false); // State for Add Inventory Modal
   const [search, setSearch] = useState(""); // Search state
- 
 
   // useEffect to fetch inventories
   useEffect(() => {
@@ -128,7 +126,7 @@ export default function InventoriesPage() {
       String(value).toLowerCase().includes(search.toLowerCase())
     )
   );
- // Memoized search options for SearchBar
+  // Memoized search options for SearchBar
   const searchOptions = useMemo(() => {
     return arrivalsData.flatMap((row) =>
       Object.values(row).map((v) => String(v))
@@ -204,14 +202,14 @@ export default function InventoriesPage() {
         {/* RIGHT: search bar */}
         {/* <SearchBar /> */}
         <div className="ms-auto">
-        <SearchBar
-          placeholder="Search inventory..."
-          value={search}
-          onChange={setSearch}
-          options={searchOptions} 
-          storageKey="inventory-search"
+          <SearchBar
+            placeholder="Search inventory..."
+            value={search}
+            onChange={setSearch}
+            options={searchOptions}
+            storageKey="inventory-search"
           />
-          </div>
+        </div>
       </div>
 
       {/* Add Inventory Modal */}
