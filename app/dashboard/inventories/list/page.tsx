@@ -203,13 +203,15 @@ export default function InventoriesPage() {
 
         {/* RIGHT: search bar */}
         {/* <SearchBar /> */}
+        <div className="ms-auto">
         <SearchBar
           placeholder="Search inventory..."
           value={search}
           onChange={setSearch}
-          options={searchOptions} // ✅ STABLE
+          options={searchOptions} 
           storageKey="inventory-search"
-        />
+          />
+          </div>
       </div>
 
       {/* Add Inventory Modal */}
