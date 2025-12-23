@@ -7,6 +7,8 @@ import ExportButton from "../../../components/ExportButton";
 import ConfirmDelete from "../../../components/ConfirmDelete";
 import SearchBar from "../../../components/SearchBar";
 import { useState, useEffect, useMemo } from "react";
+import ToggleColumns from "../../../components/ToggleColumns";
+import TimestampPicker from "../../../components/TimestampPicker";
 import { supabase } from "@/lib/supabase";
 
 export const Columns: Column<any>[] = [
@@ -133,6 +135,10 @@ export default function InventoriesPage() {
     );
   }, [arrivalsData]);
 
+  const [visibleColumns, setVisibleColumns] = useState(
+    Columns.map((col) => col.accessor)
+  );
+
   return (
     <div className="container my-5">
       {/* Header */}
@@ -201,13 +207,21 @@ export default function InventoriesPage() {
 
         {/* RIGHT: search bar */}
         {/* <SearchBar /> */}
-        <div className="ms-auto">
+        <div className="d-flex align-items-center gap-2 ms-auto">
           <SearchBar
             placeholder="Search inventory..."
             value={search}
             onChange={setSearch}
             options={searchOptions}
             storageKey="inventory-search"
+          />
+
+          
+          <ToggleColumns
+            columns={Columns}
+            onChange={(cols) =>
+              setVisibleColumns(cols.map((col) => col.accessor))
+            }
           />
         </div>
       </div>
