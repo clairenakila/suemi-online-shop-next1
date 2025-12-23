@@ -8,7 +8,6 @@ import ConfirmDelete from "../../../components/ConfirmDelete";
 import SearchBar from "../../../components/SearchBar";
 import { useState, useEffect, useMemo } from "react";
 import ToggleColumns from "../../../components/ToggleColumns";
-import TimestampPicker from "../../../components/TimestampPicker";
 import { supabase } from "@/lib/supabase";
 
 export const Columns: Column<any>[] = [
@@ -134,10 +133,11 @@ export default function InventoriesPage() {
       Object.values(row).map((v) => String(v))
     );
   }, [arrivalsData]);
-
+  // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState(
     Columns.map((col) => col.accessor)
   );
+
 
   return (
     <div className="container my-5">
@@ -215,14 +215,13 @@ export default function InventoriesPage() {
             options={searchOptions}
             storageKey="inventory-search"
           />
-
-          
           <ToggleColumns
             columns={Columns}
             onChange={(cols) =>
               setVisibleColumns(cols.map((col) => col.accessor))
             }
           />
+
         </div>
       </div>
 
