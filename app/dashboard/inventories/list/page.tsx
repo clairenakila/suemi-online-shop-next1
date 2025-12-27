@@ -74,10 +74,8 @@ export default function InventoriesPage() {
 
       const matchesDate =
         dateRange.startDate && dateRange.endDate
-          ? new Date(item.date_arrived) >=
-              new Date(dateRange.startDate) &&
-            new Date(item.date_arrived) <=
-              new Date(dateRange.endDate)
+          ? new Date(item.date_arrived) >= new Date(dateRange.startDate) &&
+            new Date(item.date_arrived) <= new Date(dateRange.endDate)
           : true;
 
       return matchesSearch && matchesDate;
@@ -181,16 +179,10 @@ export default function InventoriesPage() {
             options={searchOptions}
             storageKey="inventory-search"
           />
-
+          <DashboardDateRangePicker onChange={(range) => setDateRange(range)} />
           <ToggleColumns
             columns={Columns}
-            onChange={(cols) =>
-              setVisibleColumns(cols.map((c) => c.accessor))
-            }
-          />
-
-          <DashboardDateRangePicker
-            onChange={(range) => setDateRange(range)}
+            onChange={(cols) => setVisibleColumns(cols.map((c) => c.accessor))}
           />
         </div>
       </div>
@@ -205,9 +197,7 @@ export default function InventoriesPage() {
       {/* TABLE */}
       <DataTable
         data={filteredData}
-        columns={Columns.filter((c) =>
-          visibleColumns.includes(c.accessor)
-        )}
+        columns={Columns.filter((c) => visibleColumns.includes(c.accessor))}
         rowKey="id"
         page={1}
         pageSize={10}
