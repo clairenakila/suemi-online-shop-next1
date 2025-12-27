@@ -1,4 +1,8 @@
 "use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/lib/supabase";
+
 import BulkEdit from "../../../components/BulkEdit";
 import { Column, DataTable } from "../../../components/DataTable";
 import AddInventoryModal from "../../../components/AddInventoryModal";
@@ -6,56 +10,35 @@ import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
 import ConfirmDelete from "../../../components/ConfirmDelete";
 import SearchBar from "../../../components/SearchBar";
-import { useState, useEffect, useMemo } from "react";
 import ToggleColumns from "../../../components/ToggleColumns";
-import { supabase } from "@/lib/supabase";
+import DashboardDateRangePicker from "../../../components/DashboardDateRangePicker";
 
 export const Columns: Column<any>[] = [
-  {
-    header: "Created At",
-    accessor: "created_at",
-    center: false,
-  },
-  {
-    header: "Date Arrived",
-    accessor: "date_arrived",
-    center: false,
-  },
-  {
-    header: "Category",
-    accessor: "category",
-    center: true,
-  },
-  {
-    header: "Supplier",
-    accessor: "supplier",
-    center: true,
-  },
-  {
-    header: "Box Number",
-    accessor: "box_number",
-    center: false,
-  },
-  {
-    header: "Quantity",
-    accessor: "quantity",
-    center: true,
-  },
-
-  {
-    header: "Total",
-    accessor: "total",
-    center: true,
-  },
+  { header: "Created At", accessor: "created_at", center: false },
+  { header: "Date Arrived", accessor: "date_arrived", center: false },
+  { header: "Category", accessor: "category", center: true },
+  { header: "Supplier", accessor: "supplier", center: true },
+  { header: "Box Number", accessor: "box_number", center: false },
+  { header: "Quantity", accessor: "quantity", center: true },
+  { header: "Total", accessor: "total", center: true },
 ];
 
 export default function InventoriesPage() {
-  const [arrivalsData, setArrivalsData] = useState<any[]>([]); // Sample data can be set here
-  const [selectedIds, setSelectedIds] = useState<string[]>([]); // ← Fixed: added state for selected IDs
-  const [openAddModal, setOpenAddModal] = useState(false); // State for Add Inventory Modal
-  const [search, setSearch] = useState(""); // Search state
+  const [arrivalsData, setArrivalsData] = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [openAddModal, setOpenAddModal] = useState(false);
 
-  // useEffect to fetch inventories
+  const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({ startDate: null, endDate: null });
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    Columns.map((c) => c.accessor)
+  );
+
+  // FETCH DATA
   useEffect(() => {
     const fetchInventories = async () => {
       const { data, error } = await supabase
@@ -74,18 +57,41 @@ export default function InventoriesPage() {
         )
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Fetch error:", error);
-        return;
-      }
-
-      setArrivalsData(data || []);
+      if (!error) setArrivalsData(data || []);
     };
 
     fetchInventories();
   }, []);
 
-  // Handlers for selection
+  // FILTER LOGIC (SEARCH + DATE)
+  const filteredData = useMemo(() => {
+    return arrivalsData.filter((item) => {
+      const matchesSearch = search
+        ? Object.values(item).some((value) =>
+            String(value).toLowerCase().includes(search.toLowerCase())
+          )
+        : true;
+
+      const matchesDate =
+        dateRange.startDate && dateRange.endDate
+          ? new Date(item.date_arrived) >=
+              new Date(dateRange.startDate) &&
+            new Date(item.date_arrived) <=
+              new Date(dateRange.endDate)
+          : true;
+
+      return matchesSearch && matchesDate;
+    });
+  }, [arrivalsData, search, dateRange]);
+
+  // SEARCH OPTIONS
+  const searchOptions = useMemo(() => {
+    return arrivalsData.flatMap((row) =>
+      Object.values(row).map((v) => String(v))
+    );
+  }, [arrivalsData]);
+
+  // SELECT HANDLERS
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -93,75 +99,41 @@ export default function InventoriesPage() {
   };
 
   const handleToggleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allIdsOnPage = filteredData.map((row) => row.id);
-      setSelectedIds(allIdsOnPage);
-    } else {
-      setSelectedIds([]);
-    }
+    setSelectedIds(checked ? filteredData.map((r) => r.id) : []);
   };
 
-  // Handler for delete action
+  // DELETE
   const handleDelete = async () => {
-    if (selectedIds.length === 0) return;
+    if (!selectedIds.length) return;
 
-    const { error } = await supabase
-      .from("inventories")
-      .delete()
-      .in("id", selectedIds);
+    await supabase.from("inventories").delete().in("id", selectedIds);
 
-    if (error) {
-      console.error("Delete error:", error);
-      return;
-    }
-
-    // Refresh data
     setArrivalsData((prev) =>
-      prev.filter((item) => !selectedIds.includes(item.id))
+      prev.filter((row) => !selectedIds.includes(row.id))
     );
     setSelectedIds([]);
   };
-  // Search state and filtering
-  const filteredData = arrivalsData.filter((row) =>
-    Object.values(row).some((value) =>
-      String(value).toLowerCase().includes(search.toLowerCase())
-    )
-  );
-  // Memoized search options for SearchBar
-  const searchOptions = useMemo(() => {
-    return arrivalsData.flatMap((row) =>
-      Object.values(row).map((v) => String(v))
-    );
-  }, [arrivalsData]);
-  // Column visibility state
-  const [visibleColumns, setVisibleColumns] = useState(
-    Columns.map((col) => col.accessor)
-  );
-
 
   return (
     <div className="container my-5">
-      {/* Header */}
-      <div className="mb-4">
-        <h2>Inventory List</h2>
-      </div>
-      {/* Buttons */}
-      {/* Add Inventory Button */}
-      <div className="d-flex gap-2 mb-3">
+      <h2 className="mb-4">Inventory List</h2>
+
+      {/* ACTION BAR */}
+      <div className="d-flex flex-wrap gap-2 align-items-center mb-3">
         <button
           className="btn btn-success"
           onClick={() => setOpenAddModal(true)}
         >
           Add Inventory
         </button>
-        {/* Edit Btn */}
+
         <BulkEdit
           table="inventories"
           fields={[]}
-          selectedIds={selectedIds} // ← Fixed: use state, not empty array
+          selectedIds={selectedIds}
           onSuccess={() => {}}
         />
-        {/* Import Button */}
+
         <ImportButton
           table="inventories"
           headersMap={{
@@ -172,42 +144,36 @@ export default function InventoriesPage() {
             quantity: "quantity",
             total: "total",
           }}
-          onSuccess={() => {
-            // optional: refetch inventories
-          }}
+          onSuccess={() => {}}
         />
-        {/* Export Button */}
+
         <ExportButton
           data={filteredData}
           headersMap={{
-            created_at: "created At",
-            date_arrived: "date_arrived",
-            category_id: "category",
-            supplier_id: "supplier",
-            box_number: "box_number",
-            quantity: "quantity",
-            total: "total",
+            created_at: "Created At",
+            date_arrived: "Date Arrived",
+            category: "Category",
+            supplier: "Supplier",
+            box_number: "Box Number",
+            quantity: "Quantity",
+            total: "Total",
           }}
         />
 
-        {/* ConfirmDelete */}
         <ConfirmDelete
           onConfirm={handleDelete}
-          confirmMessage={`Are you sure you want to delete ${selectedIds.length} item(s)?`}
+          confirmMessage={`Delete ${selectedIds.length} item(s)?`}
         >
           <span
             className="text-white"
-            style={{
-              pointerEvents: selectedIds.length === 0 ? "none" : "auto",
-            }}
+            style={{ pointerEvents: selectedIds.length ? "auto" : "none" }}
           >
             Delete Selected
           </span>
         </ConfirmDelete>
 
-        {/* RIGHT: search bar */}
-        {/* <SearchBar /> */}
-        <div className="d-flex align-items-center gap-2 ms-auto">
+        {/* RIGHT SIDE */}
+        <div className="d-flex gap-2 ms-auto align-items-center">
           <SearchBar
             placeholder="Search inventory..."
             value={search}
@@ -215,43 +181,44 @@ export default function InventoriesPage() {
             options={searchOptions}
             storageKey="inventory-search"
           />
+
           <ToggleColumns
             columns={Columns}
             onChange={(cols) =>
-              setVisibleColumns(cols.map((col) => col.accessor))
+              setVisibleColumns(cols.map((c) => c.accessor))
             }
           />
 
+          <DashboardDateRangePicker
+            onChange={(range) => setDateRange(range)}
+          />
         </div>
       </div>
 
-      {/* Add Inventory Modal */}
+      {/* MODAL */}
       <AddInventoryModal
         isOpen={openAddModal}
         onClose={() => setOpenAddModal(false)}
-        onSuccess={() => {
-          setOpenAddModal(false);
-          // Refresh data or show success message
-        }}
+        onSuccess={() => setOpenAddModal(false)}
       />
 
-      {/* DataTable */}
-      <div className="container mx-auto">
-        <DataTable
-          data={filteredData}
-          columns={Columns}
-          rowKey="id"
-          page={1}
-          pageSize={10}
-          totalCount={filteredData.length}
-          onPageChange={() => {}}
-          onPageSizeChange={() => {}}
-          selectable
-          selectedIds={selectedIds}
-          onToggleSelect={handleToggleSelect}
-          onToggleSelectAll={handleToggleSelectAll}
-        />
-      </div>
+      {/* TABLE */}
+      <DataTable
+        data={filteredData}
+        columns={Columns.filter((c) =>
+          visibleColumns.includes(c.accessor)
+        )}
+        rowKey="id"
+        page={1}
+        pageSize={10}
+        totalCount={filteredData.length}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
+        selectable
+        selectedIds={selectedIds}
+        onToggleSelect={handleToggleSelect}
+        onToggleSelectAll={handleToggleSelectAll}
+      />
     </div>
   );
 }
