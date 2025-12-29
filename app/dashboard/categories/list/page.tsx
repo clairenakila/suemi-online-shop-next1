@@ -9,8 +9,8 @@ import ConfirmDelete from "../../../components/ConfirmDelete";
 import { DataTable, Column } from "../../../components/DataTable";
 import AddButton from "../../../components/AddButton";
 import BulkEdit from "../../../components/BulkEdit";
-import ExportButton from "../../../components/ExportButton";
 import ImportButton from "../../../components/ImportButton";
+import ExportButton from "../../../components/ExportButton";
 import ToggleColumns from "../../../components/ToggleColumns";
 
 interface Category {
@@ -25,65 +25,97 @@ export default function CategoriesListPage() {
   const [tableColumns, setTableColumns] = useState<Column<Category>[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalCount, setTotalCount] = useState(0);
 
+  // Fetch categories
   const fetchCategories = async () => {
-    const { data, error } = await supabase.from("categories").select("*");
-    if (error) return toast.error(error.message);
-    setCategories(data || []);
+    try {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      let query = supabase
+        .from("categories")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (searchTerm.trim()) {
+        query = query.ilike("description", `%${searchTerm.trim()}%`);
+      }
+
+      const { data, error, count } = await query;
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      setCategories(data || []);
+      setTotalCount(count || 0);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to fetch categories");
+    }
   };
 
-  // Selection
+  useEffect(() => {
+    fetchCategories();
+  }, [page, pageSize, searchTerm]);
+
+  // Column definitions
+  useEffect(() => {
+    const cols: Column<Category>[] = [
+      {
+        header: "Created At",
+        accessor: (row) => {
+          if (!row.created_at) return "";
+          const date = new Date(row.created_at);
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const day = date.getDate().toString().padStart(2, "0");
+          const year = date.getFullYear().toString().slice(-2);
+          return `${month}-${day}-${year}`;
+        },
+      },
+      { header: "Description", accessor: "description" },
+      {
+        header: "Action",
+        accessor: (row) => (
+          <ConfirmDelete
+            confirmMessage={`Are you sure you want to delete "${row.description}"?`}
+            onConfirm={async () => {
+              const { error } = await supabase
+                .from("categories")
+                .delete()
+                .eq("id", row.id!);
+              if (error) {
+                toast.error(error.message);
+                return;
+              }
+              toast.success("Category deleted successfully");
+              fetchCategories();
+            }}
+          >
+            Delete
+          </ConfirmDelete>
+        ),
+        center: true,
+      },
+    ];
+    setTableColumns(cols);
+  }, []);
+
+  // Selection handlers
   const toggleSelectCategory = (id: string) =>
     setSelectedCategories((prev) =>
       prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
     );
+
   const toggleSelectAll = (checked: boolean) =>
     setSelectedCategories(checked ? categories.map((c) => c.id!) : []);
 
-  // Filtering
   const filteredCategories = categories.filter((c) =>
     c.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Columns
-  const columns: Column<Category>[] = [
-    {
-      header: "Created At",
-      accessor: (row) =>
-        row.created_at ? new Date(row.created_at).toLocaleDateString() : "",
-    },
-    { header: "Description", accessor: "description" },
-    {
-      header: "Action",
-      accessor: (row) => (
-        <ConfirmDelete
-          confirmMessage={`Are you sure you want to delete "${row.description}"?`}
-          onConfirm={async () => {
-            const { error } = await supabase
-              .from("categories")
-              .delete()
-              .eq("id", row.id!);
-            if (error) {
-              toast.error(error.message);
-              return;
-            }
-            toast.success("Category deleted successfully");
-            fetchCategories();
-          }}
-        >
-          Delete
-        </ConfirmDelete>
-      ),
-      center: true,
-    },
-  ];
-
-  useEffect(() => {
-    setTableColumns(columns);
-  }, []);
 
   return (
     <div className="container my-5">
@@ -110,23 +142,21 @@ export default function CategoriesListPage() {
             ]}
           />
 
-          {/* Import with safe transform */}
           <ImportButton
             table="categories"
             headersMap={{
-              "Created At": "created_at", // optional
+              "Created At": "created_at",
               Description: "description",
             }}
             transformRow={async (row) => {
               const description = row.Description?.toString().trim();
-              if (!description) return null; // skip empty rows
+              if (!description) return null;
 
               let created_at: string | undefined;
               if (row["Created At"]) {
                 const date = new Date(row["Created At"]);
                 if (!isNaN(date.getTime())) created_at = date.toISOString();
               }
-
               return { description, ...(created_at ? { created_at } : {}) };
             }}
             onSuccess={async () => {
@@ -138,7 +168,14 @@ export default function CategoriesListPage() {
           <ExportButton
             data={filteredCategories}
             headersMap={{
-              "Created At": (row) => row.created_at || "",
+              "Created At": (row) => {
+                if (!row.created_at) return "";
+                const date = new Date(row.created_at);
+                const month = (date.getMonth() + 1).toString().padStart(2, "0");
+                const day = date.getDate().toString().padStart(2, "0");
+                const year = date.getFullYear().toString().slice(-2);
+                return `${month}-${day}-${year}`;
+              },
               Description: "description",
             }}
             filename="categories.csv"
@@ -173,8 +210,7 @@ export default function CategoriesListPage() {
             onChange={setSearchTerm}
             options={categories.map((c) => c.description)}
           />
-
-          <ToggleColumns columns={columns} onChange={setTableColumns} />
+          <ToggleColumns columns={tableColumns} onChange={setTableColumns} />
         </div>
       </div>
 
@@ -186,11 +222,11 @@ export default function CategoriesListPage() {
         onToggleSelect={toggleSelectCategory}
         onToggleSelectAll={toggleSelectAll}
         rowKey="id"
-        page={1}
-        pageSize={50}
-        totalCount={filteredCategories.length}
-        onPageChange={() => {}}
-        onPageSizeChange={() => {}}
+        page={page}
+        pageSize={pageSize}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
       />
     </div>
   );
