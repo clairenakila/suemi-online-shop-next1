@@ -5,10 +5,11 @@ import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { calculateInventoryTotal, validateRequired } from "../utils/validator";
+import { validateRequired } from "../utils/validator";
 
 export interface Inventory {
   id?: string;
+  created_at?: string | null;
   date_arrived?: string | null;
   box_number?: string;
   supplier?: string;
@@ -16,6 +17,16 @@ export interface Inventory {
   price?: string;
   total?: string;
   category?: string;
+  quantity_left?: string;
+  total_left?: string;
+}
+
+interface FieldConfig {
+  key: keyof Inventory;
+  label: string;
+  type?: "text" | "number" | "date" | "select";
+  options?: string[];
+  required?: boolean;
 }
 
 interface AddInventoryModalProps {
@@ -29,76 +40,208 @@ export default function AddInventoryModal({
   onClose,
   onSuccess,
 }: AddInventoryModalProps) {
-  const [suppliers, setSuppliers] = useState<{ name: string }[]>([]);
-  const [categories, setCategories] = useState<{ description: string }[]>([]);
-  const [inventory, setInventory] = useState<Inventory>({
-    date_arrived: new Date().toISOString(),
-    box_number: "",
-    supplier: "",
-    quantity: "0",
-    price: "0",
-    total: "0",
-    category: "",
-  });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [categories, setCategories] = useState<string[]>([]);
+  const [suppliers, setSuppliers] = useState<string[]>([]);
+  const [inventory, setInventory] = useState<Inventory>({
+    created_at: new Date().toISOString(),
+    date_arrived: null,
+    box_number: "",
+    supplier: "",
+    quantity: "",
+    price: "",
+    category: "",
+  });
 
+  const disabledFields: (keyof Inventory)[] = [
+    "created_at",
+    "total",
+    "quantity_left",
+    "total_left",
+  ];
+
+  // Fetch categories and suppliers from inventories table
   useEffect(() => {
-    const fetchSuppliers = async () => {
-      const { data } = await supabase.from("suppliers").select("name");
-      if (data) setSuppliers(data);
+    const fetchOptions = async () => {
+      const { data, error } = await supabase
+        .from("inventories")
+        .select("category, supplier");
+      if (error) {
+        console.error("Failed to fetch options:", error.message);
+        return;
+      }
+      if (data) {
+        const uniqueCategories = Array.from(
+          new Set(data.map((d: any) => d.category).filter(Boolean))
+        );
+        const uniqueSuppliers = Array.from(
+          new Set(data.map((d: any) => d.supplier).filter(Boolean))
+        );
+        setCategories(uniqueCategories);
+        setSuppliers(uniqueSuppliers);
+      }
     };
-    const fetchCategories = async () => {
-      const { data } = await supabase.from("categories").select("description");
-      if (data) setCategories(data);
-    };
-    if (isOpen) {
-      fetchSuppliers();
-      fetchCategories();
-    }
-  }, [isOpen]);
+    fetchOptions();
+  }, []);
+
+  const allFields: FieldConfig[] = [
+    { key: "created_at", label: "Timestamp", type: "date", required: true },
+    {
+      key: "date_arrived",
+      label: "Date Arrived",
+      type: "date",
+      required: true,
+    },
+    { key: "box_number", label: "Box Number", type: "text", required: true },
+    {
+      key: "supplier",
+      label: "Supplier",
+      type: "select",
+      options: suppliers,
+      required: true,
+    },
+    {
+      key: "category",
+      label: "Category",
+      type: "select",
+      options: categories,
+      required: true,
+    },
+    { key: "quantity", label: "Quantity", type: "number", required: true },
+    { key: "price", label: "Price", type: "number", required: true },
+    { key: "total", label: "Total", type: "number" }, // auto-calculated
+    { key: "quantity_left", label: "Quantity Left", type: "number" }, // derived
+    { key: "total_left", label: "Total Left", type: "number" }, // derived
+  ];
+
+  const visibleFields = allFields.filter(
+    (f) => !["quantity_left", "total_left"].includes(f.key)
+  );
 
   if (!isOpen) return null;
 
-  const handleChange = (key: keyof Inventory, value: string) => {
-    const updated = { ...inventory, [key]: value };
-    if (key === "quantity" || key === "price") {
-      updated.total = calculateInventoryTotal(
-        updated.quantity || "0",
-        updated.price || "0"
-      );
-    }
-    setInventory(updated);
-  };
+  // Derived values
+  const total = (
+    parseFloat(inventory.quantity || "0") * parseFloat(inventory.price || "0")
+  ).toString();
+  const quantity_left = inventory.quantity || "";
+  const total_left = total;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-    [
-      "date_arrived",
-      "box_number",
-      "supplier",
-      "category",
-      "quantity",
-      "price",
-    ].forEach((key) => {
-      const err = validateRequired(
-        inventory[key as keyof Inventory] as string,
-        key
-      );
-      if (err) newErrors[key] = err;
-    });
+
+    for (const field of allFields.filter((f) => f.required)) {
+      const value = inventory[field.key] || "";
+      const err = validateRequired(value as string, field.label);
+      if (err) newErrors[field.key] = err;
+    }
+
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
     setLoading(true);
-    const { error } = await supabase.from("inventories").insert([inventory]);
+    const { error } = await supabase.from("inventories").insert([
+      {
+        ...inventory,
+        total,
+        quantity_left,
+        total_left,
+      },
+    ]);
     setLoading(false);
     if (error) return toast.error(error.message);
 
-    toast.success("Inventory added!");
+    toast.success("Inventory added successfully!");
+    setInventory({
+      created_at: new Date().toISOString(),
+      date_arrived: null,
+      box_number: "",
+      supplier: "",
+      quantity: "",
+      price: "",
+      category: "",
+    });
+    setErrors({});
     onClose();
     onSuccess();
+  };
+
+  const renderField = (f: FieldConfig) => {
+    const hasError = errors[f.key as string];
+    const baseClass = `form-control ${hasError ? "is-invalid" : ""}`;
+    const isDisabled = disabledFields.includes(f.key);
+
+    if (f.key === "total") {
+      return (
+        <input type="number" className={baseClass} value={total} disabled />
+      );
+    }
+
+    if (f.type === "date")
+      return (
+        <>
+          <DatePicker
+            selected={inventory[f.key] ? new Date(inventory[f.key]!) : null}
+            onChange={(date) =>
+              !isDisabled &&
+              setInventory({
+                ...inventory,
+                [f.key]: date ? date.toISOString() : null,
+              })
+            }
+            showTimeSelect
+            dateFormat="yyyy-MM-dd HH:mm"
+            placeholderText={f.label}
+            className={baseClass}
+            wrapperClassName="w-100"
+            popperClassName="react-datepicker-popper"
+            disabled={isDisabled}
+          />
+          {hasError && <div className="invalid-feedback">{hasError}</div>}
+        </>
+      );
+
+    if (f.type === "select")
+      return (
+        <>
+          <select
+            className={baseClass}
+            value={inventory[f.key] || ""}
+            onChange={(e) =>
+              !isDisabled &&
+              setInventory({ ...inventory, [f.key]: e.target.value })
+            }
+            disabled={isDisabled}
+          >
+            <option value="">— Select —</option>
+            {f.options?.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+          {hasError && <div className="invalid-feedback">{hasError}</div>}
+        </>
+      );
+
+    return (
+      <>
+        <input
+          type={f.type === "number" ? "number" : "text"}
+          className={baseClass}
+          placeholder={f.label}
+          value={inventory[f.key] || ""}
+          onChange={(e) =>
+            !isDisabled &&
+            setInventory({ ...inventory, [f.key]: e.target.value })
+          }
+          disabled={isDisabled}
+        />
+        {hasError && <div className="invalid-feedback">{hasError}</div>}
+      </>
+    );
   };
 
   return (
@@ -107,10 +250,13 @@ export default function AddInventoryModal({
       tabIndex={-1}
       style={{ background: "rgba(0,0,0,0.5)" }}
     >
-      <div className="modal-dialog modal-dialog-centered modal-lg">
-        <div className="modal-content">
+      <div className="modal-dialog modal-dialog-centered modal-xl">
+        <div
+          className="modal-content overflow-hidden"
+          style={{ borderRadius: "8px" }}
+        >
           <div className="modal-header bg-light">
-            <h5 className="modal-title">Add Inventory</h5>
+            <h5 className="modal-title">Add New Inventory</h5>
             <button
               type="button"
               className="btn-close"
@@ -118,117 +264,18 @@ export default function AddInventoryModal({
             ></button>
           </div>
 
-          <form onSubmit={handleSave}>
-            <div className="modal-body">
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label>Date Arrived</label>
-                  <DatePicker
-                    selected={
-                      inventory.date_arrived
-                        ? new Date(inventory.date_arrived)
-                        : null
-                    }
-                    onChange={(date) =>
-                      setInventory({
-                        ...inventory,
-                        date_arrived: date?.toISOString() || null,
-                      })
-                    }
-                    className="form-control"
-                    wrapperClassName="w-100"
-                  />
-                  {errors.date_arrived && (
-                    <div className="text-danger">{errors.date_arrived}</div>
-                  )}
-                </div>
-
-                <div className="col-md-6">
-                  <label>Box Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={inventory.box_number}
-                    onChange={(e) => handleChange("box_number", e.target.value)}
-                  />
-                  {errors.box_number && (
-                    <div className="text-danger">{errors.box_number}</div>
-                  )}
-                </div>
-
-                <div className="col-md-6">
-                  <label>Supplier</label>
-                  <select
-                    className="form-select"
-                    value={inventory.supplier}
-                    onChange={(e) => handleChange("supplier", e.target.value)}
-                  >
-                    <option value="">— Select —</option>
-                    {suppliers.map((s) => (
-                      <option key={s.name} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.supplier && (
-                    <div className="text-danger">{errors.supplier}</div>
-                  )}
-                </div>
-
-                <div className="col-md-6">
-                  <label>Category</label>
-                  <select
-                    className="form-select"
-                    value={inventory.category}
-                    onChange={(e) => handleChange("category", e.target.value)}
-                  >
-                    <option value="">— Select —</option>
-                    {categories.map((c) => (
-                      <option key={c.description} value={c.description}>
-                        {c.description}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category && (
-                    <div className="text-danger">{errors.category}</div>
-                  )}
-                </div>
-
-                <div className="col-md-4">
-                  <label>Quantity</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={inventory.quantity}
-                    onChange={(e) => handleChange("quantity", e.target.value)}
-                  />
-                  {errors.quantity && (
-                    <div className="text-danger">{errors.quantity}</div>
-                  )}
-                </div>
-
-                <div className="col-md-4">
-                  <label>Price</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={inventory.price}
-                    onChange={(e) => handleChange("price", e.target.value)}
-                  />
-                  {errors.price && (
-                    <div className="text-danger">{errors.price}</div>
-                  )}
-                </div>
-
-                <div className="col-md-4">
-                  <label>Total</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={inventory.total}
-                    readOnly
-                  />
-                </div>
+          <form onSubmit={handleSave} noValidate>
+            <div
+              className="modal-body"
+              style={{ maxHeight: "70vh", overflowY: "auto" }}
+            >
+              <div className="row">
+                {visibleFields.map((f) => (
+                  <div className="col-md-6 mb-3" key={f.key}>
+                    <label className="form-label">{f.label}</label>
+                    {renderField(f)}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -237,12 +284,19 @@ export default function AddInventoryModal({
                 type="button"
                 className="btn btn-secondary"
                 onClick={onClose}
+                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn btn-warning"
+                className="text-white shadow-md"
+                style={{
+                  backgroundColor: "#f59e0b",
+                  borderRadius: "4px",
+                  padding: "8px 16px",
+                  fontWeight: 500,
+                }}
                 disabled={loading}
               >
                 {loading ? "Saving..." : "Save"}
