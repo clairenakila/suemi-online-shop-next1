@@ -263,6 +263,19 @@ export default function DashboardLayout({
               </button>
             </li>
           )}
+
+          {/* Profile */}
+          <li className="nav-item mb-2">
+            <button
+              className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                collapsed ? "justify-content-center" : "text-start"
+              }`}
+              onClick={() => handleNavClick("/dashboard/profile/list")}
+            >
+              <i className="bi bi-person-check"></i>
+              {!collapsed && <span className="ms-2">Profile</span>}
+            </button>
+          </li>
         </ul>
       </nav>
 
