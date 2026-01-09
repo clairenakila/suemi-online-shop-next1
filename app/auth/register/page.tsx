@@ -8,38 +8,114 @@ import { ROUTES } from "../../routes";
 import Link from "next/link";
 import bcrypt from "bcryptjs";
 
+const hasInvalidConsecutiveText = (text: string) => {
+  const value = text.toLowerCase();
+  const vowels = /[aeiou]{4,}/;
+  const consonants = /[bcdfghjklmnpqrstvwxyz]{4,}/;
+  return vowels.test(value) || consonants.test(value);
+};
+
 export default function RegisterPage() {
   const [mounted, setMounted] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    address: "",
+    phone_number: "",
   });
+
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    phone_number: "",
+  });
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const capitalizeWords = (text: string) =>
+    text.replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
+    let updatedValue = value;
+    let nameError = "";
+    let emailError = "";
+    let phoneNumberError = "";
+
+    if (name === "name") {
+      updatedValue = value.replace(/[^a-zA-Z .-]/g, "");
+      updatedValue = capitalizeWords(updatedValue);
+
+      if (hasInvalidConsecutiveText(updatedValue)) {
+        nameError = "Name cannot contain 4 consecutive vowels or consonants";
+      }
+    }
+
+    if (name === "email") {
+      updatedValue = value.replace(/[^a-zA-Z0-9.@]/g, "");
+
+      if (!updatedValue.endsWith("@gmail.com")) {
+        emailError = "Email must end with @gmail.com";
+      } else if (hasInvalidConsecutiveText(updatedValue)) {
+        emailError = "Email cannot contain 4 consecutive vowels or consonants";
+      }
+    }
+
+    if (name === "address") {
+      updatedValue = value.slice(0, 100);
+
+      if (hasInvalidConsecutiveText(updatedValue)) {
+        toast.dismiss();
+        toast.error(
+          "Address cannot contain 4 consecutive vowels or consonants"
+        );
+      }
+    }
+
+    if (name === "phone_number") {
+      updatedValue = value.replace(/\D/g, "").slice(0, 11);
+
+      if (!updatedValue.startsWith("09")) {
+        phoneNumberError = "Phone number must start with 09";
+      } else if (updatedValue.length !== 11) {
+        phoneNumberError = "Phone number must be exactly 11 digits";
+      }
+    }
+
     setForm((prev) => ({
       ...prev,
-      [name]:
-        name === "name"
-          ? value.replace(/[^a-zA-Z .-]/g, "")
-          : name === "email"
-          ? value.replace(/[^a-zA-Z0-9.@]/g, "")
-          : value,
+      [name]: updatedValue,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      name: name === "name" ? nameError : prev.name,
+      email: name === "email" ? emailError : prev.email,
+      phone_number:
+        name === "phone_number" ? phoneNumberError : prev.phone_number,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (errors.name || errors.email || errors.phone_number) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
 
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords do not match");
@@ -57,43 +133,41 @@ export default function RegisterPage() {
 
       if (fetchError && fetchError.code !== "PGRST116") {
         toast.error(fetchError.message);
-        setLoading(false);
         return;
       }
 
       if (existingUser) {
         toast.error("Email already registered");
-        setLoading(false);
         return;
       }
 
       const hashedPassword = await bcrypt.hash(form.password, 10);
 
-      let guestRoleId: number;
-      const { data: guestRole } = await supabase
+      let shopperRoleId: number;
+
+      const { data: shopperRole } = await supabase
         .from("roles")
         .select("id")
-        .eq("name", "Guest")
+        .eq("name", "Shopper")
         .single();
 
-      if (guestRole) {
-        guestRoleId = guestRole.id;
+      if (shopperRole) {
+        shopperRoleId = shopperRole.id;
       } else {
         const { data: newRole, error: insertRoleError } = await supabase
           .from("roles")
-          .insert([{ name: "Guest" }])
+          .insert([{ name: "Shopper" }])
           .select()
           .single();
 
         if (!newRole || insertRoleError) {
           toast.error(
-            insertRoleError?.message || "Failed to create Guest role"
+            insertRoleError?.message || "Failed to create Shopper role"
           );
-          setLoading(false);
           return;
         }
 
-        guestRoleId = newRole.id;
+        shopperRoleId = newRole.id;
       }
 
       const { error: insertError } = await supabase.from("users").insert([
@@ -101,13 +175,14 @@ export default function RegisterPage() {
           name: form.name,
           email: form.email,
           password: hashedPassword,
-          role_id: guestRoleId,
+          address: form.address,
+          phone_number: form.phone_number,
+          role_id: shopperRoleId,
         },
       ]);
 
       if (insertError) {
         toast.error(insertError.message);
-        setLoading(false);
         return;
       }
 
@@ -126,6 +201,7 @@ export default function RegisterPage() {
   return (
     <div className="container d-flex justify-content-center align-items-start min-vh-100 bg-white py-5">
       <Toaster position="top-center" />
+
       <div
         className="card shadow-lg p-4"
         style={{ maxWidth: "400px", width: "100%", borderRadius: "12px" }}
@@ -134,7 +210,7 @@ export default function RegisterPage() {
           <img
             src="/images/logo2.png"
             alt="Logo"
-            className="mx-auto"
+            className="mx-auto d-block mb-2"
             style={{ width: "120px", cursor: "pointer" }}
           />
         </Link>
@@ -146,25 +222,60 @@ export default function RegisterPage() {
           <input
             type="text"
             name="name"
-            className="form-control mb-3"
+            className={`form-control mb-1 ${errors.name ? "is-invalid" : ""}`}
             placeholder="Full Name"
             value={form.name}
             onChange={handleChange}
             required
-            maxLength={50}
           />
+          {errors.name && (
+            <div className="text-danger small mb-2">{errors.name}</div>
+          )}
 
           <label className="form-label fw-semibold">Email address</label>
           <input
             type="email"
             name="email"
-            className="form-control mb-3"
-            placeholder="Email"
+            className={`form-control mb-1 ${errors.email ? "is-invalid" : ""}`}
+            placeholder="example@gmail.com"
             value={form.email}
             onChange={handleChange}
             required
-            maxLength={50}
           />
+          {errors.email && (
+            <div className="text-danger small mb-2">{errors.email}</div>
+          )}
+
+          <label className="form-label fw-semibold">Address</label>
+          <textarea
+            name="address"
+            className="form-control mb-2"
+            placeholder="Complete address"
+            value={form.address}
+            onChange={handleChange}
+            required
+            rows={3}
+            maxLength={100}
+          />
+          <small className="text-muted d-block mb-3">
+            {form.address.length}/100 characters
+          </small>
+
+          <label className="form-label fw-semibold">Phone Number</label>
+          <input
+            type="text"
+            name="phone_number"
+            className={`form-control mb-1 ${
+              errors.phone_number ? "is-invalid" : ""
+            }`}
+            placeholder="09XXXXXXXXX"
+            value={form.phone_number}
+            onChange={handleChange}
+            required
+          />
+          {errors.phone_number && (
+            <div className="text-danger small mb-3">{errors.phone_number}</div>
+          )}
 
           <label className="form-label fw-semibold">Password</label>
           <div className="input-group mb-3">
@@ -176,16 +287,13 @@ export default function RegisterPage() {
               value={form.password}
               onChange={handleChange}
               required
-              maxLength={50}
             />
             <span
               className="input-group-text"
               style={{ cursor: "pointer" }}
               onClick={() => setShowPassword((prev) => !prev)}
             >
-              <i
-                className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
-              ></i>
+              <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
             </span>
           </div>
 
@@ -199,16 +307,13 @@ export default function RegisterPage() {
               value={form.confirmPassword}
               onChange={handleChange}
               required
-              maxLength={50}
             />
             <span
               className="input-group-text"
               style={{ cursor: "pointer" }}
               onClick={() => setShowConfirm((prev) => !prev)}
             >
-              <i
-                className={`bi ${showConfirm ? "bi-eye-slash" : "bi-eye"}`}
-              ></i>
+              <i className={`bi ${showConfirm ? "bi-eye-slash" : "bi-eye"}`} />
             </span>
           </div>
 
