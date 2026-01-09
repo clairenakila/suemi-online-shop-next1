@@ -21,6 +21,17 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Define menu roles
+  const MENU_ROLES = {
+    itemsSection: ["Superadmin", "Admin"],
+    categories: ["Superadmin"],
+    inventories: ["Superadmin"],
+    usersSection: ["Superadmin", "Manager"],
+    settings: ["Superadmin"],
+  };
+
+  const canAccess = (roles: string[]) => roles.includes(roleName);
+
   useEffect(() => {
     setMounted(true);
 
@@ -101,7 +112,7 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        {/* Logo (only when expanded) */}
+        {/* Logo */}
         {!collapsed && (
           <div className="mb-4 w-100 d-flex justify-content-center">
             <Link href={ROUTES.HOME}>
@@ -130,68 +141,72 @@ export default function DashboardLayout({
           </li>
 
           {/* Items Section */}
-          <li className="nav-item mb-2">
-            <button
-              className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
-                collapsed ? "justify-content-center" : "justify-content-between"
-              }`}
-              onClick={toggleItemsMenu}
-            >
-              <span className="d-flex align-items-center">
-                <i className="bi bi-handbag"></i>
-                {!collapsed && <span className="ms-2">Items</span>}
-              </span>
-              {!collapsed && (
-                <i
-                  className={`bi ${
-                    itemsMenuOpen ? "bi-chevron-up" : "bi-chevron-down"
-                  }`}
-                ></i>
+          {canAccess(MENU_ROLES.itemsSection) && (
+            <li className="nav-item mb-2">
+              <button
+                className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                  collapsed
+                    ? "justify-content-center"
+                    : "justify-content-between"
+                }`}
+                onClick={toggleItemsMenu}
+              >
+                <span className="d-flex align-items-center">
+                  <i className="bi bi-handbag"></i>
+                  {!collapsed && <span className="ms-2">Items</span>}
+                </span>
+                {!collapsed && (
+                  <i
+                    className={`bi ${
+                      itemsMenuOpen ? "bi-chevron-up" : "bi-chevron-down"
+                    }`}
+                  ></i>
+                )}
+              </button>
+
+              {itemsMenuOpen && !collapsed && (
+                <ul className="nav flex-column ms-3 mt-2">
+                  {canAccess(MENU_ROLES.categories) && (
+                    <li className="nav-item mb-1">
+                      <button
+                        className="nav-link text-white btn btn-dark text-start w-100"
+                        onClick={() =>
+                          handleNavClick("/dashboard/categories/list")
+                        }
+                      >
+                        Categories
+                      </button>
+                    </li>
+                  )}
+
+                  <li className="nav-item mb-1">
+                    <button
+                      className="nav-link text-white btn btn-dark text-start w-100"
+                      onClick={() => handleNavClick("/dashboard/items/list")}
+                    >
+                      Sold Items
+                    </button>
+                  </li>
+
+                  {canAccess(MENU_ROLES.inventories) && (
+                    <li className="nav-item mb-1">
+                      <button
+                        className="nav-link text-white btn btn-dark text-start w-100"
+                        onClick={() =>
+                          handleNavClick("/dashboard/inventories/list")
+                        }
+                      >
+                        Inventories
+                      </button>
+                    </li>
+                  )}
+                </ul>
               )}
-            </button>
-
-            {itemsMenuOpen && !collapsed && (
-              <ul className="nav flex-column ms-3 mt-2">
-                {roleName === "Superadmin" && (
-                  <li className="nav-item mb-1">
-                    <button
-                      className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() =>
-                        handleNavClick("/dashboard/categories/list")
-                      }
-                    >
-                      Categories
-                    </button>
-                  </li>
-                )}
-
-                <li className="nav-item mb-1">
-                  <button
-                    className="nav-link text-white btn btn-dark text-start w-100"
-                    onClick={() => handleNavClick("/dashboard/items/list")}
-                  >
-                    Sold Items
-                  </button>
-                </li>
-
-                {roleName === "Superadmin" && (
-                  <li className="nav-item mb-1">
-                    <button
-                      className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() =>
-                        handleNavClick("/dashboard/inventories/list")
-                      }
-                    >
-                      Inventories
-                    </button>
-                  </li>
-                )}
-              </ul>
-            )}
-          </li>
+            </li>
+          )}
 
           {/* Users Section */}
-          {roleName === "Superadmin" && (
+          {canAccess(MENU_ROLES.usersSection) && (
             <li className="nav-item mb-2">
               <button
                 className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
@@ -250,7 +265,7 @@ export default function DashboardLayout({
           )}
 
           {/* Settings */}
-          {["Superadmin"].includes(roleName) && (
+          {canAccess(MENU_ROLES.settings) && (
             <li className="nav-item mb-2">
               <button
                 className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
