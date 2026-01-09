@@ -16,6 +16,7 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [usersMenuOpen, setUsersMenuOpen] = useState(false);
   const [itemsMenuOpen, setItemsMenuOpen] = useState(false);
+  const [payslipsMenuOpen, setPayslipsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [roleName, setRoleName] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,9 @@ export default function DashboardLayout({
     categories: ["Superadmin"],
     inventories: ["Superadmin"],
     usersSection: ["Superadmin", "Manager"],
+    payslipsSection: ["Superadmin", "Manager"],
+    attendance: ["Superadmin"],
+
     settings: ["Superadmin"],
   };
 
@@ -71,6 +75,7 @@ export default function DashboardLayout({
   const toggleSidebar = () => setCollapsed((prev) => !prev);
   const toggleUsersMenu = () => setUsersMenuOpen((prev) => !prev);
   const toggleItemsMenu = () => setItemsMenuOpen((prev) => !prev);
+  const togglePayslipsMenu = () => setPayslipsMenuOpen((prev) => !prev);
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST" });
@@ -259,6 +264,62 @@ export default function DashboardLayout({
                       Roles
                     </button>
                   </li>
+                </ul>
+              )}
+            </li>
+          )}
+
+          {/* Payslips Section */}
+          {canAccess(MENU_ROLES.payslipsSection) && (
+            <li className="nav-item mb-2">
+              <button
+                className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                  collapsed
+                    ? "justify-content-center"
+                    : "justify-content-between"
+                }`}
+                onClick={togglePayslipsMenu}
+              >
+                <span className="d-flex align-items-center">
+                  <i className="bi bi-credit-card-2-front"></i>
+                  {!collapsed && <span className="ms-2">Payroll</span>}
+                </span>
+                {!collapsed && (
+                  <i
+                    className={`bi ${
+                      payslipsMenuOpen ? "bi-chevron-up" : "bi-chevron-down"
+                    }`}
+                  ></i>
+                )}
+              </button>
+
+              {payslipsMenuOpen && !collapsed && (
+                <ul className="nav flex-column ms-3 mt-2">
+                  {canAccess(MENU_ROLES.payslipsSection) && (
+                    <li className="nav-item mb-1">
+                      <button
+                        className="nav-link text-white btn btn-dark text-start w-100"
+                        onClick={() =>
+                          handleNavClick("/dashboard/categories/list")
+                        }
+                      >
+                        Payslips
+                      </button>
+                    </li>
+                  )}
+
+                  {canAccess(MENU_ROLES.attendance) && (
+                    <li className="nav-item mb-1">
+                      <button
+                        className="nav-link text-white btn btn-dark text-start w-100"
+                        onClick={() =>
+                          handleNavClick("/dashboard/attendance/list")
+                        }
+                      >
+                        Attendance
+                      </button>
+                    </li>
+                  )}
                 </ul>
               )}
             </li>
