@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { ROUTES } from "../routes";
-import Loader from "./../components/Loader";
+import Loader from "../components/Loader";
 
 export default function DashboardLayout({
   children,
@@ -18,17 +18,16 @@ export default function DashboardLayout({
   const [itemsMenuOpen, setItemsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [roleName, setRoleName] = useState<string>("");
-  const [loading, setLoading] = useState(false); // 👈 added
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Fetch user and role info
   useEffect(() => {
     setMounted(true);
 
     const fetchUser = async () => {
       let user: any = null;
-
       const stored = localStorage.getItem("user");
+
       if (stored) {
         user = JSON.parse(stored);
         if (!user.role) {
@@ -69,7 +68,6 @@ export default function DashboardLayout({
     router.push(ROUTES.HOME);
   };
 
-  // 👇 helper for link clicks
   const handleNavClick = (path: string) => {
     setLoading(true);
     router.push(path);
@@ -79,7 +77,6 @@ export default function DashboardLayout({
 
   return (
     <div className="d-flex vh-100 w-100" style={{ overflow: "hidden" }}>
-      {/* Loader shown when navigating */}
       {loading && <Loader />}
 
       {/* Sidebar */}
@@ -90,8 +87,12 @@ export default function DashboardLayout({
           transition: "width 0.3s ease",
         }}
       >
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          {!collapsed && <h4 className="mb-0">Panel</h4>}
+        {/* Toggle button */}
+        <div
+          className={`w-100 d-flex ${
+            collapsed ? "justify-content-center" : "justify-content-end"
+          } mb-3`}
+        >
           <button
             className="btn btn-outline-light btn-sm"
             onClick={toggleSidebar}
@@ -100,27 +101,45 @@ export default function DashboardLayout({
           </button>
         </div>
 
+        {/* Logo (only when expanded) */}
+        {!collapsed && (
+          <div className="mb-4 w-100 d-flex justify-content-center">
+            <Link href={ROUTES.HOME}>
+              <img
+                src="/images/logo2.png"
+                alt="Logo"
+                className="img-fluid"
+                style={{ maxWidth: "120px", cursor: "pointer" }}
+              />
+            </Link>
+          </div>
+        )}
+
         <ul className="nav nav-pills flex-column grow">
           {/* Dashboard */}
           <li className="nav-item mb-2">
             <button
-              className="nav-link text-white d-flex align-items-center btn btn-dark w-100 text-start"
+              className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                collapsed ? "justify-content-center" : "text-start"
+              }`}
               onClick={() => handleNavClick("/dashboard")}
             >
-              <i className="bi bi-speedometer2 me-2"></i>
-              {!collapsed && "Dashboard"}
+              <i className="bi bi-speedometer2"></i>
+              {!collapsed && <span className="ms-2">Dashboard</span>}
             </button>
           </li>
 
           {/* Items Section */}
           <li className="nav-item mb-2">
             <button
-              className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
+              className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                collapsed ? "justify-content-center" : "justify-content-between"
+              }`}
               onClick={toggleItemsMenu}
             >
               <span className="d-flex align-items-center">
-                <i className="bi bi-handbag me-2"></i>
-                {!collapsed && "Items"}
+                <i className="bi bi-handbag"></i>
+                {!collapsed && <span className="ms-2">Items</span>}
               </span>
               {!collapsed && (
                 <i
@@ -130,6 +149,7 @@ export default function DashboardLayout({
                 ></i>
               )}
             </button>
+
             {itemsMenuOpen && !collapsed && (
               <ul className="nav flex-column ms-3 mt-2">
                 {roleName === "Superadmin" && (
@@ -153,6 +173,7 @@ export default function DashboardLayout({
                     Sold Items
                   </button>
                 </li>
+
                 {roleName === "Superadmin" && (
                   <li className="nav-item mb-1">
                     <button
@@ -173,12 +194,16 @@ export default function DashboardLayout({
           {roleName === "Superadmin" && (
             <li className="nav-item mb-2">
               <button
-                className="nav-link text-white d-flex align-items-center justify-content-between w-100 btn btn-dark"
+                className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                  collapsed
+                    ? "justify-content-center"
+                    : "justify-content-between"
+                }`}
                 onClick={toggleUsersMenu}
               >
                 <span className="d-flex align-items-center">
-                  <i className="bi bi-people me-2"></i>
-                  {!collapsed && "Users"}
+                  <i className="bi bi-people"></i>
+                  {!collapsed && <span className="ms-2">Users</span>}
                 </span>
                 {!collapsed && (
                   <i
@@ -188,6 +213,7 @@ export default function DashboardLayout({
                   ></i>
                 )}
               </button>
+
               {usersMenuOpen && !collapsed && (
                 <ul className="nav flex-column ms-3 mt-2">
                   <li className="nav-item mb-1">
@@ -227,11 +253,13 @@ export default function DashboardLayout({
           {["Superadmin"].includes(roleName) && (
             <li className="nav-item mb-2">
               <button
-                className="nav-link text-white d-flex align-items-center btn btn-dark w-100 text-start"
+                className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                  collapsed ? "justify-content-center" : "text-start"
+                }`}
                 onClick={() => handleNavClick("/dashboard/settings")}
               >
-                <i className="bi bi-gear me-2"></i>
-                {!collapsed && "Settings"}
+                <i className="bi bi-gear"></i>
+                {!collapsed && <span className="ms-2">Settings</span>}
               </button>
             </li>
           )}
