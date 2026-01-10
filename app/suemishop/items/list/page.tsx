@@ -13,6 +13,8 @@ import ToggleColumns from "../../../components/ToggleColumns";
 import ImportButton from "../../../components/ImportButton";
 import ExportButton from "../../../components/ExportButton";
 import AddItemModal from "../../../components/AddItemModal";
+import EditRowButton from "../../../components/EditRowButton";
+import EditItemModal from "../../../components/EditItemModal";
 import {
   dateNoTimezone,
   applyDiscount,
@@ -61,14 +63,12 @@ export default function SoldItemsPage() {
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
-
   const [tableColumns, setTableColumns] = useState<Column<Item>[]>([]);
 
-  // Fetch logged-in user
+  /** Fetch logged-in user */
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -83,7 +83,7 @@ export default function SoldItemsPage() {
     fetchUser();
   }, []);
 
-  // Fetch items when user or filters change
+  /** Fetch items when user or filters change */
   useEffect(() => {
     if (user) fetchItems();
   }, [user, page, pageSize, searchTerm, dateRange]);
@@ -100,12 +100,10 @@ export default function SoldItemsPage() {
         .order("timestamp", { ascending: false })
         .range(from, to);
 
-      // Filter by user if not Superadmin
       if (user.role?.name !== "Superadmin") {
         query = query.ilike("prepared_by", user.name.trim());
       }
 
-      // Date filter
       if (dateRange.startDate && dateRange.endDate) {
         const start = new Date(dateRange.startDate);
         const end = new Date(dateRange.endDate);
@@ -115,7 +113,6 @@ export default function SoldItemsPage() {
           .lte("timestamp", end.toISOString());
       }
 
-      // Search filter
       const textColumns = [
         "prepared_by",
         "brand",
@@ -134,11 +131,7 @@ export default function SoldItemsPage() {
       }
 
       const { data, error, count } = await query;
-
-      if (error) {
-        toast.error(error.message || "Failed to fetch items");
-        return;
-      }
+      if (error) return toast.error(error.message || "Failed to fetch items");
 
       const mapped = (data || []).map((i) => ({
         ...i,
@@ -154,7 +147,7 @@ export default function SoldItemsPage() {
     }
   };
 
-  // Build columns dynamically after user loads
+  /** Build table columns dynamically */
   useEffect(() => {
     if (!user) return;
 
@@ -202,24 +195,31 @@ export default function SoldItemsPage() {
       },
     ];
 
-    // Add Action column only for Superadmin
+    /** Action column (Edit + Delete) */
     if (user.role?.name === "Superadmin") {
       cols.push({
         header: "Action",
         accessor: (row) => (
-          <ConfirmDelete
-            confirmMessage={`Are you sure you want to delete item ${row.id}?`}
-            onConfirm={async () => {
-              const { error } = await supabase
-                .from("items")
-                .delete()
-                .eq("id", row.id!);
-              if (error) throw error;
-              fetchItems();
-            }}
-          >
-            Delete
-          </ConfirmDelete>
+          <div className="flex gap-2 justify-center">
+            <EditRowButton
+              itemId={row.id!}
+              ModalComponent={EditItemModal}
+              onSuccess={fetchItems}
+            />
+            <ConfirmDelete
+              confirmMessage={`Are you sure you want to delete item ${row.id}?`}
+              onConfirm={async () => {
+                const { error } = await supabase
+                  .from("items")
+                  .delete()
+                  .eq("id", row.id!);
+                if (error) throw error;
+                fetchItems();
+              }}
+            >
+              Delete
+            </ConfirmDelete>
+          </div>
         ),
         center: true,
       });
@@ -255,115 +255,112 @@ export default function SoldItemsPage() {
             onClose={() => setShowAddModal(false)}
             onSuccess={fetchItems}
           />
-          {user?.role?.name === "Superadmin" && (
-            <BulkEdit
-              table="items"
-              selectedIds={selectedItems}
-              onSuccess={fetchItems}
-              columns={2}
-              fields={[
-                {
-                  key: "mined_from",
-                  label: "Mined From",
-                  type: "select",
-                  options: ["Shoppee", "Facebook"],
-                },
-                { key: "brand", label: "Brand", type: "text" },
-                { key: "category", label: "Category", type: "text" },
-                { key: "order_id", label: "Order ID", type: "text" },
-                {
-                  key: "selling_price",
-                  label: "Selling Price",
-                  type: "number",
-                },
-                { key: "quantity", label: "Quantity", type: "number" },
-                { key: "capital", label: "Capital", type: "number" },
-                {
-                  key: "shoppee_commission",
-                  label: "Shoppee Commission",
-                  type: "text",
-                },
-                { key: "discount", label: "Discount", type: "text" },
-                {
-                  key: "is_returned",
-                  label: "Is Returned",
-                  type: "select",
-                  options: ["Yes", "No"],
-                },
-                {
-                  key: "date_returned",
-                  label: "Date Returned",
-                  type: "text",
-                  placeholder: "MM-DD-YY",
-                },
-                {
-                  key: "date_shipped",
-                  label: "Date Shipped",
-                  type: "text",
-                  placeholder: "MM-DD-YY",
-                },
-              ]}
-            />
-          )}
 
           {user?.role?.name === "Superadmin" && (
-            <ImportButton
-              table="items"
-              headersMap={{
-                Timestamp: "timestamp",
-                "Prepared By": "prepared_by",
-                Brand: "brand",
-                "Order ID": "order_id",
-                "Shoppee Commission": "shoppee_commission",
-                "Selling Price": "selling_price",
-                Quantity: "quantity",
-                Capital: "capital",
-                "Order Income": "order_income",
-                Discount: "discount",
-                "Live Seller": "live_seller",
-                Category: "category",
-                "Mined From": "mined_from",
-              }}
-              onSuccess={fetchItems}
-            />
-          )}
-          {user?.role?.name === "Superadmin" && (
-            <ExportButton
-              data={items}
-              headersMap={{
-                Timestamp: (row) => row.timestamp || "",
-                "Prepared By": "prepared_by",
-                Brand: "brand",
-                "Order ID": "order_id",
-                "Shoppee Commission": "shoppee_commission",
-                "Selling Price": "selling_price",
-                Quantity: "quantity",
-                Capital: "capital",
-                "Order Income": "order_income",
-                Discount: "discount",
-                "Live Seller": "live_seller",
-                Category: "category",
-                "Mined From": "mined_from",
-              }}
-              filename="sold_items.csv"
-            />
-          )}
-          {user?.role?.name === "Superadmin" && (
-            <ConfirmDelete
-              confirmMessage="Are you sure you want to delete selected items?"
-              onConfirm={async () => {
-                if (!selectedItems.length) throw new Error("No items selected");
-                const { error } = await supabase
-                  .from("items")
-                  .delete()
-                  .in("id", selectedItems);
-                if (error) throw error;
-                setSelectedItems([]);
-                fetchItems();
-              }}
-            >
-              Delete Selected
-            </ConfirmDelete>
+            <>
+              <BulkEdit
+                table="items"
+                selectedIds={selectedItems}
+                onSuccess={fetchItems}
+                columns={2}
+                fields={[
+                  {
+                    key: "mined_from",
+                    label: "Mined From",
+                    type: "select",
+                    options: ["Shoppee", "Facebook"],
+                  },
+                  { key: "brand", label: "Brand", type: "text" },
+                  { key: "category", label: "Category", type: "text" },
+                  { key: "order_id", label: "Order ID", type: "text" },
+                  {
+                    key: "selling_price",
+                    label: "Selling Price",
+                    type: "number",
+                  },
+                  { key: "quantity", label: "Quantity", type: "number" },
+                  { key: "capital", label: "Capital", type: "number" },
+                  {
+                    key: "shoppee_commission",
+                    label: "Shoppee Commission",
+                    type: "text",
+                  },
+                  { key: "discount", label: "Discount", type: "text" },
+                  {
+                    key: "is_returned",
+                    label: "Is Returned",
+                    type: "select",
+                    options: ["Yes", "No"],
+                  },
+                  {
+                    key: "date_returned",
+                    label: "Date Returned",
+                    type: "text",
+                    placeholder: "MM-DD-YY",
+                  },
+                  {
+                    key: "date_shipped",
+                    label: "Date Shipped",
+                    type: "text",
+                    placeholder: "MM-DD-YY",
+                  },
+                ]}
+              />
+              <ImportButton
+                table="items"
+                headersMap={{
+                  Timestamp: "timestamp",
+                  "Prepared By": "prepared_by",
+                  Brand: "brand",
+                  "Order ID": "order_id",
+                  "Shoppee Commission": "shoppee_commission",
+                  "Selling Price": "selling_price",
+                  Quantity: "quantity",
+                  Capital: "capital",
+                  "Order Income": "order_income",
+                  Discount: "discount",
+                  "Live Seller": "live_seller",
+                  Category: "category",
+                  "Mined From": "mined_from",
+                }}
+                onSuccess={fetchItems}
+              />
+              <ExportButton
+                data={items}
+                headersMap={{
+                  Timestamp: (row) => row.timestamp || "",
+                  "Prepared By": "prepared_by",
+                  Brand: "brand",
+                  "Order ID": "order_id",
+                  "Shoppee Commission": "shoppee_commission",
+                  "Selling Price": "selling_price",
+                  Quantity: "quantity",
+                  Capital: "capital",
+                  "Order Income": "order_income",
+                  Discount: "discount",
+                  "Live Seller": "live_seller",
+                  Category: "category",
+                  "Mined From": "mined_from",
+                }}
+                filename="sold_items.csv"
+              />
+              <ConfirmDelete
+                confirmMessage="Are you sure you want to delete selected items?"
+                onConfirm={async () => {
+                  if (!selectedItems.length)
+                    throw new Error("No items selected");
+                  const { error } = await supabase
+                    .from("items")
+                    .delete()
+                    .in("id", selectedItems);
+                  if (error) throw error;
+                  setSelectedItems([]);
+                  fetchItems();
+                }}
+              >
+                Delete Selected
+              </ConfirmDelete>
+            </>
           )}
         </div>
 
@@ -393,8 +390,7 @@ export default function SoldItemsPage() {
         </div>
       )}
 
-      {/* total cleaned bags */}
-      {/* Summary Widget — visible only for non-Superadmin */}
+      {/* Summary Widget for non-Superadmin */}
       {user?.role?.name !== "Superadmin" && (
         <div className="mb-4">
           <div className="bg-white shadow-sm rounded-4 p-4 border d-flex align-items-center justify-content-between">
