@@ -23,7 +23,7 @@ interface User {
   password?: string;
   role_id: string;
   role_name?: string;
-  contact_number?: string; // ✅ added
+  phone_number?: string; // ✅ added
   sss_number?: string;
   philhealth_number?: string;
   pagibig_number?: string;
@@ -47,7 +47,7 @@ export default function EmployeesListPage() {
     name: "",
     email: "",
     password: "",
-    contact_number: "",
+    phone_number: "",
     role_id: "",
     sss_number: "",
     philhealth_number: "",
@@ -147,15 +147,20 @@ export default function EmployeesListPage() {
   // Filtering
   const filteredUsers = users.filter((u) => {
     const term = searchTerm.toLowerCase();
+
     const matchesSearch = [
       u.name,
       u.email,
-      u.contact_number, // ✅ included
+      u.phone_number,
       u.sss_number,
       u.philhealth_number,
       u.pagibig_number,
       u.role_name,
-    ].some((val) => val?.toLowerCase().includes(term));
+    ].some((val) =>
+      String(val ?? "")
+        .toLowerCase()
+        .includes(term)
+    );
 
     let matchesDateRange = true;
     if (dateRange.startDate && dateRange.endDate && u.created_at) {
@@ -185,7 +190,7 @@ export default function EmployeesListPage() {
     },
     { header: "Name", accessor: "name" },
     { header: "Email", accessor: "email" },
-    { header: "Contact Number", accessor: "contact_number" }, // ✅ added
+    { header: "Phone Number", accessor: "phone_number" }, // ✅ added
     { header: "SSS Number", accessor: "sss_number" },
     { header: "PhilHealth Number", accessor: "philhealth_number" },
     { header: "Pagibig Number", accessor: "pagibig_number" },
@@ -231,7 +236,7 @@ export default function EmployeesListPage() {
             fields={[
               { key: "name", label: "Name", type: "text" },
               { key: "email", label: "Email", type: "text" },
-              { key: "contact_number", label: "Contact Number", type: "text" }, // ✅ added
+              { key: "phone_number", label: "Contact Number", type: "text" }, // ✅ added
               { key: "password", label: "Password", type: "text" },
               { key: "sss_number", label: "SSS Number", type: "text" },
               {
@@ -279,7 +284,7 @@ export default function EmployeesListPage() {
             fields={[
               { key: "name", label: "Name", type: "text" },
               { key: "email", label: "Email", type: "text" },
-              { key: "contact_number", label: "Contact Number", type: "text" }, // ✅ added
+              { key: "phone_number", label: "Contact Number", type: "text" }, // ✅ added
               { key: "password", label: "Password", type: "text" },
               { key: "sss_number", label: "SSS Number", type: "text" },
               {
@@ -315,7 +320,7 @@ export default function EmployeesListPage() {
             headersMap={{
               Name: "name",
               Email: "email",
-              "Contact Number": "contact_number",
+              "Contact Number": "phone_number",
               Password: "password",
               "Hourly Rate": "hourly_rate",
               "Daily Rate": "daily_rate",
@@ -353,8 +358,8 @@ export default function EmployeesListPage() {
 
               if (get("name")) userData.name = get("name");
               if (get("email")) userData.email = get("email");
-              if (get("contact_number"))
-                userData.contact_number = get("contact_number");
+              if (get("phone_number"))
+                userData.phone_number = get("phone_number");
               if (get("sss_number")) userData.sss_number = get("sss_number");
               if (get("pagibig_number"))
                 userData.pagibig_number = get("pagibig_number");
@@ -383,7 +388,7 @@ export default function EmployeesListPage() {
               "Created At": (row) => row.created_at || "",
               Name: "name",
               Email: "email",
-              "Contact Number": "contact_number", // ✅ added
+              "Phone Number": "phone_number", // ✅ added
               "SSS Number": "sss_number",
               "PhilHealth Number": "philhealth_number",
               "Pagibig Number": "pagibig_number",

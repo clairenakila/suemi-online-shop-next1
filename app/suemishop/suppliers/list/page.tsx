@@ -18,7 +18,7 @@ interface Supplier {
   id?: string;
   created_at?: string;
   name?: string;
-  contact_number?: string;
+  phone_number?: string;
 }
 
 export default function SuppliersPage() {
@@ -57,7 +57,7 @@ export default function SuppliersPage() {
   // Filtering
   const filteredSuppliers = suppliers.filter((s) => {
     const term = searchTerm.toLowerCase();
-    const matchesSearch = [s.name, s.contact_number].some((val) =>
+    const matchesSearch = [s.name, s.phone_number].some((val) =>
       val?.toLowerCase().includes(term)
     );
 
@@ -82,7 +82,7 @@ export default function SuppliersPage() {
         row.created_at ? new Date(row.created_at).toLocaleDateString() : "",
     },
     { header: "Name", accessor: "name" },
-    { header: "Contact Number", accessor: "contact_number" },
+    { header: "Contact Number", accessor: "phone_number" },
     {
       header: "Action",
       accessor: (row) => (
@@ -120,7 +120,7 @@ export default function SuppliersPage() {
             fields={[
               { key: "name", label: "Supplier Name", type: "text" },
               {
-                key: "contact_number",
+                key: "phone_number",
                 label: "Contact Number",
                 type: "number",
                 placeholder: "Must be 11 digits:09918895977",
@@ -134,8 +134,8 @@ export default function SuppliersPage() {
             fields={[
               { key: "name", label: "Supplier Name", type: "text" },
               {
-                key: "contact_number",
-                label: "Contact Number",
+                key: "phone_number",
+                label: "Phone Number",
                 type: "number",
                 placeholder: "Must be 11 digits:09918895977",
               },
@@ -145,7 +145,7 @@ export default function SuppliersPage() {
             table="suppliers"
             headersMap={{
               Name: "name",
-              "Contact Number": "contact_number",
+              "Phone Number": "phone_number",
               "Created At": "created_at",
             }}
             onSuccess={fetchSuppliers}
@@ -155,7 +155,7 @@ export default function SuppliersPage() {
             headersMap={{
               "Created At": (row) => row.created_at || "",
               Name: "name",
-              "Contact Number": "contact_number",
+              "Phone Number": "phone_number",
             }}
             filename="suppliers.csv"
           />
