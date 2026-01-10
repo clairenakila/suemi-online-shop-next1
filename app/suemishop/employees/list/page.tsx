@@ -225,7 +225,7 @@ export default function EmployeesListPage() {
   return (
     <div className="container my-5">
       <Toaster />
-      <h3 className="mb-4">Employees Management</h3>
+      <h3 className="mb-4">Users Management</h3>
 
       {/* Toolbar */}
       <div className="mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -420,7 +420,7 @@ export default function EmployeesListPage() {
         {/* Search + Calendar */}
         <div className="d-flex align-items-center gap-2">
           <SearchBar
-            placeholder="Search employees..."
+            placeholder="Search users..."
             value={searchTerm}
             onChange={setSearchTerm}
             options={users.map((u) => u.name)}

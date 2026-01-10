@@ -243,7 +243,7 @@ export default function DashboardLayout({
                         handleNavClick("/suemishop/employees/list")
                       }
                     >
-                      Employees
+                      Users
                     </button>
                   </li>
                   <li className="nav-item mb-1">
