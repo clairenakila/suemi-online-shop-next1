@@ -138,7 +138,7 @@ export default function DashboardLayout({
               className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
                 collapsed ? "justify-content-center" : "text-start"
               }`}
-              onClick={() => handleNavClick("/dashboard")}
+              onClick={() => handleNavClick("/suemishop/dashboard")}
             >
               <i className="bi bi-speedometer2"></i>
               {!collapsed && <span className="ms-2">Dashboard</span>}
@@ -176,7 +176,7 @@ export default function DashboardLayout({
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
                         onClick={() =>
-                          handleNavClick("/dashboard/categories/list")
+                          handleNavClick("/suemishop/categories/list")
                         }
                       >
                         Categories
@@ -187,7 +187,7 @@ export default function DashboardLayout({
                   <li className="nav-item mb-1">
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() => handleNavClick("/dashboard/items/list")}
+                      onClick={() => handleNavClick("/suemishop/items/list")}
                     >
                       Sold Items
                     </button>
@@ -198,7 +198,7 @@ export default function DashboardLayout({
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
                         onClick={() =>
-                          handleNavClick("/dashboard/inventories/list")
+                          handleNavClick("/suemishop/inventories/list")
                         }
                       >
                         Inventories
@@ -240,7 +240,7 @@ export default function DashboardLayout({
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
                       onClick={() =>
-                        handleNavClick("/dashboard/employees/list")
+                        handleNavClick("/suemishop/employees/list")
                       }
                     >
                       Employees
@@ -250,7 +250,7 @@ export default function DashboardLayout({
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
                       onClick={() =>
-                        handleNavClick("/dashboard/suppliers/list")
+                        handleNavClick("/suemishop/suppliers/list")
                       }
                     >
                       Suppliers
@@ -259,7 +259,7 @@ export default function DashboardLayout({
                   <li className="nav-item mb-1">
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() => handleNavClick("/dashboard/roles/list")}
+                      onClick={() => handleNavClick("/suemishop/roles/list")}
                     >
                       Roles
                     </button>
@@ -300,7 +300,7 @@ export default function DashboardLayout({
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
                         onClick={() =>
-                          handleNavClick("/dashboard/categories/list")
+                          handleNavClick("/suemishop/categories/list")
                         }
                       >
                         Payslips
@@ -313,7 +313,7 @@ export default function DashboardLayout({
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
                         onClick={() =>
-                          handleNavClick("/dashboard/attendance/list")
+                          handleNavClick("/suemishop/attendance/list")
                         }
                       >
                         Attendance
@@ -332,7 +332,7 @@ export default function DashboardLayout({
                 className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
                   collapsed ? "justify-content-center" : "text-start"
                 }`}
-                onClick={() => handleNavClick("/dashboard/settings")}
+                onClick={() => handleNavClick("/suemishop/settings")}
               >
                 <i className="bi bi-gear"></i>
                 {!collapsed && <span className="ms-2">Settings</span>}
@@ -346,7 +346,7 @@ export default function DashboardLayout({
               className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
                 collapsed ? "justify-content-center" : "text-start"
               }`}
-              onClick={() => handleNavClick("/dashboard/profile/list")}
+              onClick={() => handleNavClick("/suemishop/profile/list")}
             >
               <i className="bi bi-person-check"></i>
               {!collapsed && <span className="ms-2">Profile</span>}

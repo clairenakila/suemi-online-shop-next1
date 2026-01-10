@@ -2,6 +2,6 @@
 export const ROUTES = {
   HOME: "/",
   LOGIN: "/auth/login",
-  DASHBOARD: "/dashboard",
+  DASHBOARD: "/suemishop/dashboard",
   REGISTER: "/auth/register",
 };
