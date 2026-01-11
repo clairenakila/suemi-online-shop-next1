@@ -17,9 +17,7 @@ export default function PasswordSettings() {
         />
 
         <div className="text-end mt-3">
-          <button className="btn btn-sm btn-outline-danger">
-            Edit
-          </button>
+          <button className="btn" style={{ backgroundColor: '#FFB6C1', color: '#333' }}>Edit</button>
         </div>
       </div>
     </div>
