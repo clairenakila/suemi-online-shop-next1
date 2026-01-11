@@ -1,6 +1,6 @@
 export default function ProfileSettings() {
   return (
-    <div className="card shadow-sm">
+    <div className="card shadow-sm" style={{ width: 1100 , height: 333}}>
       <div className="card-body">
         <h5 className="card-title mb-3">Profile Settings</h5>
 

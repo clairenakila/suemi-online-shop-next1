@@ -1,8 +1,8 @@
 export default function PasswordSettings() {
   return (
-    <div className="card shadow-sm">
+    <div className="card shadow-sm" style={{ width: 1100 , height: 250}}>
       <div className="card-body">
-        <h5 className="card-title mb-3">Password Settings</h5>
+        <h5 className="card-title mb-3 font-bold">Password Settings</h5>
 
         <input
           type="password"

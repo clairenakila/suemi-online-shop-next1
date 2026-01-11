@@ -1,10 +1,10 @@
 export default function ProfileCard() {
   return (
-    <div className="card text-center shadow-sm" style={{ width: 300 }}>
+    <div className="card text-center shadow-sm" style={{ width: 400 }}>
       <div className="card-body">
         <div
           className="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3"
-          style={{ width: 100, height: 100 }}
+          style={{ width: 150, height: 150 }}
         >
           👤
         </div>
