@@ -2,7 +2,7 @@ export default function PasswordSettings() {
   return (
     <div className="container">
       <h5 className="mb-3 text-black fw-bold">Password Settings</h5>
-      <div className="card shadow-sm" style={{ width: 1110, height: 310 , borderRadius: 15 }}>
+      <div className="card shadow-sm" style={{ width: 1110, height: 310 , borderRadius: 15 , border: 'none'}}>
         <div className="card-body p-4">
           <p>Old Password</p>
           <input

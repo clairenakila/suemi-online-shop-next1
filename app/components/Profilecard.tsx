@@ -1,6 +1,6 @@
 export default function ProfileCard() {
   return (
-    <div className="card text-center shadow-sm" style={{ width: 400 }}>
+    <div className="card text-center shadow-sm" style={{ width: 400 , borderRadius: 15 , border: 'none', boxShadow: '0 4px 6px rgba(2, 2, 2, 2.1)' }}>
       <div className="card-body p-4">
         <div
           className="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3"
