@@ -1,9 +1,9 @@
 export default function ProfileSettings() {
   return (
     <div className="container">
-      <h5 className="card-title mb-3 text-black fw-bold">Profile Settings</h5>
-      <div className="card shadow-sm" style={{ width: 1110, height: 390, borderRadius: 15, border: 'none', backgroundColor: '#FFFFFF' }}>
-        <div className="card-body p-4">
+      <h5 className="card-title mb-3 text-black fw-bold" >Profile Settings</h5>
+      <div className="card shadow" style={{ width: 1110, height: 390, borderRadius: 15, border: 'none', backgroundColor: '#FFFFFF' }}>
+        <div className="card-body p-4 ">
           <div className="row g-3">
             <div className="col-md-6">
               <p className="mb-2" style={{ fontSize: '14px', color: '#333', fontWeight: '500' }}>Real Name</p>
