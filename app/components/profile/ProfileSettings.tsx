@@ -1,4 +1,9 @@
+"use client";
+import { useState } from "react";
+import EditProfileModal from "../../components/profile/EditProfileModal";
+
 export default function ProfileSettings() {
+  const [isEditOpen, setIsEditOpen] = useState(false);
   return (
     <div>
       <h5 className="fw-bold mb-3 text-dark">Profile Settings</h5>
@@ -34,7 +39,7 @@ export default function ProfileSettings() {
           
 
           <button
-            className="btn position-absolute"
+            className="btn position-absolute" onClick={() => setIsEditOpen(true)} // I-trigger ang modal dito
             style={{
               bottom: 20,
               right: 20,
@@ -63,6 +68,10 @@ export default function ProfileSettings() {
           </button>
         </div>
       </div>
+      <EditProfileModal 
+        isOpen={isEditOpen} 
+        onClose={() => setIsEditOpen(false)} 
+      />
     </div>
   );
 }
