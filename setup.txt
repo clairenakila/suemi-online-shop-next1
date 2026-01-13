@@ -22,3 +22,7 @@ if component not found declarations
             </Link>
           </p>
         </div> */}
+
+react hot toast is for like "Successfully, edited/deleted"
+sweetalert is for like confirmation popup modal "are you sure you want to delete it?"
+

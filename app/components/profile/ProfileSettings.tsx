@@ -14,12 +14,7 @@ export default function ProfileSettings() {
         <div className="card-body p-3 pb-5">
           <div className="row g-4">
             <div className="col-md-6">
-              <label className="form-label">Real Name</label>
-              <input className="form-control" />
-            </div>
-
-            <div className="col-md-6">
-              <label className="form-label">Username</label>
+              <label className="form-label"> Name</label>
               <input className="form-control" />
             </div>
 
@@ -27,17 +22,16 @@ export default function ProfileSettings() {
               <label className="form-label">Email</label>
               <input className="form-control" />
             </div>
-
-            <div className="col-md-6">
-              <label className="form-label">Address</label>
-              <textarea className="form-control" rows={3} />
-            </div>
-
             <div className="col-md-6">
               <label className="form-label">Phone Number</label>
               <input className="form-control" />
             </div>
+            <div className="col-md-6 my-5">
+              <label className="form-label">Address</label>
+              <textarea className="form-control" rows={4} />
+            </div>
           </div>
+          
 
           <button
             className="btn position-absolute"
