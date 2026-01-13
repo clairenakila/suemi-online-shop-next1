@@ -1,18 +1,26 @@
 export default function ProfileCard() {
   return (
-    <div className="card text-center shadow-sm" style={{ width: 400 , borderRadius: 15 , border: 'none', boxShadow: '0 4px 6px rgba(2, 2, 2, 2.1)' }}>
+    <div
+      className="card text-center"
+      style={{
+        width: 360,
+        borderRadius: 15,
+        border: "none",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+      }}
+    >
       <div className="card-body p-4">
         <div
           className="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3"
-          style={{ width: 180, height: 180, fontSize: '80px' }}
+          style={{ width: 160, height: 160, fontSize: 60 }}
         >
           👤
         </div>
 
-        <h5 className="fw-bold mb-1" style={{ fontSize: '20px' }}>Claire Nakila</h5>
-        <p className="text-muted mb-3" style={{ fontSize: '15px' }}>@watashiclang</p>
+        <h5 className="fw-bold mb-1 fs-4">Claire Nakila</h5>
+        <p className="text-muted mb-4">@watashiclang</p>
 
-        <p className="mt-4 text-muted" style={{ fontSize: '14px', lineHeight: '1.6' }}>
+        <p className="text-muted" style={{ lineHeight: 1.6 }}>
           Block 9 Lot 3 Calliandra 2<br />
           Street Phase 1 Greenwoods<br />
           Village, Dasmariñas Cavite

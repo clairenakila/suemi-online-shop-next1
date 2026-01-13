@@ -5,12 +5,14 @@ import PasswordSettings from "../../../components/PasswordSettings";
 
 export default function ProfilePage() {
   return (
-    <div className="flex gap-6 p-6 bg-[#fff9f9] min-h-screen">
-      <ProfileCard />
+    <div className="min-h-screen bg-[#fdf6f6] p-8">
+      <div className="flex gap-8 max-w-[1400px] mx-auto">
+        <ProfileCard />
 
-      <div className="flex flex-col gap-6 w-full max-w-3xl">
-        <ProfileSettings />
-        <PasswordSettings />
+        <div className="flex flex-col gap-8 flex-1">
+          <ProfileSettings />
+          <PasswordSettings />
+        </div>
       </div>
     </div>
   );
