@@ -1,6 +1,7 @@
 // components/profile/EditProfileModal.tsx
 import Modal from "../../components/profile/Modal";
 
+
 export default function EditProfileModal({
   isOpen,
   onClose,
@@ -10,35 +11,48 @@ export default function EditProfileModal({
 }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
-      <p className="text-dark">(Progress)</p>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-dark">Real Name</label>
-          <input type="text" className="border p-2 rounded w-full" />
+      {/* Bootstrap Grid System */}
+      <div className="row g-3"> 
+        <div className="col-md-6">
+          <label className="form-label fw-medium text-dark">Real Name</label>
+          <input type="text" className="form-control" />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-dark">Username</label>
-          <input type="text" className="border p-2 rounded w-full" />
+        
+        <div className="col-md-6">
+          <label className="form-label fw-medium text-dark">Username</label>
+          <input type="text" className="form-control" />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-dark">Email</label>
-          <input type="email" className="border p-2 rounded w-full" />
+
+        <div className="col-md-6">
+          <div className="mb-3">
+            <label className="form-label fw-medium text-dark">Email</label>
+            <input type="email" className="form-control" />
+          </div>
+          <div>
+            <label className="form-label fw-medium text-dark">Phone Number</label>
+            <input type="text" className="form-control" />
+          </div>
         </div>
-        <div className="row-span-2 flex flex-col gap-1">
-          <label className="text-sm font-medium text-dark  ">Address</label>
-          <textarea className="border p-2 rounded w-full h-full" rows={4} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-dark">Phone Number</label>
-          <input type="text" className="border p-2 rounded w-full" />
+
+        <div className="col-md-6">
+          <label className="form-label fw-medium text-dark">Address</label>
+          <textarea className="form-control" rows={4} style={{ height: 'calc(100% - 32px)' }} />
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-6">
-        <button onClick={onClose} className="bg-gray-200 px-4 py-2 rounded-md">
+      {/* Footer Buttons gamit ang Bootstrap utilities */}
+      <div className="d-flex justify-content-end gap-2 mt-4">
+        <button 
+          onClick={onClose} 
+          className="btn btn-light px-4"
+          style={{ backgroundColor: '#e9ecef', border: 'none' }}
+        >
           Cancel
         </button>
-        <button className="bg-pink-300 hover:bg-pink-400 text-white px-6 py-2 rounded-md transition-colors">
+        <button 
+          className="btn text-black px-4"
+          style={{ backgroundColor: '#FFB6C1', border: 'none' }}
+        >
           Save
         </button>
       </div>

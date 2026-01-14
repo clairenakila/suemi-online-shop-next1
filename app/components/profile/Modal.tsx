@@ -1,4 +1,5 @@
 // components/modals/Modal.tsx
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -6,17 +7,44 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 mx-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{title}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+    <div
+      className="d-flex align-items-center justify-content-center"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0, 0, 0, 0.5)", // Black overlay na may opacity
+        zIndex: 1050, // Standard Bootstrap modal z-index
+      }}
+    >
+      <div
+        className="card shadow-lg border-0 w-100 mx-3"
+        style={{ maxWidth: "600px" }}
+      >
+        {/* Header Part */}
+        <div className="card-header bg-white d-flex justify-content-between align-items-center border-0 pt-4 px-4">
+          <h5 className="mb-0 fw-medium text-dark">{title}</h5>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={onClose}
+            aria-label="Close"
+          ></button>
         </div>
-        {children}
+
+        {/* Body Part */}
+        <div className="card-body p-4">{children}</div>
       </div>
     </div>
   );
