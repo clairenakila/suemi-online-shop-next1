@@ -45,7 +45,7 @@ export default function EditProfileModal({
         <button 
           onClick={onClose} 
           className="btn btn-light px-4"
-          style={{ backgroundColor: '#e9ecef', border: 'none' }}
+          style={{ backgroundColor: 'lightgrey', border: 'none' }}
         >
           Cancel
         </button>
