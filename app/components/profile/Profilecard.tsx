@@ -1,4 +1,8 @@
-export default function ProfileCard() {
+interface ProfileSettingsProps {
+  user: any;
+}
+
+export default function ProfileCard({ user }: { user: any }) {
   return (
     <div
       className="card text-center"

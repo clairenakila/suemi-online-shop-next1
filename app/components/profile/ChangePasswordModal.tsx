@@ -2,7 +2,8 @@
 import Modal from "./Modal"; 
 
 interface ChangePasswordProps {
-  isOpen: boolean;
+    isOpen: boolean;
+    user: any;
   onClose: () => void;
 }
 

@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import ChangePasswordModal from "../../components/profile/ChangePasswordModal";
+interface PasswordSettingsProps {
+  user: any; 
+}
 
 
-
-export default function PasswordSettings() {
+export default function PasswordSettings({ user }: PasswordSettingsProps) {
   const [isPassOpen, setIsPassOpen] = useState(false);
   return (
     <div>
@@ -26,8 +28,8 @@ export default function PasswordSettings() {
           <label className="form-label">New Password</label>
           <input type="password" className="form-control" />
 
-          <button
-            className="btn position-absolute" onClick={() => setIsPassOpen(true)}
+          <button onClick={() => setIsPassOpen(true)}
+            className="btn position-absolute" 
             style={{
               bottom: 20,
               right: 20,
@@ -56,10 +58,10 @@ export default function PasswordSettings() {
           </button>
         </div>
       </div>
-      {/* Dito natin ilalagay yung Modal component */}
       <ChangePasswordModal 
         isOpen={isPassOpen} 
         onClose={() => setIsPassOpen(false)} 
+        user={user}
       />
     </div>
   );
