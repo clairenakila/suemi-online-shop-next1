@@ -27,7 +27,7 @@ export default function ProfileSettings() {
               <label className="form-label">Email</label>
               <input className="form-control" />
             </div>
-            <div className="col-md-6">
+            <div className="col-md-6 my-5">
               <label className="form-label">Phone Number</label>
               <input className="form-control" />
             </div>

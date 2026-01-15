@@ -24,8 +24,8 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordP
         </div>
       </div>
 
-      {/* Footer Buttons na may border-top at tamang kulay */}
-      <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+      {/* Footer Buttons  */}
+      <div className="d-flex justify-content-end gap-2 mt-4 pt-3 ">
         <button 
           onClick={onClose} 
           className="btn text-dark px-4"

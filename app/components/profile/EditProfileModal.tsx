@@ -45,13 +45,13 @@ export default function EditProfileModal({
         <button 
           onClick={onClose} 
           className="btn btn-light px-4"
-          style={{ backgroundColor: 'lightgrey', border: 'none' }}
+          style={{ backgroundColor: 'lightgrey', border: 'none' , fontSize: '0.9rem' }}
         >
           Cancel
         </button>
         <button 
           className="btn text-black px-4"
-          style={{ backgroundColor: '#FFB6C1', border: 'none' }}
+          style={{ backgroundColor: '#FFB6C1', border: 'none' ,   fontSize: '0.9rem' }}
         >
           Save
         </button>
