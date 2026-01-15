@@ -29,68 +29,56 @@ export default function EditProfileModal({ isOpen, onClose, user }: EditProfileP
     }
   }, [user, isOpen]);
 
-  const handleSave = async () => {
-    // 1. Confirmation Dialog gamit ang Swal
-    const result = await Swal.fire({
-      title: "Confirm Changes?",
-      text: "Gusto mo bang i-save ang mga pagbabagong ito, jhomhar?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#FFB6C1", 
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, save it!",
-      cancelButtonText: "No, cancel"
-    });
+const handleSave = async () => {
+  // 1. Confirmation Dialog na may bagong kulay
+  const result = await Swal.fire({
+    title: "Confirm Changes?",
+    text: "Gusto mo bang i-save ang mga pagbabagong ito, jhomhar?",
+    icon: "question",
+    showCancelButton: true,
+    // Pinagpalit natin ang logic ng kulay base sa request mo:
+    confirmButtonColor: "#d33",     // Red para sa Confirm
+    cancelButtonColor: "#D3D3D3",    // Light Grey para sa Cancel
+    confirmButtonText: "Yes, save it!",
+    cancelButtonText: "No, cancel",
+    reverseButtons: true             // Mas magandang UX kung nasa kanan ang positive action
+  });
 
-    if (result.isConfirmed) {
-      // 2. React Hot Toast Promise
-      // Ito ay magpapakita ng Loading, Success, o Error sa isang toast lang
-      toast.promise(
-        (async () => {
-          const res = await fetch("/api/profile/update", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: user.id, // Target ID 332 mula sa iyong database
-              ...formData
-            }),
-          });
+  if (result.isConfirmed) {
+    // 2. Promise Toast para sa mabilisang feedback
+    toast.promise(
+      (async () => {
+        const res = await fetch("/api/profile/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: user.id, // ID 332
+            ...formData
+          }),
+        });
 
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || "Update failed");
-          }
-
-          // Pag success, mag-refresh para makita ang pagbabago
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
-
-          onClose();
-          return "Profile updated successfully! 🚀";
-        })(),
-        {
-          loading: 'Saving changes...', // Habang nag-u-update
-          success: (msg) => msg,        // Pag tapos na
-          error: (err) => `${err.message}`, // Pag nag-error
-        },
-        {
-          style: {
-            borderRadius: '10px',
-            background: '#333',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-          },
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Update failed");
         }
-      );
-    }
-  };
+
+        // Refresh flow
+        setTimeout(() => window.location.reload(), 1500);
+        onClose();
+        return "Profile updated! 🚀";
+      })(),
+      {
+        loading: 'Saving changes...',
+        success: (msg) => <b>{msg}</b>,
+        error: (err) => <b>{err.message}</b>,
+      }
+    );
+  }
+};
 
   return (
     <>
-      {/* Siguraduhing nandito ang Toaster para lilitaw ang notifications */}
+      
       <Toaster position="top-center" reverseOrder={false} />
 
       <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
