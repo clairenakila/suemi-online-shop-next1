@@ -28,14 +28,14 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordP
       <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
         <button 
           onClick={onClose} 
-          className="btn text-white px-4"
-          style={{ backgroundColor: '#6c757d', border: 'none', fontSize: '0.9rem' }}
+          className="btn text-dark px-4"
+          style={{ backgroundColor: 'lightgrey', border: 'none', fontSize: '0.9rem' }}
         >
           Cancel
         </button>
         <button 
-          className="btn text-white px-4"
-          style={{ backgroundColor: '#ffa500', border: 'none', fontSize: '0.9rem' }}
+          className="btn text-dark px-4"
+          style={{ backgroundColor: '#FFB6C1', border: 'none', fontSize: '0.9rem' }}
         >
           Update Password
         </button>
