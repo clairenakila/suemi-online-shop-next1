@@ -1,8 +1,16 @@
-interface ProfileSettingsProps {
+"use client";
+
+interface ProfileCardProps {
   user: any;
 }
 
-export default function ProfileCard({ user }: { user: any }) {
+export default function ProfileCard({ user }: ProfileCardProps) {
+  // We use the data from the database (Row 332)
+  // If user data is still loading, we show a fallback or empty string
+  const name = user?.name || "Loading...";
+  const email = user?.email || "";
+  const address = user?.address || "No address provided";
+
   return (
     <div
       className="card text-center"
@@ -15,20 +23,22 @@ export default function ProfileCard({ user }: { user: any }) {
       }}
     >
       <div className="card-body p-4">
+        {/* Profile Image/Avatar */}
         <div
           className="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3"
           style={{ width: 160, height: 160, fontSize: 60 }}
         >
-          👧🏻
+          {/* You can change this emoji based on user gender or a dynamic avatar URL later */}
+          👦🏻 
         </div>
 
-        <h5 className="fw-bold mb-1 fs-4">Claire Nakila</h5>
-        <p className="text-muted mb-4">@watashiclang</p>
+        {/* Dynamic Name and Username */}
+        <h5 className="fw-bold mb-1 fs-4">{name}</h5>
+        <p className="text-muted mb-4">@{email.split('@')[0]}</p>
 
-        <p className="text-muted" style={{ lineHeight: 1.6 }}>
-          Block 9 Lot 3 Calliandra 2<br />
-          Street Phase 1 Greenwoods<br />
-          Village, Dasmariñas Cavite
+        {/* Dynamic Address */}
+        <p className="text-muted" style={{ lineHeight: 1.6, whiteSpace: "pre-line" }}>
+          {address}
         </p>
       </div>
     </div>
