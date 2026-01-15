@@ -35,7 +35,7 @@ export default function ProfileCard({ user }: ProfileCardProps) {
         {/* Dynamic Name and Username */}
         <h5 className="fw-bold mb-1 fs-4">{name}</h5>
         <p className="text-muted mb-4">@{email.split('@')[0]}</p>
-
+         <h1>(static palang lahat)</h1>
         {/* Dynamic Address */}
         <p className="text-muted" style={{ lineHeight: 1.6, whiteSpace: "pre-line" }}>
           {address}
