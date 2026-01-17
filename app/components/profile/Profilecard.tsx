@@ -5,11 +5,13 @@ interface ProfileCardProps {
 }
 
 export default function ProfileCard({ user }: ProfileCardProps) {
-  // We use the data from the database (Row 332)
-  // If user data is still loading, we show a fallback or empty string
   const name = user?.name || "Loading...";
   const email = user?.email || "";
   const address = user?.address || "No address provided";
+
+  // DYNAMIC AVATAR LOGIC
+  const isFemale = email === "superadmin@gmail.com" || user?.gender === "female";
+  const avatarEmoji = isFemale ? "👧🏻" : "👦🏻";
 
   return (
     <div
@@ -23,13 +25,12 @@ export default function ProfileCard({ user }: ProfileCardProps) {
       }}
     >
       <div className="card-body p-4">
-        {/* Profile Image/Avatar */}
+        
         <div
           className="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3"
           style={{ width: 160, height: 160, fontSize: 60 }}
         >
-          {/* You can change this emoji based on user gender or a dynamic avatar URL later */}
-          👦🏻 
+          {avatarEmoji} 
         </div>
 
         {/* Dynamic Name and Username */}

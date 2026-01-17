@@ -1,44 +1,50 @@
 "use client";
 import { useEffect, useState } from "react";
-// Inalis ang createClient dito dahil gagamitin ang nasa lib
-import ProfileCard from "../../../components/profile/Profilecard"; 
+import ProfileCard from "../../../components/profile/Profilecard"; // Siguraduhin ang "C" sa Card
 import ProfileSettings from "../../../components/profile/ProfileSettings";
 import PasswordSettings from "../../../components/profile/PasswordSettings";
-import { supabase } from "@/lib/supabase"; // Ito ang official na gagamitin
+import { supabase } from "@/lib/supabase"; 
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState<any>(null);
 
-  useEffect(() => {
-    async function loadProfile() {
-      // 1. Check muna natin kung may tunay na session (Automatic Login)
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // 2. Kunin ang email mula sa URL kung wala sa session
-      const params = new URLSearchParams(window.location.search);
-      const emailFromUrl = params.get("email");
+useEffect(() => {
+  async function loadProfile() {
+    // 1. Kunin ang logged-in user mula sa Local Storage
+    const storageUser = localStorage.getItem("user");
+    let loggedInEmail = null;
 
-      // 3. Logic: Session Email > URL Email > Default Email
-      const activeEmail = user?.email || emailFromUrl || "baronjhomhar@gmail.com"; 
-
-      console.log("Loading profile for:", activeEmail);
-
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", activeEmail)
-        .single();
-
-      if (error) {
-        console.error("Error fetching profile:", error.message);
-      }
-
-      if (data) {
-        setUserData(data);
-      }
+    if (storageUser) {
+      const parsedUser = JSON.parse(storageUser);
+      loggedInEmail = parsedUser.email; // Kinukuha natin yung "superadmin@gmail.com"
     }
-    loadProfile();
-  }, []);
+
+    // 2. Fallback sa URL parameter
+    const params = new URLSearchParams(window.location.search);
+    const emailFromUrl = params.get("email");
+
+    // 3. PRIORITY: Storage > URL > Default Email
+    const activeEmail = loggedInEmail || emailFromUrl || "baronjhomhar@gmail.com"; 
+
+    console.log("Automatically fetching for:", activeEmail);
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, name, email, address, phone_number") // Sinama na ang ID para safe na ang Save Changes
+      .eq("email", activeEmail)
+      .single();
+
+    if (data) {
+      setUserData(data);
+    }
+  }
+  loadProfile();
+}, []);
+
+  // Display "Loading..." lang kung wala talagang email at data
+  if (!userData) {
+    return <div className="p-6">Loading Profile Data...</div>;
+  }
 
   return (
     <div className="flex w-full gap-6 p-6 bg-[#fff9f9] min-h-screen">
