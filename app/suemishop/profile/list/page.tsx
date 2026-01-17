@@ -1,40 +1,44 @@
 "use client";
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import ProfileCard from "../../../components/profile/Profilecard";
+// Inalis ang createClient dito dahil gagamitin ang nasa lib
+import ProfileCard from "../../../components/profile/Profilecard"; 
 import ProfileSettings from "../../../components/profile/ProfileSettings";
 import PasswordSettings from "../../../components/profile/PasswordSettings";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase"; // Ito ang official na gagamitin
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState<any>(null);
 
-useEffect(() => {
-  async function getUser() {
-    console.log("Pilit na kinukuha ang data ng ID 332...");
-    
+  useEffect(() => {
+    async function loadProfile() {
+      // 1. Check muna natin kung may tunay na session (Automatic Login)
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // 2. Kunin ang email mula sa URL kung wala sa session
+      const params = new URLSearchParams(window.location.search);
+      const emailFromUrl = params.get("email");
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", 332)
-      .single();
+      // 3. Logic: Session Email > URL Email > Default Email
+      const activeEmail = user?.email || emailFromUrl || "baronjhomhar@gmail.com"; 
 
-    if (error) {
-      console.error("Database Error:", error.message);
+      console.log("Loading profile for:", activeEmail);
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", activeEmail)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error.message);
+      }
+
+      if (data) {
+        setUserData(data);
+      }
     }
-
-    if (data) {
-      console.log("Success! Data found:", data);
-      setUserData(data);
-    }
-  }
-  getUser();
-}, []);
+    loadProfile();
+  }, []);
 
   return (
     <div className="flex w-full gap-6 p-6 bg-[#fff9f9] min-h-screen">
