@@ -1,17 +1,21 @@
 "use client";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import ChangePasswordModal from "../../components/profile/ChangePasswordModal";
-interface PasswordSettingsProps {
-  user: any; 
-}
 
+interface PasswordSettingsProps {
+  user: any;
+}
 
 export default function PasswordSettings({ user }: PasswordSettingsProps) {
   const [isPassOpen, setIsPassOpen] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+
   return (
     <div>
+      {/* Ginagamit ang text-dark at fw-bold gaya ng original mo */}
       <h5 className="fw-bold mb-3 text-dark">Password Settings</h5>
-
+      
       <div
         className="card position-relative"
         style={{
@@ -22,14 +26,49 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
         }}
       >
         <div className="card-body p-4">
+          {/* Label at Input - Naka-disabled para hindi redundant sa modal */}
           <label className="form-label">Old Password</label>
-          <input type="password" className="form-control mb-3" />
+          <input
+            type="password"
+            disabled
+            className="form-control mb-3"
+            placeholder="***********"
+            style={{ backgroundColor: "#f8f9fa" }} 
+          />
 
           <label className="form-label">New Password</label>
-          <input type="password" className="form-control" />
+          <div className="input-group mb-3">
+            <input
+              type={showNewPass ? "text" : "password"}
+              className="form-control"
+              disabled
+              placeholder="***********"
+              style={{ 
+                borderRight: "none", 
+                backgroundColor: "#f8f9fa" 
+              }} 
+            />
+            <span
+              className="input-group-text bg-white"
+              style={{
+                cursor: "pointer",
+                borderLeft: "none",
+                borderColor: "#ced4da",
+              }}
+              onClick={() => setShowNewPass(!showNewPass)}
+            >
+              {showNewPass ? (
+                <EyeOff size={18} className="text-muted" />
+              ) : (
+                <Eye size={18} className="text-muted" />
+              )}
+            </span>
+          </div>
 
-          <button onClick={() => setIsPassOpen(true)}
-            className="btn position-absolute" 
+          {/* Edit Button na may Hover Effects */}
+          <button
+            onClick={() => setIsPassOpen(true)}
+            className="btn position-absolute"
             style={{
               bottom: 20,
               right: 20,
@@ -44,9 +83,8 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = "#ff9eb3";
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 16px rgba(255, 182, 193, 0.35)";
+              e.currentTarget.style.transform = "translateY(-3px)";
+              e.currentTarget.style.boxShadow = "0 6px 16px rgba(255, 182, 193, 0.4)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "#FFB6C1";
@@ -58,9 +96,11 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
           </button>
         </div>
       </div>
-      <ChangePasswordModal 
-        isOpen={isPassOpen} 
-        onClose={() => setIsPassOpen(false)} 
+
+      {/* Dito sa Modal mangyayari ang tunay na input, hashing, at toast */}
+      <ChangePasswordModal
+        isOpen={isPassOpen}
+        onClose={() => setIsPassOpen(false)}
         user={user}
       />
     </div>
