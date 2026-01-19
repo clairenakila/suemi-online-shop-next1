@@ -6,11 +6,12 @@ interface ProfileCardProps {
 
 export default function ProfileCard({ user }: ProfileCardProps) {
   const name = user?.name || "Loading...";
-  const email = user?.email || "";
+  const email = user?.email || ""; 
   const address = user?.address || "No address provided";
 
   // DYNAMIC AVATAR LOGIC
-  const isFemale = email === "superadmin@gmail.com" || user?.gender === "female";
+  const isFemale =
+    email === "superadmin@gmail.com" || user?.gender === "female";
   const avatarEmoji = isFemale ? "👧🏻" : "👦🏻";
 
   return (
@@ -25,20 +26,23 @@ export default function ProfileCard({ user }: ProfileCardProps) {
       }}
     >
       <div className="card-body p-4">
-        
         <div
           className="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3"
           style={{ width: 160, height: 160, fontSize: 60 }}
         >
-          {avatarEmoji} 
+          {avatarEmoji}
         </div>
 
-        {/* Dynamic Name and Username */}
         <h5 className="fw-bold mb-1 fs-4">{name}</h5>
-        <p className="text-muted mb-4">@{email.split('@')[0]}</p>
-        
-        {/* Dynamic Address */}
-        <p className="text-muted" style={{ lineHeight: 1.6, whiteSpace: "pre-line" }}>
+
+        <p className="text-muted mb-4" style={{ fontSize: "0.95rem" }}>
+          {email || "email@example.com"}
+        </p>
+
+        <p
+          className="text-muted"
+          style={{ lineHeight: 1.6, whiteSpace: "pre-line" }}
+        >
           {address}
         </p>
       </div>
