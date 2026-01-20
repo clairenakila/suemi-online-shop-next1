@@ -38,13 +38,21 @@ export default function EditProfileModal({
     const result = await Swal.fire({
       title: "Confirm Changes?",
       text: "Are you sure you want to save these profile updates?",
-      icon: "question",
+      icon: "info",
+      iconColor: "#FFB6C1",
       showCancelButton: true,
-      confirmButtonColor: "#d33", // Red for Confirm
-      cancelButtonColor: "#D3D3D3", // Light Grey for Cancel
+      confirmButtonColor: "#FFB6C1", 
+      cancelButtonColor: "#D3D3D3", 
       confirmButtonText: "Yes, save it!",
       cancelButtonText: "No, cancel",
-      reverseButtons: true, // Standard UI: Positive action on the right
+      reverseButtons: true, 
+      
+      customClass: {
+        confirmButton: 'text-dark px-4', 
+        cancelButton: 'text-dark px-4',
+        popup: 'rounded-4'
+      }
+  
     });
 
     if (result.isConfirmed) {
