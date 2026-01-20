@@ -74,7 +74,7 @@ export default function EditProfileModal({
           loading: "Saving changes...",
           success: (msg) => <b>{msg}</b>,
           error: (err) => <b>{err.message}</b>,
-        }
+        },
       );
     }
   };
@@ -84,7 +84,7 @@ export default function EditProfileModal({
       <Toaster position="top-center" reverseOrder={false} />
 
       <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
-        <div className="row g-3">
+        <div className="row g-3" style={{cursor: "pointer"}}>
           <div className="col-md-6">
             <label className="form-label fw-medium text-dark">Real Name</label>
             <input
@@ -97,7 +97,7 @@ export default function EditProfileModal({
             />
           </div>
 
-          <div className="col-md-6">
+          <div className="col-md-6 ">
             <label className="form-label fw-medium text-dark">Email</label>
             <input
               type="email"
@@ -139,15 +139,47 @@ export default function EditProfileModal({
         <div className="d-flex justify-content-end gap-2 mt-4">
           <button
             onClick={onClose}
-            className="btn btn-light px-4"
-            style={{ backgroundColor: "lightgrey", border: "none" }}
+            className="btn px-4"
+            style={{
+              backgroundColor: "lightgrey",
+              border: "none",
+              borderRadius: "6px",
+              transition: "all 0.3s ease", 
+              color: "#333",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#d3d3d3"; 
+              e.currentTarget.style.transform = "translateY(-2px)"; 
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "lightgrey"; 
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             className="btn text-black px-4"
-            style={{ backgroundColor: "#FFB6C1", border: "none" }}
+            style={{
+              backgroundColor: "#FFB6C1",
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: "500",
+              transition: "all 0.3s ease", // Smooth animation
+              boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#ff9eb3"; // Lighter pink
+              e.currentTarget.style.transform = "translateY(-2px)"; // Subtle lift
+              e.currentTarget.style.boxShadow =
+                "0 5px 15px rgba(255, 182, 193, 0.4)"; // Pinkish glow
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#FFB6C1"; // Reset color
+              e.currentTarget.style.transform = "translateY(0)"; // Reset position
+              e.currentTarget.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)"; // Reset shadow
+            }}
           >
             Save Changes
           </button>
