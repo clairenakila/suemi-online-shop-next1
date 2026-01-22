@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EditProfileModal from "../../components/profile/EditProfileModal";
+import { supabase } from "@/lib/supabase";
 
 // 1. I-declare ang interface para sa user prop
 interface ProfileSettingsProps {

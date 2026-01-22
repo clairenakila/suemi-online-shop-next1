@@ -174,19 +174,19 @@ export default function EditProfileModal({
               border: "none",
               borderRadius: "6px",
               fontWeight: "500",
-              transition: "all 0.3s ease", // Smooth animation
+              transition: "all 0.3s ease",
               boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#ff9eb3"; // Lighter pink
-              e.currentTarget.style.transform = "translateY(-2px)"; // Subtle lift
+              e.currentTarget.style.backgroundColor = "#ff9eb3"; 
+              e.currentTarget.style.transform = "translateY(-2px)"; 
               e.currentTarget.style.boxShadow =
-                "0 5px 15px rgba(255, 182, 193, 0.4)"; // Pinkish glow
+                "0 5px 15px rgba(255, 182, 193, 0.4)"; 
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#FFB6C1"; // Reset color
-              e.currentTarget.style.transform = "translateY(0)"; // Reset position
-              e.currentTarget.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)"; // Reset shadow
+              e.currentTarget.style.backgroundColor = "#FFB6C1"; 
+              e.currentTarget.style.transform = "translateY(0)"; 
+              e.currentTarget.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)"; 
             }}
           >
             Save Changes

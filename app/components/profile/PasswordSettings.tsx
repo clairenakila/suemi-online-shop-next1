@@ -13,7 +13,6 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
 
   return (
     <div>
-      {/* Ginagamit ang text-dark at fw-bold gaya ng original mo */}
       <h5 className="fw-bold mb-3 text-dark">Password Settings</h5>
       
       <div
@@ -26,7 +25,6 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
         }}
       >
         <div className="card-body p-4">
-          {/* Label at Input - Naka-disabled para hindi redundant sa modal */}
           <label className="form-label">Old Password</label>
           <input
             type="password"
@@ -43,10 +41,7 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
               className="form-control"
               disabled
               placeholder="***********"
-              style={{ 
-                borderRight: "none", 
-                backgroundColor: "#f8f9fa" 
-              }} 
+              style={{ borderRight: "none", backgroundColor: "#f8f9fa" }} 
             />
             <span
               className="input-group-text bg-white"
@@ -65,7 +60,7 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
             </span>
           </div>
 
-          {/* Edit Button na may Hover Effects */}
+          {/* Edit Button */}
           <button
             onClick={() => setIsPassOpen(true)}
             className="btn position-absolute"
@@ -97,11 +92,10 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
         </div>
       </div>
 
-      {/* Dito sa Modal mangyayari ang tunay na input, hashing, at toast */}
+      {/* Modal */}
       <ChangePasswordModal
         isOpen={isPassOpen}
         onClose={() => setIsPassOpen(false)}
-        user={user}
       />
     </div>
   );
