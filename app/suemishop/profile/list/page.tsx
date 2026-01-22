@@ -1,58 +1,59 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import ProfileCard from "../../../components/profile/Profilecard"; // Siguraduhin ang "C" sa Card
+import ProfileCard from "../../../components/profile/Profilecard";
 import ProfileSettings from "../../../components/profile/ProfileSettings";
 import PasswordSettings from "../../../components/profile/PasswordSettings";
-import { supabase } from "@/lib/supabase"; 
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState<any>(null);
 
-useEffect(() => {
-  async function loadProfile() {
-    // 1. Kunin ang logged-in user mula sa Local Storage
-    const storageUser = localStorage.getItem("user");
-    let loggedInEmail = null;
+  useEffect(() => {
+    async function loadProfile() {
+      // Get user from localStorage
+      const stored = localStorage.getItem("user");
 
-    if (storageUser) {
-      const parsedUser = JSON.parse(storageUser);
-      loggedInEmail = parsedUser.email; // Kinukuha natin yung "superadmin@gmail.com"
+      if (!stored) {
+        console.log("No user logged in");
+        return; // leave userData as null
+      }
+
+      const user = JSON.parse(stored);
+
+      // Optionally fetch fresh data from API
+      try {
+        const res = await fetch("/api/me");
+        const data = await res.json();
+
+        if (res.ok && data.user) {
+          setUserData(data.user);
+        } else {
+          setUserData(user); // fallback to localStorage
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setUserData(user); // fallback
+      }
     }
 
-    // 2. Fallback sa URL parameter
-    const params = new URLSearchParams(window.location.search);
-    const emailFromUrl = params.get("email");
-
-    // 3. PRIORITY: Storage > URL > Default Email
-    const activeEmail = loggedInEmail || emailFromUrl || "baronjhomhar@gmail.com"; 
-
-    console.log("Automatically fetching for:", activeEmail);
-
-    const { data, error } = await supabase
-      .from("users")
-      .select("id, name, email, address, phone_number") // Sinama na ang ID para safe na ang Save Changes
-      .eq("email", activeEmail)
-      .single();
-
-    if (data) {
-      setUserData(data);
-    }
-  }
-  loadProfile();
-}, []);
-
-  // Display "Loading..." lang kung wala talagang email at data
-  if (!userData) {
-    return <div className="p-6">Loading Profile Data...</div>;
-  }
+    loadProfile();
+  }, []);
 
   return (
     <div className="flex w-full gap-6 p-6 bg-[#fff9f9] min-h-screen">
-      <ProfileCard user={userData} />
-      <div className="flex flex-col gap-6 flex-1">
-        <ProfileSettings user={userData} />
-        <PasswordSettings user={userData} />
-      </div>
+      {userData ? (
+        <>
+          <ProfileCard user={userData} />
+          <div className="flex flex-col gap-6 flex-1">
+            <ProfileSettings user={userData} />
+            <PasswordSettings user={userData} />
+          </div>
+        </>
+      ) : (
+        <div className="text-center text-gray-500">
+          You are not logged in. Profile information is unavailable.
+        </div>
+      )}
     </div>
   );
 }
