@@ -14,7 +14,7 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
   return (
     <div>
       <h5 className="fw-bold mb-3 text-dark">Password Settings</h5>
-      
+
       <div
         className="card position-relative"
         style={{
@@ -31,7 +31,7 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
             disabled
             className="form-control mb-3"
             placeholder="***********"
-            style={{ backgroundColor: "#f8f9fa" }} 
+            style={{ backgroundColor: "#f8f9fa" }}
           />
 
           <label className="form-label">New Password</label>
@@ -41,7 +41,7 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
               className="form-control"
               disabled
               placeholder="***********"
-              style={{ borderRight: "none", backgroundColor: "#f8f9fa" }} 
+              style={{ borderRight: "none", backgroundColor: "#f8f9fa" }}
             />
             <span
               className="input-group-text bg-white"
@@ -79,7 +79,8 @@ export default function PasswordSettings({ user }: PasswordSettingsProps) {
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = "#ff9eb3";
               e.currentTarget.style.transform = "translateY(-3px)";
-              e.currentTarget.style.boxShadow = "0 6px 16px rgba(255, 182, 193, 0.4)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 16px rgba(255, 182, 193, 0.4)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "#FFB6C1";

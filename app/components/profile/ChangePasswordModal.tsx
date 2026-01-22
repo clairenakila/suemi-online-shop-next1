@@ -10,7 +10,10 @@ interface ChangePasswordModalProps {
   onClose: () => void;
 }
 
-export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
+export default function ChangePasswordModal({
+  isOpen,
+  onClose,
+}: ChangePasswordModalProps) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,8 +67,13 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
       <div className="d-flex flex-column gap-3">
         {/* New Password */}
         <div>
-          <label className="form-label fw-medium text-dark small">New Password</label>
-          <div className="input-group border rounded" style={{ overflow: "hidden" }}>
+          <label className="form-label fw-medium text-dark small">
+            New Password
+          </label>
+          <div
+            className="input-group border rounded"
+            style={{ overflow: "hidden" }}
+          >
             <input
               type={showNew ? "text" : "password"}
               className="form-control border-0 shadow-none"
@@ -85,8 +93,13 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
 
         {/* Confirm Password */}
         <div>
-          <label className="form-label fw-medium text-dark small">Confirm New Password</label>
-          <div className="input-group border rounded" style={{ overflow: "hidden" }}>
+          <label className="form-label fw-medium text-dark small">
+            Confirm New Password
+          </label>
+          <div
+            className="input-group border rounded"
+            style={{ overflow: "hidden" }}
+          >
             <input
               type={showConfirm ? "text" : "password"}
               className="form-control border-0 shadow-none"

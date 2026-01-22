@@ -41,18 +41,17 @@ export default function EditProfileModal({
       icon: "info",
       iconColor: "#FFB6C1",
       showCancelButton: true,
-      confirmButtonColor: "#FFB6C1", 
-      cancelButtonColor: "#D3D3D3", 
+      confirmButtonColor: "#FFB6C1",
+      cancelButtonColor: "#D3D3D3",
       confirmButtonText: "Yes, save it!",
       cancelButtonText: "No, cancel",
-      reverseButtons: true, 
-      
+      reverseButtons: true,
+
       customClass: {
-        confirmButton: 'text-dark px-4', 
-        cancelButton: 'text-dark px-4',
-        popup: 'rounded-4'
-      }
-  
+        confirmButton: "text-dark px-4",
+        cancelButton: "text-dark px-4",
+        popup: "rounded-4",
+      },
     });
 
     if (result.isConfirmed) {
@@ -63,18 +62,32 @@ export default function EditProfileModal({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              id: user.id, // Targeting ID 332
+              id: user.id,
               ...formData,
             }),
           });
+
+          // 👇 ADD THIS DEBUG CODE
+          const text = await res.text();
+          console.log("🔍 Update API Response:", text);
+
+          let errorData;
+          try {
+            errorData = JSON.parse(text);
+          } catch (e) {
+            console.error("❌ Response is not JSON:", text.substring(0, 200));
+            throw new Error("Server error - not returning JSON");
+          }
+
+          if (!res.ok) {
+            throw new Error(errorData.error || "Update failed");
+          }
 
           if (!res.ok) {
             const errorData = await res.json();
             throw new Error(errorData.error || "Update failed");
           }
 
-          // Wait a bit so the user sees the success toast before the reload
-          setTimeout(() => window.location.reload(), 1500);
           onClose();
           return "Profile updated successfully! 🚀";
         })(),
@@ -92,7 +105,7 @@ export default function EditProfileModal({
       <Toaster position="top-center" reverseOrder={false} />
 
       <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
-        <div className="row g-3" style={{cursor: "pointer"}}>
+        <div className="row g-3" style={{ cursor: "pointer" }}>
           <div className="col-md-6">
             <label className="form-label fw-medium text-dark">Real Name</label>
             <input
@@ -152,15 +165,15 @@ export default function EditProfileModal({
               backgroundColor: "lightgrey",
               border: "none",
               borderRadius: "6px",
-              transition: "all 0.3s ease", 
+              transition: "all 0.3s ease",
               color: "#333",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#d3d3d3"; 
-              e.currentTarget.style.transform = "translateY(-2px)"; 
+              e.currentTarget.style.backgroundColor = "#d3d3d3";
+              e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "lightgrey"; 
+              e.currentTarget.style.backgroundColor = "lightgrey";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
@@ -178,15 +191,15 @@ export default function EditProfileModal({
               boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#ff9eb3"; 
-              e.currentTarget.style.transform = "translateY(-2px)"; 
+              e.currentTarget.style.backgroundColor = "#ff9eb3";
+              e.currentTarget.style.transform = "translateY(-2px)";
               e.currentTarget.style.boxShadow =
-                "0 5px 15px rgba(255, 182, 193, 0.4)"; 
+                "0 5px 15px rgba(255, 182, 193, 0.4)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#FFB6C1"; 
-              e.currentTarget.style.transform = "translateY(0)"; 
-              e.currentTarget.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)"; 
+              e.currentTarget.style.backgroundColor = "#FFB6C1";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
             }}
           >
             Save Changes

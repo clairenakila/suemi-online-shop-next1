@@ -25,7 +25,8 @@ export default function ProfileCard({ user }: ProfileCardProps) {
   }, [user]);
 
   // Determine avatar emoji
-  const isFemale = user?.gender === "female" || user?.email === "superadmin@gmail.com";
+  const isFemale =
+    user?.gender === "female" || user?.email === "superadmin@gmail.com";
   const avatarEmoji = isFemale ? "👧🏻" : "👦🏻";
 
   // Safely handle missing fields

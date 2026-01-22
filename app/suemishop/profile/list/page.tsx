@@ -6,35 +6,40 @@ import ProfileSettings from "../../../components/profile/ProfileSettings";
 import PasswordSettings from "../../../components/profile/PasswordSettings";
 
 export default function ProfilePage() {
-  // Use null = loading, false = not logged in, object = user
   const [userData, setUserData] = useState<any | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
-      // Try to get user from localStorage first
+      // 1. Kunin ang fallback mula sa localStorage
       const stored = localStorage.getItem("user");
+      const localUser = stored ? JSON.parse(stored) : null;
 
-      if (!stored) {
-        console.log("No user logged in in localStorage");
-        setUserData(false); // explicitly mark as logged out
-        return;
-      }
-
-      const user = JSON.parse(stored);
-
-      // Fetch fresh data from API
       try {
+        // 2. Fetch fresh data mula sa API
         const res = await fetch("/api/me");
         const data = await res.json();
 
         if (res.ok && data.user) {
-          setUserData(data.user);
+          // 3. Merge at linisin ang data (lalo na ang address na nagdo-doble)
+          const freshUser = {
+            ...localUser,
+            ...data.user,
+            // Tanggalin ang extra spaces/newlines para hindi magmukhang doble sa textarea
+            address: data.user?.address 
+              ? String(data.user.address).replace(/\s+/g, " ").trim() 
+              : (localUser?.address || ""),
+            phone_number: data.user?.phone_number || localUser?.phone_number || "",
+          };
+
+          // NOTE: Tinanggal ang localStorage.setItem dito para iwas infinite reload
+          setUserData(freshUser);
+        } else if (localUser) {
+          setUserData(localUser);
         } else {
-          setUserData(user); // fallback
+          setUserData(false);
         }
       } catch (err) {
-        console.error("Error fetching profile:", err);
-        setUserData(user); // fallback
+        setUserData(localUser || false);
       }
     }
 
@@ -42,21 +47,11 @@ export default function ProfilePage() {
   }, []);
 
   if (userData === null) {
-    // Still loading
-    return (
-      <div className="text-center text-gray-500 mt-10">
-        Loading profile...
-      </div>
-    );
+    return <div className="text-center text-gray-500 mt-10">Loading profile...</div>;
   }
 
   if (userData === false) {
-    // Explicitly not logged in
-    return (
-      <div className="text-center text-gray-500 mt-10">
-        You are not logged in. Profile information is unavailable.
-      </div>
-    );
+    return <div className="text-center text-gray-500 mt-10">You are not logged in.</div>;
   }
 
   return (
