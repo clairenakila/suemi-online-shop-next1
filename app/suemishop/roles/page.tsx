@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import AddButton from "../../../components/AddButton";
-import BulkEdit from "../../../components/BulkEdit";
-import ExportButton from "../../../components/ExportButton";
-import ToggleColumns from "../../../components/ToggleColumns";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+import { DataTable, Column } from "../../components/DataTable";
+import AddButton from "../../components/AddButton";
+import BulkEdit from "../../components/BulkEdit";
+import ExportButton from "../../components/ExportButton";
+import ToggleColumns from "../../components/ToggleColumns";
 
 interface Role {
   id?: string;
@@ -37,14 +37,14 @@ export default function RolesListPage() {
   // Selection
   const toggleSelectRole = (id: string) =>
     setSelectedRoles((prev) =>
-      prev.includes(id) ? prev.filter((rid) => rid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((rid) => rid !== id) : [...prev, id],
     );
   const toggleSelectAll = (checked: boolean) =>
     setSelectedRoles(checked ? roles.map((r) => r.id!) : []);
 
   // Filtering
   const filteredRoles = roles.filter((r) =>
-    r.name.toLowerCase().includes(searchTerm.toLowerCase())
+    r.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Columns

@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import BulkEdit from "../../../components/BulkEdit";
-import DateRangePicker from "../../../components/DateRangePicker";
-import ToggleColumns from "../../../components/ToggleColumns";
-import ImportButton from "../../../components/ImportButton";
-import ExportButton from "../../../components/ExportButton";
-import AddInventoryModal from "../../../components/AddInventoryModal";
-import { dateNoTimezone } from "../../../utils/validator";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+import { DataTable, Column } from "../../components/DataTable";
+import BulkEdit from "../../components/BulkEdit";
+import DateRangePicker from "../../components/DateRangePicker";
+import ToggleColumns from "../../components/ToggleColumns";
+import ImportButton from "../../components/ImportButton";
+import ExportButton from "../../components/ExportButton";
+import AddInventoryModal from "../../components/AddInventoryModal";
+import { dateNoTimezone } from "../../utils/validator";
 
 /* ================= TYPES ================= */
 
@@ -108,7 +108,7 @@ export default function InventoriesPage() {
       if (searchTerm.trim()) {
         const term = `%${searchTerm.trim()}%`;
         query = query.or(
-          `box_number.ilike.${term},supplier.ilike.${term},category.ilike.${term}`
+          `box_number.ilike.${term},supplier.ilike.${term},category.ilike.${term}`,
         );
       }
 
@@ -182,7 +182,7 @@ export default function InventoriesPage() {
 
   const toggleSelectItem = (id: string) =>
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
   const toggleSelectAll = (checked: boolean) =>

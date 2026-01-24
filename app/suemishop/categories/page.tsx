@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import AddButton from "../../../components/AddButton";
-import BulkEdit from "../../../components/BulkEdit";
-import ImportButton from "../../../components/ImportButton";
-import ExportButton from "../../../components/ExportButton";
-import ToggleColumns from "../../../components/ToggleColumns";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+import { DataTable, Column } from "../../components/DataTable";
+import AddButton from "../../components/AddButton";
+import BulkEdit from "../../components/BulkEdit";
+import ImportButton from "../../components/ImportButton";
+import ExportButton from "../../components/ExportButton";
+import ToggleColumns from "../../components/ToggleColumns";
 
 interface Category {
   id?: string;
@@ -107,14 +107,14 @@ export default function CategoriesListPage() {
   // Selection handlers
   const toggleSelectCategory = (id: string) =>
     setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id],
     );
 
   const toggleSelectAll = (checked: boolean) =>
     setSelectedCategories(checked ? categories.map((c) => c.id!) : []);
 
   const filteredCategories = categories.filter((c) =>
-    c.description.toLowerCase().includes(searchTerm.toLowerCase())
+    c.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (

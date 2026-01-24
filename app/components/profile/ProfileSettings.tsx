@@ -57,7 +57,7 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
               <label className="form-label">Address</label>
               <textarea
                 className="form-control"
-                rows={4}
+                rows={3}
                 value={user?.address || ""}
                 readOnly
               />
@@ -65,7 +65,7 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
           </div>
 
           <button
-            className="btn position-absolute"
+            className="btn position-absolute "
             onClick={() => setIsEditOpen(true)}
             style={{
               bottom: 20,

@@ -346,10 +346,19 @@ export default function DashboardLayout({
       {/* Main Content */}
       <div className="d-flex flex-column grow vh-100 overflow-hidden">
         <header className="bg-light border-bottom p-3 d-flex justify-content-between align-items-center shrink-0">
-          <span className="fw-semibold text-secondary">
+          {/* <span className="fw-semibold text-secondary">
             {userName || "Loading..."}
             {roleName ? ` - ${roleName}` : ""}
-          </span>
+          </span> */}
+          <h2
+            style={{
+              fontFamily: "cursive",
+              textShadow: "2px 2px 4px rgba(255, 182, 193, 0.8)",
+              color: "#FF69B4", // optional pink color
+            }}
+          >
+            SuemiShop
+          </h2>
           <button
             className="btn btn-outline-secondary btn-sm"
             onClick={handleLogout}

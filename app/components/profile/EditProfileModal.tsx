@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Modal from "../../components/profile/Modal";
 import Swal from "sweetalert2";
 import toast, { Toaster } from "react-hot-toast";
-import { supabase } from "@/lib/supabase"; // Make sure you have this configured
+import { supabase } from "@/lib/supabase";
 
 interface EditProfileProps {
   isOpen: boolean;
@@ -12,12 +12,25 @@ interface EditProfileProps {
   user: any;
 }
 
+const hasInvalidConsecutiveText = (text: string) => {
+  const value = text.toLowerCase();
+  const vowels = /[aeiou]{4,}/;
+  const consonants = /[bcdfghjklmnpqrstvwxyz]{4,}/;
+  return vowels.test(value) || consonants.test(value);
+};
+
 export default function EditProfileModal({
   isOpen,
   onClose,
   user,
 }: EditProfileProps) {
   const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone_number: "",
+    address: "",
+  });
+  const [errors, setErrors] = useState({
     name: "",
     email: "",
     phone_number: "",
@@ -34,10 +47,69 @@ export default function EditProfileModal({
         phone_number: user.phone_number || "",
         address: user.address || "",
       });
+      setErrors({
+        name: "",
+        email: "",
+        phone_number: "",
+        address: "",
+      });
     }
   }, [user, isOpen]);
 
+  const validateField = (name: string, value: string) => {
+    let error = "";
+
+    if (name === "name") {
+      if (hasInvalidConsecutiveText(value)) {
+        error = "Name cannot contain 4 consecutive vowels or consonants";
+      }
+    }
+
+    if (name === "email") {
+      if (!value.endsWith("@gmail.com")) {
+        error = "Email must end with @gmail.com";
+      } else if (hasInvalidConsecutiveText(value)) {
+        error = "Email cannot contain 4 consecutive vowels or consonants";
+      }
+    }
+
+    if (name === "phone_number") {
+      if (!value.startsWith("09") || value.length !== 11) {
+        error = "Phone must start with 09 and be 11 digits";
+      }
+    }
+
+    if (name === "address") {
+      if (hasInvalidConsecutiveText(value)) {
+        error = "Address cannot contain 4 consecutive vowels or consonants";
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+    return error === "";
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value);
+  };
+
   const handleSave = async () => {
+    // Validate all fields before saving
+    let valid = true;
+    Object.entries(formData).forEach(([key, value]) => {
+      if (!validateField(key, value)) valid = false;
+    });
+
+    if (!valid) {
+      toast.error("Please fix the errors before saving!");
+      return;
+    }
+
     const result = await Swal.fire({
       title: "Confirm Changes?",
       text: "Are you sure you want to save these profile updates?",
@@ -62,7 +134,6 @@ export default function EditProfileModal({
 
     toast.promise(
       (async () => {
-        // Update Supabase users table
         const { data, error } = await supabase
           .from("users")
           .update({
@@ -73,11 +144,10 @@ export default function EditProfileModal({
           })
           .eq("id", user.id)
           .select()
-          .single(); // return updated row
+          .single();
 
         if (error) throw error;
 
-        // Update localStorage so Profile page updates immediately
         localStorage.setItem("user", JSON.stringify(data));
 
         setLoading(false);
@@ -103,12 +173,14 @@ export default function EditProfileModal({
             <label className="form-label fw-medium text-dark">Name</label>
             <input
               type="text"
-              className="form-control"
+              name="name"
+              className={`form-control ${errors.name ? "is-invalid" : ""}`}
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={handleChange}
             />
+            {errors.name && (
+              <div className="text-danger small">{errors.name}</div>
+            )}
           </div>
 
           {/* Email */}
@@ -116,12 +188,14 @@ export default function EditProfileModal({
             <label className="form-label fw-medium text-dark">Email</label>
             <input
               type="email"
-              className="form-control"
+              name="email"
+              className={`form-control ${errors.email ? "is-invalid" : ""}`}
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              onChange={handleChange}
             />
+            {errors.email && (
+              <div className="text-danger small">{errors.email}</div>
+            )}
           </div>
 
           {/* Phone */}
@@ -131,75 +205,51 @@ export default function EditProfileModal({
             </label>
             <input
               type="text"
-              className="form-control"
+              name="phone_number"
+              className={`form-control ${
+                errors.phone_number ? "is-invalid" : ""
+              }`}
               value={formData.phone_number}
-              onChange={(e) =>
-                setFormData({ ...formData, phone_number: e.target.value })
-              }
+              onChange={handleChange}
             />
+            {errors.phone_number && (
+              <div className="text-danger small">{errors.phone_number}</div>
+            )}
           </div>
 
           {/* Address */}
           <div className="col-md-6">
             <label className="form-label fw-medium text-dark">Address</label>
             <textarea
-              className="form-control"
+              name="address"
+              className={`form-control ${errors.address ? "is-invalid" : ""}`}
               rows={4}
               value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
+              onChange={handleChange}
             />
+            {errors.address && (
+              <div className="text-danger small">{errors.address}</div>
+            )}
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="d-flex justify-content-end gap-2 mt-4">
           <button
             onClick={onClose}
             disabled={loading}
             className="btn px-4"
-            style={{
-              backgroundColor: "lightgrey",
-              border: "none",
-              borderRadius: "6px",
-              color: "#333",
-              transition: "all 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#d3d3d3";
-              e.currentTarget.style.transform = "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "lightgrey";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
+            style={{ backgroundColor: "lightgrey", borderRadius: "6px" }}
           >
             Cancel
           </button>
-
           <button
             onClick={handleSave}
             disabled={loading}
             className="btn text-black px-4"
             style={{
               backgroundColor: "#FFB6C1",
-              border: "none",
               borderRadius: "6px",
               fontWeight: "500",
-              transition: "all 0.3s ease",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#ff9eb3";
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 5px 15px rgba(255, 182, 193, 0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#FFB6C1";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
             }}
           >
             {loading ? "Saving..." : "Save Changes"}

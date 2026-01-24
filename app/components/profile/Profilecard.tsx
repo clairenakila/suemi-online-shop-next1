@@ -49,8 +49,13 @@ export default function ProfileCard({ user }: ProfileCardProps) {
       <div className="card-body p-4">
         {/* Avatar */}
         <div
-          className="rounded-circle bg-warning d-flex align-items-center justify-content-center mx-auto mb-3"
-          style={{ width: 160, height: 160, fontSize: 60 }}
+          className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+          style={{
+            width: 160,
+            height: 160,
+            fontSize: 60,
+            backgroundColor: "#FFB6C1", // hot pink
+          }}
         >
           {loading ? "⏳" : avatarEmoji}
         </div>
@@ -67,7 +72,7 @@ export default function ProfileCard({ user }: ProfileCardProps) {
 
         {/* Address */}
         <p
-          className="text-muted"
+          className="text-muted text-capitalize"
           style={{ lineHeight: 1.6, whiteSpace: "pre-line" }}
         >
           {loading ? "Fetching address..." : address}
