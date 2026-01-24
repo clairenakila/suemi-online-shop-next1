@@ -28,13 +28,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
             {/* LEFT COLUMN */}
             <div className="col-md-6">
               <label className="form-label">Name</label>
-<<<<<<< HEAD
-              <input className="form-control mb-4" />
-
-              <label className="form-label">Email</label>
-              <input className="form-control mb-4" />
-
-=======
               {/* Gamitin ang nickname base sa database mo */}
               <input
                 className="form-control"
@@ -51,7 +44,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
               />
             </div>
             <div className="col-md-6 my-5">
->>>>>>> 4472f51c8ec39f6dbbd4c64a7ca0171140b02ba4
               <label className="form-label">Phone Number</label>
               <input
                 className="form-control"
@@ -63,27 +55,18 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
             {/* RIGHT COLUMN */}
             <div className="col-md-6">
               <label className="form-label">Address</label>
-<<<<<<< HEAD
-              <textarea className="form-control h-50" rows={4} />
-=======
               <textarea
                 className="form-control"
                 rows={4}
                 value={user?.address || ""}
                 readOnly
               />
->>>>>>> 4472f51c8ec39f6dbbd4c64a7ca0171140b02ba4
             </div>
           </div>
 
           <button
-<<<<<<< HEAD
-            className="btn position-absolute mb-35"
-            onClick={() => setIsEditOpen(true)} // I-trigger ang modal dito
-=======
             className="btn position-absolute"
             onClick={() => setIsEditOpen(true)}
->>>>>>> 4472f51c8ec39f6dbbd4c64a7ca0171140b02ba4
             style={{
               bottom: 20,
               right: 20,
@@ -112,18 +95,12 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
           </button>
         </div>
       </div>
-<<<<<<< HEAD
-      <EditProfileModal
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-=======
 
       {/* 3. Ipasa ang user sa Modal */}
       <EditProfileModal
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         user={user} // Dito nanggagaling ang error sa Line 63
->>>>>>> 4472f51c8ec39f6dbbd4c64a7ca0171140b02ba4
       />
     </div>
   );
