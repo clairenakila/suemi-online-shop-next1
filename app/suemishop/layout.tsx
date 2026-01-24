@@ -175,9 +175,7 @@ export default function DashboardLayout({
                     <li className="nav-item mb-1">
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
-                        onClick={() =>
-                          handleNavClick("/suemishop/categories/list")
-                        }
+                        onClick={() => handleNavClick("/suemishop/categories")}
                       >
                         Categories
                       </button>
@@ -187,7 +185,7 @@ export default function DashboardLayout({
                   <li className="nav-item mb-1">
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() => handleNavClick("/suemishop/items/list")}
+                      onClick={() => handleNavClick("/suemishop/items")}
                     >
                       Sold Items
                     </button>
@@ -197,9 +195,7 @@ export default function DashboardLayout({
                     <li className="nav-item mb-1">
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
-                        onClick={() =>
-                          handleNavClick("/suemishop/inventories/list")
-                        }
+                        onClick={() => handleNavClick("/suemishop/inventories")}
                       >
                         Inventories
                       </button>
@@ -239,9 +235,7 @@ export default function DashboardLayout({
                   <li className="nav-item mb-1">
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() =>
-                        handleNavClick("/suemishop/employees/list")
-                      }
+                      onClick={() => handleNavClick("/suemishop/employees")}
                     >
                       Users
                     </button>
@@ -249,9 +243,7 @@ export default function DashboardLayout({
                   <li className="nav-item mb-1">
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() =>
-                        handleNavClick("/suemishop/suppliers/list")
-                      }
+                      onClick={() => handleNavClick("/suemishop/suppliers")}
                     >
                       Suppliers
                     </button>
@@ -259,7 +251,7 @@ export default function DashboardLayout({
                   <li className="nav-item mb-1">
                     <button
                       className="nav-link text-white btn btn-dark text-start w-100"
-                      onClick={() => handleNavClick("/suemishop/roles/list")}
+                      onClick={() => handleNavClick("/suemishop/roles")}
                     >
                       Roles
                     </button>
@@ -299,9 +291,7 @@ export default function DashboardLayout({
                     <li className="nav-item mb-1">
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
-                        onClick={() =>
-                          handleNavClick("/suemishop/categories/list")
-                        }
+                        onClick={() => handleNavClick("/suemishop/payslips")}
                       >
                         Payslips
                       </button>
@@ -312,9 +302,7 @@ export default function DashboardLayout({
                     <li className="nav-item mb-1">
                       <button
                         className="nav-link text-white btn btn-dark text-start w-100"
-                        onClick={() =>
-                          handleNavClick("/suemishop/attendance/list")
-                        }
+                        onClick={() => handleNavClick("/suemishop/attendance")}
                       >
                         Attendance
                       </button>
@@ -346,7 +334,7 @@ export default function DashboardLayout({
               className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
                 collapsed ? "justify-content-center" : "text-start"
               }`}
-              onClick={() => handleNavClick("/suemishop/profile/list")}
+              onClick={() => handleNavClick("/suemishop/profile")}
             >
               <i className="bi bi-person-check"></i>
               {!collapsed && <span className="ms-2">Profile</span>}

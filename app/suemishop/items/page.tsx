@@ -4,23 +4,23 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import BulkEdit from "../../../components/BulkEdit";
-import DateRangePicker from "../../../components/DateRangePicker";
-import ToggleColumns from "../../../components/ToggleColumns";
-import ImportButton from "../../../components/ImportButton";
-import ExportButton from "../../../components/ExportButton";
-import AddItemModal from "../../../components/AddItemModal";
-import EditRowButton from "../../../components/EditRowButton";
-import EditItemModal from "../../../components/EditItemModal";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+import { DataTable, Column } from "../../components/DataTable";
+import BulkEdit from "../../components/BulkEdit";
+import DateRangePicker from "../../components/DateRangePicker";
+import ToggleColumns from "../../components/ToggleColumns";
+import ImportButton from "../../components/ImportButton";
+import ExportButton from "../../components/ExportButton";
+import AddItemModal from "../../components/AddItemModal";
+import EditRowButton from "../../components/EditRowButton";
+import EditItemModal from "../../components/EditItemModal";
 import {
   dateNoTimezone,
   applyDiscount,
   calculateOrderIncome,
   calculateCommissionRate,
-} from "../../../utils/validator";
+} from "../../utils/validator";
 
 interface Item {
   id?: string;
@@ -173,7 +173,7 @@ export default function SoldItemsPage() {
         accessor: (row) =>
           calculateOrderIncome(
             applyDiscount(row.selling_price || "0", row.discount || "0"),
-            row.shoppee_commission || "0"
+            row.shoppee_commission || "0",
           ),
       },
       {
@@ -181,7 +181,7 @@ export default function SoldItemsPage() {
         accessor: (row) =>
           calculateCommissionRate(
             applyDiscount(row.selling_price || "0", row.discount || "0"),
-            row.shoppee_commission || "0"
+            row.shoppee_commission || "0",
           ),
       },
       { header: "Is Returned", accessor: "is_returned" },
@@ -230,7 +230,7 @@ export default function SoldItemsPage() {
 
   const toggleSelectItem = (id: string) =>
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
   const toggleSelectAll = (checked: boolean) =>
@@ -401,7 +401,7 @@ export default function SoldItemsPage() {
                   .filter((i) => i.prepared_by?.trim() === user?.name?.trim())
                   .reduce(
                     (sum, i) => sum + (parseFloat(i.quantity || "0") || 0),
-                    0
+                    0,
                   )
                   .toLocaleString()}
               </h2>

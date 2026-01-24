@@ -18,28 +18,28 @@ export default function ProfileSettings() {
       >
         <div className="card-body p-3 pb-5">
           <div className="row g-4">
+            {/* LEFT COLUMN */}
             <div className="col-md-6">
-              <label className="form-label"> Name</label>
-              <input className="form-control" />
-            </div>
+              <label className="form-label">Name</label>
+              <input className="form-control mb-4" />
 
-            <div className="col-md-6">
               <label className="form-label">Email</label>
-              <input className="form-control" />
-            </div>
-            <div className="col-md-6">
+              <input className="form-control mb-4" />
+
               <label className="form-label">Phone Number</label>
               <input className="form-control" />
             </div>
-            <div className="col-md-6 my-5">
+
+            {/* RIGHT COLUMN */}
+            <div className="col-md-6">
               <label className="form-label">Address</label>
-              <textarea className="form-control" rows={4} />
+              <textarea className="form-control h-50" rows={4} />
             </div>
           </div>
-          
 
           <button
-            className="btn position-absolute" onClick={() => setIsEditOpen(true)} // I-trigger ang modal dito
+            className="btn position-absolute mb-35"
+            onClick={() => setIsEditOpen(true)} // I-trigger ang modal dito
             style={{
               bottom: 20,
               right: 20,
@@ -68,9 +68,9 @@ export default function ProfileSettings() {
           </button>
         </div>
       </div>
-      <EditProfileModal 
-        isOpen={isEditOpen} 
-        onClose={() => setIsEditOpen(false)} 
+      <EditProfileModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
       />
     </div>
   );

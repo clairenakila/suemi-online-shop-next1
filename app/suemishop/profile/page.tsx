@@ -1,7 +1,7 @@
 "use client";
-import ProfileCard from "../../../components/profile/Profilecard";
-import ProfileSettings from "../../../components/profile/ProfileSettings";
-import PasswordSettings from "../../../components/profile/PasswordSettings";
+import ProfileCard from "../../components/profile/Profilecard";
+import ProfileSettings from "../../components/profile/ProfileSettings";
+import PasswordSettings from "../../components/profile/PasswordSettings";
 
 export default function ProfilePage() {
   return (
