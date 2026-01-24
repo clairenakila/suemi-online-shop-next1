@@ -313,6 +313,21 @@ export default function DashboardLayout({
             </li>
           )}
 
+          {/* Expenses */}
+          {canAccess(MENU_ROLES.settings) && (
+            <li className="nav-item mb-2">
+              <button
+                className={`nav-link text-white d-flex align-items-center btn btn-dark w-100 ${
+                  collapsed ? "justify-content-center" : "text-start"
+                }`}
+                onClick={() => handleNavClick("/suemishop/expenses")}
+              >
+                <i className="bi bi-gear"></i>
+                {!collapsed && <span className="ms-2">Expenses</span>}
+              </button>
+            </li>
+          )}
+
           {/* Settings */}
           {canAccess(MENU_ROLES.settings) && (
             <li className="nav-item mb-2">
