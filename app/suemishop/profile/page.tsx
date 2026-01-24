@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ProfileCard from "../../components/profile/ProfileCard";
+import ProfileCard from "../../components/profile/Profilecard";
 import ProfileSettings from "../../components/profile/ProfileSettings";
 import PasswordSettings from "../../components/profile/PasswordSettings";
 
