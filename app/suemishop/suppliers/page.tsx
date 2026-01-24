@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import BulkEdit from "../../../components/BulkEdit";
-import DateRangePicker from "../../../components/DateRangePicker";
-import AddButton from "../../../components/AddButton";
-import ToggleColumns from "../../../components/ToggleColumns";
-import ImportButton from "../../../components/ImportButton";
-import ExportButton from "../../../components/ExportButton";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+import { DataTable, Column } from "../../components/DataTable";
+import BulkEdit from "../../components/BulkEdit";
+import DateRangePicker from "../../components/DateRangePicker";
+import AddButton from "../../components/AddButton";
+import ToggleColumns from "../../components/ToggleColumns";
+import ImportButton from "../../components/ImportButton";
+import ExportButton from "../../components/ExportButton";
 
 interface Supplier {
   id?: string;
@@ -49,7 +49,7 @@ export default function SuppliersPage() {
   // Selection
   const toggleSelectSupplier = (id: string) =>
     setSelectedSuppliers((prev) =>
-      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id],
     );
   const toggleSelectAll = (checked: boolean) =>
     setSelectedSuppliers(checked ? suppliers.map((s) => s.id!) : []);
@@ -58,7 +58,7 @@ export default function SuppliersPage() {
   const filteredSuppliers = suppliers.filter((s) => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = [s.name, s.phone_number].some((val) =>
-      val?.toLowerCase().includes(term)
+      val?.toLowerCase().includes(term),
     );
 
     let matchesDateRange = true;
