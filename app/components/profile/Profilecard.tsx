@@ -54,7 +54,7 @@ export default function ProfileCard({ user }: ProfileCardProps) {
             width: 160,
             height: 160,
             fontSize: 60,
-            backgroundColor: "#FFB6C1", // hot pink
+            backgroundColor: "#FFB6C1", //pink
           }}
         >
           {loading ? "⏳" : avatarEmoji}

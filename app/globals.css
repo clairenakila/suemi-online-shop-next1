@@ -149,7 +149,9 @@ body {
 /* sidebar and submenu  */
 /* Sidebar links hover - make text white */
 nav .nav-link {
-  transition: color 0.2s, background-color 0.2s;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
 }
 
 nav .nav-link:hover,
@@ -161,7 +163,9 @@ nav .nav-link:focus {
 /* Submenu links */
 nav ul.nav ul.nav-link,
 nav ul.nav li .nav-link {
-  transition: color 0.2s, background-color 0.2s;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
 }
 
 nav ul.nav ul.nav-link:hover,
@@ -202,4 +206,22 @@ nav ul.nav li .nav-link:hover {
 .table-responsive {
   position: relative;
   z-index: 1; /* table is behind dropdown */
+}
+/* 
+//logout button */
+
+.btn-pink-hover {
+  border-color: #ffb6c1;
+  color: black; /* default text color */
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.btn-pink-hover:hover,
+.btn-pink-hover:focus,
+.btn-pink-hover:active {
+  background-color: #ffb6c1; /* pink background on hover/click/focus */
+  color: black; /* text stays black */
+  border-color: #ffb6c1; /* keep border pink */
+  box-shadow: none; /* remove Bootstrap focus shadow if any */
 }

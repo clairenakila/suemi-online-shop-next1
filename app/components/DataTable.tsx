@@ -47,7 +47,7 @@ export function DataTable<T extends Record<string, any>>({
      Column Filters
   ========================== */
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
-    {}
+    {},
   );
 
   const handleFilterChange = (key: string, value: string) => {
@@ -67,14 +67,14 @@ export function DataTable<T extends Record<string, any>>({
     if ("created_at" in data[0]) {
       return [...data].sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
     }
 
     if ("timestamp" in data[0]) {
       return [...data].sort(
         (a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
       );
     }
 
@@ -98,7 +98,7 @@ export function DataTable<T extends Record<string, any>>({
         return String(rawValue ?? "")
           .toLowerCase()
           .includes(filterValue.toLowerCase());
-      })
+      }),
     );
   }, [sortedData, columnFilters, columns]);
 

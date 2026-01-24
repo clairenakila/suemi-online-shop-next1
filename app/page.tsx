@@ -21,7 +21,7 @@ export default function HomePage() {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
-      }
+      },
     );
 
     const getUser = async () => {
@@ -99,7 +99,7 @@ export default function HomePage() {
             <span className="font-semibold">Welcome, {user.email}</span>
             <button
               onClick={async () => await supabase.auth.signOut()}
-              className="px-6 py-3 font-semibold rounded-lg bg-black text-white hover:bg-gray-800 transition"
+              className="px-6 py-3 font-semibold rounded-lg bg-red text-white hover:bg-red-300 transition"
             >
               Logout
             </button>
