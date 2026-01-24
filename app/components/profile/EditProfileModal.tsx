@@ -1,8 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import Modal from "../../components/profile/Modal";
 import Swal from "sweetalert2";
-import toast, { Toaster } from "react-hot-toast"; // Import natin ang Toaster at toast
+import toast, { Toaster } from "react-hot-toast";
+import { supabase } from "@/lib/supabase"; // Make sure you have this configured
 
 interface EditProfileProps {
   isOpen: boolean;
@@ -21,7 +23,9 @@ export default function EditProfileModal({
     phone_number: "",
     address: "",
   });
+  const [loading, setLoading] = useState(false);
 
+  // Initialize form when modal opens
   useEffect(() => {
     if (user) {
       setFormData({
@@ -34,7 +38,6 @@ export default function EditProfileModal({
   }, [user, isOpen]);
 
   const handleSave = async () => {
-    // 1. English Confirmation Dialog with Red/Grey scheme
     const result = await Swal.fire({
       title: "Confirm Changes?",
       text: "Are you sure you want to save these profile updates?",
@@ -46,7 +49,6 @@ export default function EditProfileModal({
       confirmButtonText: "Yes, save it!",
       cancelButtonText: "No, cancel",
       reverseButtons: true,
-
       customClass: {
         confirmButton: "text-dark px-4",
         cancelButton: "text-dark px-4",
@@ -54,50 +56,40 @@ export default function EditProfileModal({
       },
     });
 
-    if (result.isConfirmed) {
-      // 2. English Promise Toast for the update flow
-      toast.promise(
-        (async () => {
-          const res = await fetch("/api/profile/update", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: user.id,
-              ...formData,
-            }),
-          });
+    if (!result.isConfirmed) return;
 
-          // 👇 ADD THIS DEBUG CODE
-          const text = await res.text();
-          console.log("🔍 Update API Response:", text);
+    setLoading(true);
 
-          let errorData;
-          try {
-            errorData = JSON.parse(text);
-          } catch (e) {
-            console.error("❌ Response is not JSON:", text.substring(0, 200));
-            throw new Error("Server error - not returning JSON");
-          }
+    toast.promise(
+      (async () => {
+        // Update Supabase users table
+        const { data, error } = await supabase
+          .from("users")
+          .update({
+            name: formData.name,
+            email: formData.email,
+            phone_number: formData.phone_number,
+            address: formData.address,
+          })
+          .eq("id", user.id)
+          .select()
+          .single(); // return updated row
 
-          if (!res.ok) {
-            throw new Error(errorData.error || "Update failed");
-          }
+        if (error) throw error;
 
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || "Update failed");
-          }
+        // Update localStorage so Profile page updates immediately
+        localStorage.setItem("user", JSON.stringify(data));
 
-          onClose();
-          return "Profile updated successfully! 🚀";
-        })(),
-        {
-          loading: "Saving changes...",
-          success: (msg) => <b>{msg}</b>,
-          error: (err) => <b>{err.message}</b>,
-        },
-      );
-    }
+        setLoading(false);
+        onClose();
+        return "Profile updated successfully! 🚀";
+      })(),
+      {
+        loading: "Saving changes...",
+        success: (msg) => <b>{msg}</b>,
+        error: (err) => <b>{err.message}</b>,
+      },
+    );
   };
 
   return (
@@ -105,9 +97,10 @@ export default function EditProfileModal({
       <Toaster position="top-center" reverseOrder={false} />
 
       <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile">
-        <div className="row g-3" style={{ cursor: "pointer" }}>
+        <div className="row g-3">
+          {/* Name */}
           <div className="col-md-6">
-            <label className="form-label fw-medium text-dark">Real Name</label>
+            <label className="form-label fw-medium text-dark">Name</label>
             <input
               type="text"
               className="form-control"
@@ -118,7 +111,8 @@ export default function EditProfileModal({
             />
           </div>
 
-          <div className="col-md-6 ">
+          {/* Email */}
+          <div className="col-md-6">
             <label className="form-label fw-medium text-dark">Email</label>
             <input
               type="email"
@@ -130,6 +124,7 @@ export default function EditProfileModal({
             />
           </div>
 
+          {/* Phone */}
           <div className="col-md-6">
             <label className="form-label fw-medium text-dark">
               Phone Number
@@ -144,6 +139,7 @@ export default function EditProfileModal({
             />
           </div>
 
+          {/* Address */}
           <div className="col-md-6">
             <label className="form-label fw-medium text-dark">Address</label>
             <textarea
@@ -157,16 +153,18 @@ export default function EditProfileModal({
           </div>
         </div>
 
+        {/* Buttons */}
         <div className="d-flex justify-content-end gap-2 mt-4">
           <button
             onClick={onClose}
+            disabled={loading}
             className="btn px-4"
             style={{
               backgroundColor: "lightgrey",
               border: "none",
               borderRadius: "6px",
-              transition: "all 0.3s ease",
               color: "#333",
+              transition: "all 0.3s ease",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = "#d3d3d3";
@@ -179,8 +177,10 @@ export default function EditProfileModal({
           >
             Cancel
           </button>
+
           <button
             onClick={handleSave}
+            disabled={loading}
             className="btn text-black px-4"
             style={{
               backgroundColor: "#FFB6C1",
@@ -202,7 +202,7 @@ export default function EditProfileModal({
               e.currentTarget.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
             }}
           >
-            Save Changes
+            {loading ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </Modal>
