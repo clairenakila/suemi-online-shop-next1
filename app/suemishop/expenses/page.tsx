@@ -25,6 +25,7 @@ export default function Expenses() {
           ]}
           onSuccess={fetchExpenses}
         />
+        {/* Additional buttons like BulkEdit, ImportButton can be added here */}
       </div>
 
       {/* Table Container */}
