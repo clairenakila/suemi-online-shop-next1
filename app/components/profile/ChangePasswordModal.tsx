@@ -49,7 +49,7 @@ export default function ChangePasswordModal({
       if (!res.ok) {
         toast.error(data?.error || `Server error: ${res.status}`);
       } else {
-        toast.success(data?.message || "Password updated successfully!");
+        toast.success(data?.message || "Profile updated successfully! 🚀");
         setNewPassword("");
         setConfirmPassword("");
         onClose();
