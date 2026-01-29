@@ -65,51 +65,54 @@ export default function ExpensesListPage() {
     fetchExpenses();
   }, [page, pageSize, searchTerm]);
 
-  // Column definitions
+  // Column definitions - Initialize columns
   useEffect(() => {
-    const cols: Column<Expense>[] = [
-      {
-        header: "Created At",
-        accessor: (row) => {
-          if (!row.created_at) return "";
-          const date = new Date(row.created_at);
-          const month = (date.getMonth() + 1).toString().padStart(2, "0");
-          const day = date.getDate().toString().padStart(2, "0");
-          const year = date.getFullYear().toString().slice(-2);
-          return `${month}-${day}-${year}`;
+    // Only initialize if columns are empty
+    if (tableColumns.length === 0) {
+      const cols: Column<Expense>[] = [
+        {
+          header: "Created At",
+          accessor: (row) => {
+            if (!row.created_at) return "";
+            const date = new Date(row.created_at);
+            const month = (date.getMonth() + 1).toString().padStart(2, "0");
+            const day = date.getDate().toString().padStart(2, "0");
+            const year = date.getFullYear().toString().slice(-2);
+            return `${month}-${day}-${year}`;
+          },
         },
-      },
-      { header: "Description", accessor: "description" },
-      {
-        header: "Amount",
-        accessor: (row) => `₱${row.amount?.toFixed(2) || "0.00"}`,
-      },
-      {
-        header: "Action",
-        accessor: (row) => (
-          <ConfirmDelete
-            confirmMessage={`Are you sure you want to delete "${row.description}"?`}
-            onConfirm={async () => {
-              const { error } = await supabase
-                .from("expenses")
-                .delete()
-                .eq("id", row.id!);
-              if (error) {
-                toast.error(error.message);
-                return;
-              }
-              toast.success("Expense deleted successfully");
-              fetchExpenses();
-            }}
-          >
-            Delete
-          </ConfirmDelete>
-        ),
-        center: true,
-      },
-    ];
-    setTableColumns(cols);
-  }, []);
+        { header: "Description", accessor: "description" },
+        {
+          header: "Amount",
+          accessor: (row) => `₱${row.amount?.toFixed(2) || "0.00"}`,
+        },
+        {
+          header: "Action",
+          accessor: (row) => (
+            <ConfirmDelete
+              confirmMessage={`Are you sure you want to delete "${row.description}"?`}
+              onConfirm={async () => {
+                const { error } = await supabase
+                  .from("expenses")
+                  .delete()
+                  .eq("id", row.id!);
+                if (error) {
+                  toast.error(error.message);
+                  return;
+                }
+                toast.success("Expense deleted successfully");
+                fetchExpenses();
+              }}
+            >
+              Delete
+            </ConfirmDelete>
+          ),
+          center: true,
+        },
+      ];
+      setTableColumns(cols);
+    }
+  }, [tableColumns.length]); // Only run when length changes
 
   // Selection handlers
   const toggleSelectExpense = (id: string) =>
