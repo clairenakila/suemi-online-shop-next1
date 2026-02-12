@@ -6,7 +6,11 @@ import { supabase } from "@/lib/supabase";
 
 import SearchBar from "../../components/SearchBar";
 import ConfirmDelete from "../../components/ConfirmDelete";
-import { DataTable, Column } from "../../components/DataTable";
+// import { DataTable, Column } from "../../components/DataTable";
+import ItemTable, {
+  ItemColumn,
+} from "../../components/items/ItemTable";
+
 import BulkEdit from "../../components/BulkEdit";
 import DateRangePicker from "../../components/DateRangePicker";
 import ToggleColumns from "../../components/ToggleColumns";
@@ -66,7 +70,7 @@ export default function SoldItemsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
-  const [tableColumns, setTableColumns] = useState<Column<Item>[]>([]);
+  const [tableColumns, setTableColumns] = useState<ItemColumn<Item>[]>([]);
 
   /** Fetch logged-in user */
   useEffect(() => {
@@ -151,7 +155,7 @@ export default function SoldItemsPage() {
   useEffect(() => {
     if (!user) return;
 
-    const cols: Column<Item>[] = [
+    const cols: ItemColumn<Item>[] = [
       { header: "Timestamp", accessor: (row) => dateNoTimezone(row.timestamp) },
       { header: "Mined From", accessor: "mined_from" },
       { header: "Prepared By", accessor: "prepared_by" },
@@ -201,6 +205,7 @@ export default function SoldItemsPage() {
         header: "Action",
         accessor: (row) => (
           <div className="flex gap-2 justify-center">
+            
             <EditRowButton
               itemId={row.id!}
               ModalComponent={EditItemModal}
@@ -415,21 +420,22 @@ export default function SoldItemsPage() {
           </div>
         </div>
       )}
+<ItemTable
+  data={items}
+  columns={tableColumns}
+  rowKey="id"
+  selectable
+  selectedIds={selectedItems}
+  onToggleSelect={toggleSelectItem}
+  onToggleSelectAll={toggleSelectAll}
+  page={page}
+  pageSize={pageSize}
+  totalCount={totalCount}
+  onPageChange={setPage}
+  onPageSizeChange={setPageSize}
+/>
 
-      <DataTable
-        data={items}
-        columns={tableColumns}
-        selectable
-        selectedIds={selectedItems}
-        onToggleSelect={toggleSelectItem}
-        onToggleSelectAll={toggleSelectAll}
-        rowKey="id"
-        page={page}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+
     </div>
   );
 }
