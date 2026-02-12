@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import BulkEdit from "../../../components/BulkEdit";
-import DateRangePicker from "../../../components/DateRangePicker";
-import AddButton from "../../../components/AddButton";
-import ToggleColumns from "../../../components/ToggleColumns";
-import ImportButton from "../../../components/ImportButton";
-import ExportButton from "../../../components/ExportButton";
-import { mapRoleNameToId, formatNumberForText } from "../../../utils/validator";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+import { DataTable, Column } from "../../components/DataTable";
+import BulkEdit from "../../components/BulkEdit";
+import DateRangePicker from "../../components/DateRangePicker";
+import AddButton from "../../components/AddButton";
+import ToggleColumns from "../../components/ToggleColumns";
+import ImportButton from "../../components/ImportButton";
+import ExportButton from "../../components/ExportButton";
+import { mapRoleNameToId, formatNumberForText } from "../../utils/validator";
 import bcrypt from "bcryptjs";
 
 interface User {
@@ -139,7 +139,7 @@ export default function EmployeesListPage() {
   // Selection
   const toggleSelectUser = (id: string) =>
     setSelectedUsers((prev) =>
-      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id],
     );
   const toggleSelectAll = (checked: boolean) =>
     setSelectedUsers(checked ? users.map((u) => u.id!) : []);
@@ -159,7 +159,7 @@ export default function EmployeesListPage() {
     ].some((val) =>
       String(val ?? "")
         .toLowerCase()
-        .includes(term)
+        .includes(term),
     );
 
     let matchesDateRange = true;

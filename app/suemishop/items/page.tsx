@@ -4,23 +4,29 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import BulkEdit from "../../../components/BulkEdit";
-import DateRangePicker from "../../../components/DateRangePicker";
-import ToggleColumns from "../../../components/ToggleColumns";
-import ImportButton from "../../../components/ImportButton";
-import ExportButton from "../../../components/ExportButton";
-import AddItemModal from "../../../components/AddItemModal";
-import EditRowButton from "../../../components/EditRowButton";
-import EditItemModal from "../../../components/EditItemModal";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+// import { DataTable, Column } from "../../components/DataTable";
+import ItemTable, {
+  ItemColumn,
+} from "../../components/Items/ItemTable";
+
+import BulkEdit from "../../components/BulkEdit";
+import DateRangePicker from "../../components/DateRangePicker";
+import ToggleColumns from "../../components/ToggleColumns";
+import ImportButton from "../../components/ImportButton";
+import ExportButton from "../../components/ExportButton";
+import AddItemModal from "../../components/AddItemModal";
+import EditRowButton from "../../components/EditRowButton";
+import EditItemModal from "../../components/items/EditItemModal";
+import ViewItemModal from "../../components/items/ViewItemModal";
 import {
   dateNoTimezone,
   applyDiscount,
   calculateOrderIncome,
   calculateCommissionRate,
-} from "../../../utils/validator";
+} from "../../utils/validator";
+import ViewRowButton from "@/app/components/ViewRowButton";
 
 interface Item {
   id?: string;
@@ -66,7 +72,7 @@ export default function SoldItemsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
-  const [tableColumns, setTableColumns] = useState<Column<Item>[]>([]);
+  const [tableColumns, setTableColumns] = useState<ItemColumn<Item>[]>([]);
 
   /** Fetch logged-in user */
   useEffect(() => {
@@ -151,48 +157,49 @@ export default function SoldItemsPage() {
   useEffect(() => {
     if (!user) return;
 
-    const cols: Column<Item>[] = [
+    const cols: ItemColumn<Item>[] = [
       { header: "Timestamp", accessor: (row) => dateNoTimezone(row.timestamp) },
-      { header: "Mined From", accessor: "mined_from" },
+      // { header: "Mined From", accessor: "mined_from" },
       { header: "Prepared By", accessor: "prepared_by" },
-      { header: "Category", accessor: "category" },
+      // { header: "Category", accessor: "category" },
       { header: "Brand", accessor: "brand" },
-      { header: "Quantity", accessor: "quantity" },
-      { header: "Live Seller", accessor: "live_seller" },
+      // { header: "Quantity", accessor: "quantity" },
       { header: "Order ID", accessor: "order_id" },
-      { header: "Capital", accessor: "capital" },
+      { header: "Live Seller", accessor: "live_seller" },
+
+      // { header: "Capital", accessor: "capital" },
       {
         header: "Selling Price",
         accessor: (row) =>
           applyDiscount(row.selling_price || "0", row.discount || "0"),
       },
-      { header: "Discount", accessor: "discount" },
-      { header: "Shoppee Commission", accessor: "shoppee_commission" },
-      {
-        header: "Order Income",
-        accessor: (row) =>
-          calculateOrderIncome(
-            applyDiscount(row.selling_price || "0", row.discount || "0"),
-            row.shoppee_commission || "0"
-          ),
-      },
-      {
-        header: "Commission Rate (%)",
-        accessor: (row) =>
-          calculateCommissionRate(
-            applyDiscount(row.selling_price || "0", row.discount || "0"),
-            row.shoppee_commission || "0"
-          ),
-      },
-      { header: "Is Returned", accessor: "is_returned" },
-      {
-        header: "Date Returned",
-        accessor: (row) => dateNoTimezone(row.date_returned),
-      },
-      {
-        header: "Date Shipped",
-        accessor: (row) => dateNoTimezone(row.date_shipped),
-      },
+      // { header: "Discount", accessor: "discount" },
+      // { header: "Shoppee Commission", accessor: "shoppee_commission" },
+      // {
+      //   header: "Order Income",
+      //   accessor: (row) =>
+      //     calculateOrderIncome(
+      //       applyDiscount(row.selling_price || "0", row.discount || "0"),
+      //       row.shoppee_commission || "0",
+      //     ),
+      // },
+      // {
+      //   header: "Commission Rate (%)",
+      //   accessor: (row) =>
+      //     calculateCommissionRate(
+      //       applyDiscount(row.selling_price || "0", row.discount || "0"),
+      //       row.shoppee_commission || "0",
+      //     ),
+      // },
+      // { header: "Is Returned", accessor: "is_returned" },
+      // {
+      //   header: "Date Returned",
+      //   accessor: (row) => dateNoTimezone(row.date_returned),
+      // },
+      // {
+      //   header: "Date Shipped",
+      //   accessor: (row) => dateNoTimezone(row.date_shipped),
+      // },
     ];
 
     /** Action column (Edit + Delete) */
@@ -201,6 +208,13 @@ export default function SoldItemsPage() {
         header: "Action",
         accessor: (row) => (
           <div className="flex gap-2 justify-center">
+            <ViewRowButton
+              itemId={row.id!}
+              ModalComponent={ViewItemModal}
+              onSuccess={fetchItems}
+            />
+              
+  
             <EditRowButton
               itemId={row.id!}
               ModalComponent={EditItemModal}
@@ -230,7 +244,7 @@ export default function SoldItemsPage() {
 
   const toggleSelectItem = (id: string) =>
     setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
   const toggleSelectAll = (checked: boolean) =>
@@ -380,7 +394,7 @@ export default function SoldItemsPage() {
           >
             <i className="bi bi-calendar3 fs-5 text-secondary"></i>
           </button>
-          <ToggleColumns columns={tableColumns} onChange={setTableColumns} />
+            {/* <ToggleColumns columns={tableColumns} onChange={setTableColumns} /> */}
         </div>
       </div>
 
@@ -401,7 +415,7 @@ export default function SoldItemsPage() {
                   .filter((i) => i.prepared_by?.trim() === user?.name?.trim())
                   .reduce(
                     (sum, i) => sum + (parseFloat(i.quantity || "0") || 0),
-                    0
+                    0,
                   )
                   .toLocaleString()}
               </h2>
@@ -415,21 +429,22 @@ export default function SoldItemsPage() {
           </div>
         </div>
       )}
+<ItemTable
+  data={items}
+  columns={tableColumns}
+  rowKey="id"
+  selectable
+  selectedIds={selectedItems}
+  onToggleSelect={toggleSelectItem}
+  onToggleSelectAll={toggleSelectAll}
+  page={page}
+  pageSize={pageSize}
+  totalCount={totalCount}
+  onPageChange={setPage}
+  onPageSizeChange={setPageSize}
+/>
 
-      <DataTable
-        data={items}
-        columns={tableColumns}
-        selectable
-        selectedIds={selectedItems}
-        onToggleSelect={toggleSelectItem}
-        onToggleSelectAll={toggleSelectAll}
-        rowKey="id"
-        page={page}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+
     </div>
   );
 }

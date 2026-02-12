@@ -2,50 +2,60 @@
 
 import React, { ReactNode, useMemo, useState } from "react";
 
-export type Column<T> = {
+/* ================================
+   Column Type
+================================ */
+export type ItemColumn<T> = {
   header: string;
   accessor: keyof T | ((row: T) => ReactNode);
   center?: boolean;
 };
 
-interface DataTableProps<T> {
+/* ================================
+   Props
+================================ */
+interface ItemTableProps<T> {
   data: T[];
-  columns: Column<T>[];
+  columns: ItemColumn<T>[];
+
+  rowKey: keyof T;
+
+  /* Selection */
   selectable?: boolean;
   selectedIds?: string[];
   onToggleSelect?: (id: string) => void;
   onToggleSelectAll?: (checked: boolean) => void;
-  rowKey: keyof T;
+
+  /* Pagination */
   page: number;
   pageSize: number;
   totalCount: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
-
-  /* Edit functionality */
-  showEdit?: boolean;
-  onEditRow?: (row: T) => void;
 }
 
-export function DataTable<T extends Record<string, any>>({
+/* ================================
+   Component
+================================ */
+export default function ItemTable<T extends Record<string, any>>({
   data,
   columns,
+  rowKey,
+
   selectable = false,
   selectedIds = [],
   onToggleSelect,
   onToggleSelectAll,
-  rowKey,
+
   page,
   pageSize,
   totalCount,
   onPageChange,
   onPageSizeChange,
-  showEdit = false,
-  onEditRow,
-}: DataTableProps<T>) {
-  /* =========================
+}: ItemTableProps<T>) {
+  /* ================================
      Column Filters
-  ========================== */
+  ================================= */
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
     {},
   );
@@ -58,18 +68,11 @@ export function DataTable<T extends Record<string, any>>({
     setColumnFilters({});
   };
 
-  /* =========================
-     Sorting
-  ========================== */
+  /* ================================
+     Sorting (by timestamp if exists)
+  ================================= */
   const sortedData = useMemo(() => {
     if (!data?.length) return [];
-
-    if ("created_at" in data[0]) {
-      return [...data].sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      );
-    }
 
     if ("timestamp" in data[0]) {
       return [...data].sort(
@@ -81,9 +84,9 @@ export function DataTable<T extends Record<string, any>>({
     return data;
   }, [data]);
 
-  /* =========================
+  /* ================================
      Filtering
-  ========================== */
+  ================================= */
   const filteredData = useMemo(() => {
     return sortedData.filter((row) =>
       columns.every((col) => {
@@ -102,15 +105,14 @@ export function DataTable<T extends Record<string, any>>({
     );
   }, [sortedData, columnFilters, columns]);
 
-  const rowsToRender = filteredData;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  /* =========================
+  /* ================================
      Render
-  ========================== */
+  ================================= */
   return (
     <div>
-      {/* Toolbar */}
+      {/* Top Toolbar */}
       <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
         {selectable && selectedIds.length > 0 && (
           <div className="text-muted small">
@@ -128,17 +130,17 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Table */}
       <div className="table-responsive" style={{ maxHeight: "70vh" }}>
-        <table className="table table-bordered table-striped">
+        <table className="table table-bordered table-striped align-middle">
           <thead className="table-light sticky-top">
-            {/* Header row */}
+            {/* Header Row */}
             <tr>
               {selectable && (
                 <th className="text-center">
                   <input
                     type="checkbox"
                     checked={
-                      rowsToRender.length > 0 &&
-                      selectedIds.length === rowsToRender.length
+                      filteredData.length > 0 &&
+                      selectedIds.length === filteredData.length
                     }
                     onChange={(e) => onToggleSelectAll?.(e.target.checked)}
                   />
@@ -146,21 +148,15 @@ export function DataTable<T extends Record<string, any>>({
               )}
 
               {columns.map((col, idx) => (
-                <th
-                  key={idx}
-                  className={`${col.center ? "text-center" : ""} fw-semibold`}
-                >
+                <th key={idx} className={`fw-semibold ${col.center ? "text-center" : ""}`}>
                   {col.header}
                 </th>
               ))}
-
-              {showEdit && <th className="text-center">Edit</th>}
             </tr>
 
-            {/* Filter row */}
+            {/* Filter Row */}
             <tr>
               {selectable && <th />}
-
               {columns.map((col, idx) => (
                 <th key={idx}>
                   <input
@@ -168,65 +164,44 @@ export function DataTable<T extends Record<string, any>>({
                     className="form-control form-control-sm"
                     placeholder="Filter..."
                     value={columnFilters[col.header] || ""}
-                    onChange={(e) =>
-                      handleFilterChange(col.header, e.target.value)
-                    }
+                    onChange={(e) => handleFilterChange(col.header, e.target.value)}
                   />
                 </th>
               ))}
-
-              {showEdit && <th />}
             </tr>
           </thead>
 
           <tbody>
-            {rowsToRender.length === 0 ? (
+            {filteredData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={
-                    columns.length + (selectable ? 1 : 0) + (showEdit ? 1 : 0)
-                  }
+                  colSpan={columns.length + (selectable ? 1 : 0)}
                   className="text-center py-4 text-secondary"
                 >
                   No records found.
                 </td>
               </tr>
             ) : (
-              rowsToRender.map((row) => (
-                <tr key={row[rowKey]}>
+              filteredData.map((row) => (
+                <tr key={String(row[rowKey])}>
                   {selectable && (
                     <td className="text-center">
                       <input
                         type="checkbox"
-                        checked={selectedIds.includes(row[rowKey])}
-                        onChange={() => onToggleSelect?.(row[rowKey])}
+                        checked={selectedIds.includes(String(row[rowKey]))}
+                        onChange={() => onToggleSelect?.(String(row[rowKey]))}
                       />
                     </td>
                   )}
 
                   {columns.map((col, idx) => {
-                    const value =
-                      typeof col.accessor === "function"
-                        ? col.accessor(row)
-                        : row[col.accessor];
-
+                    const value = typeof col.accessor === "function" ? col.accessor(row) : row[col.accessor];
                     return (
                       <td key={idx} className={col.center ? "text-center" : ""}>
                         {value}
                       </td>
                     );
                   })}
-
-                  {showEdit && (
-                    <td className="text-center">
-                      <button
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => onEditRow?.(row)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  )}
                 </tr>
               ))
             )}
@@ -258,9 +233,7 @@ export function DataTable<T extends Record<string, any>>({
             .map((p) => (
               <button
                 key={p}
-                className={`btn btn-sm mx-1 ${
-                  p === page ? "btn-primary" : "btn-outline-secondary"
-                }`}
+                className={`btn btn-sm mx-1 ${p === page ? "btn-primary" : "btn-outline-secondary"}`}
                 onClick={() => onPageChange(p)}
               >
                 {p}
@@ -269,8 +242,7 @@ export function DataTable<T extends Record<string, any>>({
         </div>
 
         <div className="text-muted small">
-          Showing {(page - 1) * pageSize + 1}–
-          {Math.min(page * pageSize, totalCount)} of {totalCount} entries
+          Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalCount)} of {totalCount} entries
         </div>
       </div>
     </div>

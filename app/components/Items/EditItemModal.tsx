@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { validateRequired } from "../utils/validator";
+import { validateRequired } from "../../utils/validator";
 
 export interface Item {
   id?: string;

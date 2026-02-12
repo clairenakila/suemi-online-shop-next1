@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import Link from "next/link";
@@ -8,12 +8,21 @@ import Image from "next/image";
 import { ROUTES } from "../../routes";
 
 export default function LoginPage() {
+  const [mounted, setMounted] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👈 added
+  const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // ⛔ Prevent SSR render → no hydration mismatch
+  if (!mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +40,7 @@ export default function LoginPage() {
       if (!res.ok) {
         toast.error(data.error || "Invalid credentials");
       } else {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
+        localStorage.setItem("user", JSON.stringify(data.user));
         toast.success("Logged in successfully!");
         router.push(ROUTES.DASHBOARD);
       }
@@ -77,7 +84,6 @@ export default function LoginPage() {
           />
 
           <label className="form-label fw-semibold">Password</label>
-          {/* 👇 added input-group with toggle icon */}
           <div className="input-group mb-4">
             <input
               type={showPassword ? "text" : "password"}
@@ -92,7 +98,9 @@ export default function LoginPage() {
               onClick={() => setShowPassword((prev) => !prev)}
             >
               <i
-                className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
+                className={`bi ${
+                  showPassword ? "bi-eye-slash" : "bi-eye"
+                }`}
               ></i>
             </span>
           </div>

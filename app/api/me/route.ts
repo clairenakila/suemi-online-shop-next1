@@ -56,17 +56,41 @@ export async function GET(req: NextRequest) {
   const cookie = req.cookies.get("user");
   if (!cookie) return NextResponse.json({ user: null }, { status: 200 });
 
-  const user = verifyData(cookie.value);
-  if (!user) return NextResponse.json({ user: null }, { status: 200 });
+  const decodedUser = verifyData(cookie.value);
+  if (!decodedUser) return NextResponse.json({ user: null }, { status: 200 });
 
-  // Get role info
-  const { data: roleData, error } = await supabase
-    .from("roles")
-    .select("name")
-    .eq("id", user.role_id)
-    .single();
+  try {
+    // ✅ FIXED: Changed "profiles" to "users"
+    const { data: userData, error: userError } = await supabase
+      .from("users")  // ← CHANGED FROM "profiles" TO "users"
+      .select("id, name, email, address, phone_number, role_id") 
+      .eq("id", decodedUser.id)
+      .single();
 
-  return NextResponse.json({
-    user: { ...user, role: roleData ? { name: roleData.name } : null },
-  });
+    if (userError || !userData) {
+      console.error("❌ Error fetching user data:", userError);
+      return NextResponse.json({ user: decodedUser }, { status: 200 });
+    }
+
+    console.log("✅ User data fetched:", userData);
+
+    // KUKUHA NG ROLE NAME
+    const { data: roleData } = await supabase
+      .from("roles")
+      .select("name")
+      .eq("id", userData.role_id)
+      .single();
+
+    // PAGSAMAHIN PARA LUMABAS ANG ADDRESS AT PHONE SA SCREEN
+    return NextResponse.json({
+      user: { 
+        ...decodedUser, 
+        ...userData, 
+        role: roleData ? { name: roleData.name } : null 
+      },
+    });
+  } catch (err) {
+    console.error("❌ Unexpected error:", err);
+    return NextResponse.json({ user: decodedUser }, { status: 200 });
+  }
 }
