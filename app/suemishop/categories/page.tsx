@@ -12,6 +12,7 @@ import BulkEdit from "../../components/BulkEdit";
 import ImportButton from "../../components/ImportButton";
 import ExportButton from "../../components/ExportButton";
 import ToggleColumns from "../../components/ToggleColumns";
+import CategoriesTable from "../../components/categories/CategoriesTable";
 
 interface Category {
   id?: string;
@@ -214,20 +215,7 @@ export default function CategoriesListPage() {
         </div>
       </div>
 
-      <DataTable<Category>
-        data={filteredCategories}
-        columns={tableColumns}
-        selectable
-        selectedIds={selectedCategories}
-        onToggleSelect={toggleSelectCategory}
-        onToggleSelectAll={toggleSelectAll}
-        rowKey="id"
-        page={page}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+      <CategoriesTable />
     </div>
   );
 }
