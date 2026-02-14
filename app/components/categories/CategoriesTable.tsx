@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import ItemTable from "../items/ItemTable";
+import ViewCategoriesModal from "./ViewCategoriesModal";
+
 
 interface Category {
   id: string;
@@ -11,11 +13,14 @@ interface Category {
 }
 
 export default function CategoriesTable() {
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
   
+
   // ✅ ADD: Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -41,9 +46,9 @@ export default function CategoriesTable() {
   // ✅ ADD: Toggle individual checkbox
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) 
-        ? prev.filter((selectedId) => selectedId !== id) 
-        : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((selectedId) => selectedId !== id)
+        : [...prev, id],
     );
   };
 
@@ -78,9 +83,13 @@ export default function CategoriesTable() {
       accessor: (row: Category) => (
         <div className="d-flex gap-2 justify-content-center">
           {/* View Button */}
+          {/* View Button */}
           <button
             className="btn btn-success"
-            onClick={() => alert(`View: ${row.description}`)}
+            onClick={() => {
+              setSelectedCategoryId(row.id!);
+              setViewModalOpen(true);
+            }}
           >
             View
           </button>
@@ -98,7 +107,7 @@ export default function CategoriesTable() {
             className="btn btn-danger"
             onClick={async () => {
               if (!confirm(`Delete "${row.description}"?`)) return;
-              
+
               const { error } = await supabase
                 .from("categories")
                 .delete()
@@ -127,15 +136,20 @@ export default function CategoriesTable() {
         data={categories}
         columns={columns}
         rowKey="id"
-        selectable={true}  // ✅ ADD: Enable checkboxes
-        selectedIds={selectedIds}  // ✅ ADD: Pass selected IDs
-        onToggleSelect={handleToggleSelect}  // ✅ ADD: Individual toggle
-        onToggleSelectAll={handleToggleSelectAll}  // ✅ ADD: Select all toggle
+        selectable={true} // ✅ ADD: Enable checkboxes
+        selectedIds={selectedIds} // ✅ ADD: Pass selected IDs
+        onToggleSelect={handleToggleSelect} // ✅ ADD: Individual toggle
+        onToggleSelectAll={handleToggleSelectAll} // ✅ ADD: Select all toggle
         page={page}
         pageSize={pageSize}
         totalCount={totalCount}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+      />
+      <ViewCategoriesModal
+        isOpen={viewModalOpen}
+        categoryId={selectedCategoryId}
+        onClose={() => setViewModalOpen(false)}
       />
     </div>
   );
