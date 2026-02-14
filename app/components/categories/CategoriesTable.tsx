@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import ItemTable from "../items/ItemTable";
 import ViewCategoriesModal from "./ViewCategoriesModal";
-
+import EditCategoriesModal from "./EditCategoriesModal";
 
 interface Category {
   id: string;
@@ -19,7 +19,8 @@ export default function CategoriesTable() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [totalCount, setTotalCount] = useState(0);
-  
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editCategoryId, setEditCategoryId] = useState<string>("");
 
   // ✅ ADD: Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -97,7 +98,10 @@ export default function CategoriesTable() {
           {/* Edit Button */}
           <button
             className="btn btn-warning"
-            onClick={() => alert(`Edit: ${row.description}`)}
+            onClick={() => {
+              setEditCategoryId(row.id!);
+              setEditModalOpen(true);
+            }}
           >
             Edit
           </button>
@@ -150,6 +154,12 @@ export default function CategoriesTable() {
         isOpen={viewModalOpen}
         categoryId={selectedCategoryId}
         onClose={() => setViewModalOpen(false)}
+      />
+      <EditCategoriesModal
+        isOpen={editModalOpen}
+        categoryId={editCategoryId}
+        onClose={() => setEditModalOpen(false)}
+        onSuccess={fetchCategories}
       />
     </div>
   );
