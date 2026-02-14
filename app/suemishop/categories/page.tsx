@@ -13,6 +13,7 @@ import ImportButton from "../../components/ImportButton";
 import ExportButton from "../../components/ExportButton";
 import ToggleColumns from "../../components/ToggleColumns";
 import CategoriesTable from "../../components/categories/CategoriesTable";
+import DateRangePicker from "../../components/DateRangePicker";
 
 interface Category {
   id?: string;
@@ -21,14 +22,24 @@ interface Category {
 }
 
 export default function CategoriesListPage() {
+  // ✅ All states INSIDE component
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [tableColumns, setTableColumns] = useState<Column<Category>[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
+  
+  // ✅ Date picker states
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateRange, setDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
 
   // Fetch categories
   const fetchCategories = async () => {
@@ -41,6 +52,16 @@ export default function CategoriesListPage() {
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to);
+
+      // ✅ ADD: Date range filter
+      if (dateRange.startDate && dateRange.endDate) {
+        const start = new Date(dateRange.startDate);
+        const end = new Date(dateRange.endDate);
+        end.setHours(23, 59, 59, 999);
+        query = query
+          .gte("created_at", start.toISOString())
+          .lte("created_at", end.toISOString());
+      }
 
       if (searchTerm.trim()) {
         query = query.ilike("description", `%${searchTerm.trim()}%`);
@@ -61,7 +82,7 @@ export default function CategoriesListPage() {
 
   useEffect(() => {
     fetchCategories();
-  }, [page, pageSize, searchTerm]);
+  }, [page, pageSize, searchTerm, dateRange]); // ✅ Add dateRange
 
   // Column definitions
   useEffect(() => {
@@ -203,7 +224,7 @@ export default function CategoriesListPage() {
           </ConfirmDelete>
         </div>
 
-        {/* Search + Toggle Columns */}
+        {/* Search + Date Toggle + Toggle Columns */}
         <div className="d-flex align-items-center gap-2">
           <SearchBar
             placeholder="Search categories..."
@@ -211,9 +232,27 @@ export default function CategoriesListPage() {
             onChange={setSearchTerm}
             options={categories.map((c) => c.description)}
           />
-          <ToggleColumns columns={tableColumns} onChange={setTableColumns} />
+          
+          {/* ✅ Date Toggle Button */}
+          <button
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            className="p-2 bg-light border rounded-3 shadow-sm"
+            style={{ borderRadius: "12px", width: "42px", height: "42px" }}
+            title="Filter by date created"
+          >
+            <i className="bi bi-calendar3 fs-5 text-secondary"></i>
+          </button>
+          
+          
         </div>
       </div>
+
+      {/* ✅ Date Range Picker (collapsible) */}
+      {showDatePicker && (
+        <div className="bg-white p-3 shadow-md rounded-4 mb-3 w-fit">
+          <DateRangePicker onChange={setDateRange} />
+        </div>
+      )}
 
       <CategoriesTable />
     </div>
