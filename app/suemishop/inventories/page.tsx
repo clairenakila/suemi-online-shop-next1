@@ -14,6 +14,7 @@ import ImportButton from "../../components/ImportButton";
 import ExportButton from "../../components/ExportButton";
 import AddInventoryModal from "../../components/AddInventoryModal";
 import { dateNoTimezone } from "../../utils/validator";
+import InventoriesTable from "../../components/inventories/InventoriesTable";
 
 /* ================= TYPES ================= */
 
@@ -323,20 +324,7 @@ export default function InventoriesPage() {
         </div>
       )}
 
-      <DataTable
-        data={items}
-        columns={tableColumns}
-        selectable
-        selectedIds={selectedItems}
-        onToggleSelect={toggleSelectItem}
-        onToggleSelectAll={toggleSelectAll}
-        rowKey="id"
-        page={page}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+      <InventoriesTable />
     </div>
   );
 }
