@@ -110,6 +110,7 @@ export default function ItemTable<T extends Record<string, any>>({
   /* ================================
      Render
   ================================= */
+
   return (
     <div>
       {/* Top Toolbar */}
@@ -140,7 +141,9 @@ export default function ItemTable<T extends Record<string, any>>({
                     type="checkbox"
                     checked={
                       filteredData.length > 0 &&
-                      selectedIds.length === filteredData.length
+                      filteredData.every((row) =>
+                        selectedIds.includes(String(row[rowKey]))
+                      )
                     }
                     onChange={(e) => onToggleSelectAll?.(e.target.checked)}
                   />
@@ -148,7 +151,10 @@ export default function ItemTable<T extends Record<string, any>>({
               )}
 
               {columns.map((col, idx) => (
-                <th key={idx} className={`fw-semibold ${col.center ? "text-center" : ""}`}>
+                <th
+                  key={idx}
+                  className={`fw-semibold ${col.center ? "text-center" : ""}`}
+                >
                   {col.header}
                 </th>
               ))}
@@ -164,7 +170,9 @@ export default function ItemTable<T extends Record<string, any>>({
                     className="form-control form-control-sm"
                     placeholder="Filter..."
                     value={columnFilters[col.header] || ""}
-                    onChange={(e) => handleFilterChange(col.header, e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange(col.header, e.target.value)
+                    }
                   />
                 </th>
               ))}
@@ -184,6 +192,7 @@ export default function ItemTable<T extends Record<string, any>>({
             ) : (
               filteredData.map((row) => (
                 <tr key={String(row[rowKey])}>
+                  {/* ✅ FIXED: Individual row checkbox */}
                   {selectable && (
                     <td className="text-center">
                       <input
@@ -195,7 +204,10 @@ export default function ItemTable<T extends Record<string, any>>({
                   )}
 
                   {columns.map((col, idx) => {
-                    const value = typeof col.accessor === "function" ? col.accessor(row) : row[col.accessor];
+                    const value =
+                      typeof col.accessor === "function"
+                        ? col.accessor(row)
+                        : row[col.accessor];
                     return (
                       <td key={idx} className={col.center ? "text-center" : ""}>
                         {value}
@@ -242,7 +254,8 @@ export default function ItemTable<T extends Record<string, any>>({
         </div>
 
         <div className="text-muted small">
-          Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalCount)} of {totalCount} entries
+          Showing {(page - 1) * pageSize + 1}–
+          {Math.min(page * pageSize, totalCount)} of {totalCount} entries
         </div>
       </div>
     </div>

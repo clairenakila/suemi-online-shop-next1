@@ -54,13 +54,14 @@ export default function CategoriesTable() {
   };
 
   // ✅ ADD: Toggle select all
-  const handleToggleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(categories.map((cat) => cat.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
+const handleToggleSelectAll = (checked: boolean) => {
+  if (checked) {
+    // Select all VISIBLE items on current page
+    setSelectedIds(categories.map((cat) => String(cat.id)));
+  } else {
+    setSelectedIds([]);
+  }
+};
 
   // Define columns
   const columns = [
