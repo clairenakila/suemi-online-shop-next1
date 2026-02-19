@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 
-import SearchBar from "../../../components/SearchBar";
-import ConfirmDelete from "../../../components/ConfirmDelete";
-import { DataTable, Column } from "../../../components/DataTable";
-import BulkEdit from "../../../components/BulkEdit";
-import DateRangePicker from "../../../components/DateRangePicker";
-import AddButton from "../../../components/AddButton";
-import ToggleColumns from "../../../components/ToggleColumns";
-import ImportButton from "../../../components/ImportButton";
-import ExportButton from "../../../components/ExportButton";
+import SearchBar from "../../components/SearchBar";
+import ConfirmDelete from "../../components/ConfirmDelete";
+import { DataTable, Column } from "../../components/DataTable";
+import BulkEdit from "../../components/BulkEdit";
+import DateRangePicker from "../../components/DateRangePicker";
+import AddButton from "../../components/AddButton";
+import ToggleColumns from "../../components/ToggleColumns";
+import ImportButton from "../../components/ImportButton";
+import ExportButton from "../../components/ExportButton";
 
 interface Supplier {
   id?: string;
